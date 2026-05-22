@@ -24,12 +24,12 @@ class TripDashboardPage extends ConsumerWidget {
 
     return tripAsync.when(
       data: (trip) => _TripDashboardContent(trip: trip),
-      loading: () => const Scaffold(
-        backgroundColor: AppColors.backgroundDark,
+      loading: () => Scaffold(
+        ///backgroundColor: AppColors.backgroundDark,
         body: Center(child: CircularProgressIndicator()),
       ),
       error: (error, stack) => Scaffold(
-        backgroundColor: AppColors.backgroundDark,
+        //backgroundColor: AppColors.backgroundDark,
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
@@ -107,7 +107,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light,
       child: Scaffold(
-        backgroundColor: AppColors.backgroundDark,
+        backgroundColor: AppColors.background(context),
         body: NestedScrollView(
           controller: _scrollController,
           headerSliverBuilder: (context, innerBoxIsScrolled) {
@@ -117,7 +117,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                 floating: false,
                 elevation: 0,
                 scrolledUnderElevation: 0,
-                backgroundColor: AppColors.backgroundDark,
+                backgroundColor: AppColors.background(context),
 
                 // ✅ Título animado que aparece/desaparece
                 title: AnimatedOpacity(
@@ -131,24 +131,24 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                 centerTitle: true,
 
                 leading: IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.arrow_back,
-                    color: AppColors.textPrimary,
+                    color: AppColors.textPrimary(context),
                   ),
                   onPressed: () => context.go('/home'),
                 ),
                 actions: [
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.people_outline,
-                      color: AppColors.textSecondary,
+                      color: AppColors.textSecondary(context),
                     ),
                     onPressed: () => _showMembersSheet(context, widget.trip),
                   ),
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.ios_share_outlined,
-                      color: AppColors.textSecondary,
+                      color: AppColors.textSecondary(context),
                     ),
                     onPressed: () => _showInviteSheet(context, widget.trip.inviteCode),
                   ),
@@ -174,7 +174,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                               ? AppColors.primary.withOpacity(0.15)
                               : isUpcoming
                               ? AppColors.success.withOpacity(0.15)
-                              : AppColors.surfaceDark,
+                              : AppColors.surface(context),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -201,7 +201,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                                     ? AppColors.primary
                                     : isUpcoming
                                     ? AppColors.success
-                                    : AppColors.textTertiary,
+                                    : AppColors.textTertiary(context),
                               ),
                             ),
                           ],
@@ -225,7 +225,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                       Text(
                         trip.name,
                         style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.textSecondary,
+                          color: AppColors.textSecondary(context),
                         ),
                       ),
 
@@ -234,10 +234,10 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                       // Info row
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.calendar_today_outlined,
                             size: 14,
-                            color: AppColors.textTertiary,
+                            color: AppColors.textTertiary(context),
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -254,22 +254,22 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                               vertical: 3,
                             ),
                             decoration: BoxDecoration(
-                              color: AppColors.cardDark,
+                              color: AppColors.card(context),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
                               '${trip.numberOfDays} days',
                               style: AppTextStyles.labelSmall.copyWith(
-                                color: AppColors.textSecondary,
+                                color: AppColors.textSecondary(context),
                               ),
                             ),
                           ),
                           const Spacer(),
                           // Members
-                          const Icon(
+                          Icon(
                             Icons.people_outline,
                             size: 14,
-                            color: AppColors.textTertiary,
+                            color: AppColors.textTertiary(context),
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -294,8 +294,8 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                     indicatorColor: AppColors.primary,
                     indicatorWeight: 2,
                     indicatorSize: TabBarIndicatorSize.label,
-                    labelColor: AppColors.textPrimary,
-                    unselectedLabelColor: AppColors.textTertiary,
+                    labelColor: AppColors.textPrimary(context),
+                    unselectedLabelColor: AppColors.textTertiary(context),
                     labelStyle: AppTextStyles.labelLarge,
                     unselectedLabelStyle: AppTextStyles.labelMedium,
                     tabs: const [
@@ -304,6 +304,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                       Tab(text: 'Checklist'),
                     ],
                   ),
+                  backgroundColor: AppColors.background(context),
                 ),
               ),
             ];
@@ -324,7 +325,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
   void _showMembersSheet(BuildContext context, TripEntity trip) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surfaceDark,
+      backgroundColor: AppColors.surface(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -340,7 +341,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.textTertiary,
+                  color: AppColors.textTertiary(context),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -363,12 +364,12 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: AppColors.cardDark,
+                      color: AppColors.card(context),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.person,
-                      color: AppColors.textSecondary,
+                      color: AppColors.textSecondary(context),
                       size: 22,
                     ),
                   ),
@@ -387,7 +388,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                     decoration: BoxDecoration(
                       color: member.isHost
                           ? AppColors.primary.withOpacity(0.15)
-                          : AppColors.cardDark,
+                          : AppColors.card(context),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -395,7 +396,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                       style: AppTextStyles.labelSmall.copyWith(
                         color: member.isHost
                             ? AppColors.primary
-                            : AppColors.textSecondary,
+                            : AppColors.textSecondary(context),
                       ),
                     ),
                   ),
@@ -426,7 +427,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
   void _showInviteSheet(BuildContext context, String inviteCode) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.surfaceDark,
+      backgroundColor: AppColors.surface(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -440,7 +441,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.textTertiary,
+                  color: AppColors.textTertiary(context),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -473,8 +474,8 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
-                color: AppColors.cardDark,
-                borderRadius: BorderRadius.circular(12),
+                  color: AppColors.card(context),
+                  borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
                 child: Text(
@@ -510,17 +511,14 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
 // Sticky tab bar sin línea separadora
 class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
   final TabBar tabBar;
+  final Color backgroundColor;
 
-  _StickyTabBarDelegate(this.tabBar);
+  _StickyTabBarDelegate(this.tabBar, {required this.backgroundColor});
 
   @override
-  Widget build(
-      BuildContext context,
-      double shrinkOffset,
-      bool overlapsContent,
-      ) {
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
-      color: AppColors.backgroundDark, // mismo color que el fondo
+      color: backgroundColor,
       child: tabBar,
     );
   }
@@ -532,5 +530,6 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
   double get minExtent => tabBar.preferredSize.height;
 
   @override
-  bool shouldRebuild(_StickyTabBarDelegate oldDelegate) => false;
+  bool shouldRebuild(_StickyTabBarDelegate oldDelegate) =>
+      oldDelegate.backgroundColor != backgroundColor;
 }

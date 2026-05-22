@@ -28,12 +28,12 @@ class ActivityCard extends ConsumerWidget {
         return await showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            backgroundColor: AppColors.surfaceDark,
+            backgroundColor: AppColors.surface(context),
             title: Text('Delete activity?', style: AppTextStyles.h4),
             content: Text(
               activity.title,
               style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
+                color: AppColors.textSecondary(context),
               ),
             ),
             actions: [
@@ -101,8 +101,8 @@ class ActivityCard extends ConsumerWidget {
                             activity.title,
                             style: AppTextStyles.bodyMedium.copyWith(
                               color: activity.isCompleted
-                                  ? AppColors.textTertiary
-                                  : AppColors.textPrimary,
+                                  ? AppColors.textTertiary(context)
+                                  : AppColors.textPrimary(context),
                               decoration: activity.isCompleted
                                   ? TextDecoration.lineThrough
                                   : null,
@@ -122,14 +122,14 @@ class ActivityCard extends ConsumerWidget {
                               Text(
                                 AppDateUtils.formatTime(activity.time!),
                                 style: AppTextStyles.labelSmall.copyWith(
-                                  color: AppColors.textTertiary,
+                                  color: AppColors.textTertiary(context),
                                 ),
                               ),
                               if (activity.locationName != null)
                                 Text(
                                   '  ·  ',
                                   style: AppTextStyles.labelSmall.copyWith(
-                                    color: AppColors.textTertiary,
+                                    color: AppColors.textTertiary(context),
                                   ),
                                 ),
                             ],
@@ -138,7 +138,7 @@ class ActivityCard extends ConsumerWidget {
                                 child: Text(
                                   activity.locationName!,
                                   style: AppTextStyles.labelSmall.copyWith(
-                                    color: AppColors.textTertiary,
+                                    color: AppColors.textTertiary(context),
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -166,7 +166,7 @@ class ActivityCard extends ConsumerWidget {
                         child: Icon(
                           Icons.map_outlined,
                           size: 18,
-                          color: AppColors.textTertiary,
+                          color: AppColors.textTertiary(context),
                         ),
                       ),
                     ),
@@ -191,11 +191,11 @@ class ActivityCard extends ConsumerWidget {
                         border: Border.all(
                           color: activity.isCompleted
                               ? color
-                              : AppColors.textTertiary.withOpacity(0.4),
+                              : AppColors.textTertiary(context).withOpacity(0.4),
                           width: 1.5,
                         ),
                         color: activity.isCompleted
-                            ? color.withOpacity(0.2)
+                            ? color.withValues(alpha: 0.2)
                             : Colors.transparent,
                       ),
                       child: activity.isCompleted

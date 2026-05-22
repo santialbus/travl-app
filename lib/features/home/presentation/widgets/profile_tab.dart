@@ -26,7 +26,7 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
         if (user == null) return const SizedBox.shrink();
 
         return Scaffold(
-          backgroundColor: AppColors.backgroundDark,
+          backgroundColor: AppColors.background(context),
           body: SafeArea(
             child: SingleChildScrollView(
               child: Column(
@@ -79,7 +79,7 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
                                     color: AppColors.primary,
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: AppColors.backgroundDark,
+                                      color: AppColors.background(context),
                                       width: 2,
                                     ),
                                   ),
@@ -206,7 +206,7 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surfaceDark,
+        backgroundColor: AppColors.surface(context),
         title: Text('Edit Name', style: AppTextStyles.h4),
         content: TextField(
           controller: controller,
@@ -237,7 +237,7 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surfaceDark,
+        backgroundColor: AppColors.surface(context),
         title: Text('Change Password', style: AppTextStyles.h4),
         content: TextField(
           controller: controller,
@@ -284,7 +284,7 @@ class _SectionTitle extends StatelessWidget {
         child: Text(
           title,
           style: AppTextStyles.labelSmall.copyWith(
-            color: AppColors.textTertiary,
+            color: AppColors.textTertiary(context),
             letterSpacing: 1.2,
           ),
         ),
@@ -315,12 +315,15 @@ class _SettingsItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         decoration: BoxDecoration(
           border: Border(
-            bottom: BorderSide(color: AppColors.divider, width: 0.5),
+            bottom: BorderSide(
+              color: AppColors.dividerColor(context),
+              width: 0.5,
+            ),
           ),
         ),
         child: Row(
           children: [
-            Icon(icon, size: 22, color: AppColors.textSecondary),
+            Icon(icon, size: 22, color: AppColors.textSecondary(context)),
             const SizedBox(width: 16),
             Expanded(
               child: Text(title, style: AppTextStyles.bodyMedium),
@@ -332,10 +335,10 @@ class _SettingsItem extends StatelessWidget {
               ),
             if (onTap != null) ...[
               const SizedBox(width: 8),
-              const Icon(
+              Icon(
                 Icons.arrow_forward_ios,
                 size: 14,
-                color: AppColors.textTertiary,
+                color: AppColors.textTertiary(context),
               ),
             ],
           ],
@@ -365,12 +368,15 @@ class _SettingsToggle extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: AppColors.divider, width: 0.5),
+          bottom: BorderSide(
+            color: AppColors.dividerColor(context),
+            width: 0.5,
+          ),
         ),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 22, color: AppColors.textSecondary),
+          Icon(icon, size: 22, color: AppColors.textSecondary(context)),
           const SizedBox(width: 16),
           Expanded(
             child: Text(title, style: AppTextStyles.bodyMedium),

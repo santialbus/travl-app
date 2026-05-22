@@ -17,14 +17,12 @@ class AppTheme {
         error: AppColors.error,
       ),
       scaffoldBackgroundColor: AppColors.backgroundDark,
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.backgroundDark,
         elevation: 0,
         scrolledUnderElevation: 0,
-        centerTitle: false,
         systemOverlayStyle: SystemUiOverlayStyle.light,
-        titleTextStyle: AppTextStyles.h3,
-        iconTheme: const IconThemeData(color: AppColors.textPrimary),
+        iconTheme: IconThemeData(color: Color(0xFFFFFFFF)),
       ),
       cardTheme: CardThemeData(
         color: AppColors.cardDark,
@@ -42,13 +40,11 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: AppTextStyles.button,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: AppTextStyles.buttonSmall,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -66,8 +62,11 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.error, width: 1),
+        ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textTertiary),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: AppColors.surfaceDark,
@@ -75,19 +74,26 @@ class AppTheme {
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
       ),
-      dividerTheme: const DividerThemeData(color: AppColors.divider, thickness: 1),
-      iconTheme: const IconThemeData(color: AppColors.textPrimary, size: 24),
+      dividerTheme: const DividerThemeData(
+        color: AppColors.divider,
+        thickness: 1,
+      ),
+      iconTheme: const IconThemeData(
+        color: Color(0xFFFFFFFF),
+        size: 24,
+      ),
+      // ✅ Colores de texto definidos aquí para dark mode
       textTheme: TextTheme(
-        displayLarge: AppTextStyles.h1,
-        displayMedium: AppTextStyles.h2,
-        displaySmall: AppTextStyles.h3,
-        headlineMedium: AppTextStyles.h4,
-        bodyLarge: AppTextStyles.bodyLarge,
-        bodyMedium: AppTextStyles.bodyMedium,
-        bodySmall: AppTextStyles.bodySmall,
-        labelLarge: AppTextStyles.labelLarge,
-        labelMedium: AppTextStyles.labelMedium,
-        labelSmall: AppTextStyles.labelSmall,
+        displayLarge: AppTextStyles.h1.copyWith(color: const Color(0xFFFFFFFF)),
+        displayMedium: AppTextStyles.h2.copyWith(color: const Color(0xFFFFFFFF)),
+        displaySmall: AppTextStyles.h3.copyWith(color: const Color(0xFFFFFFFF)),
+        headlineMedium: AppTextStyles.h4.copyWith(color: const Color(0xFFFFFFFF)),
+        bodyLarge: AppTextStyles.bodyLarge.copyWith(color: const Color(0xFFFFFFFF)),
+        bodyMedium: AppTextStyles.bodyMedium.copyWith(color: const Color(0xFFFFFFFF)),
+        bodySmall: AppTextStyles.bodySmall.copyWith(color: const Color(0xFFB0B0B0)),
+        labelLarge: AppTextStyles.labelLarge.copyWith(color: const Color(0xFFFFFFFF)),
+        labelMedium: AppTextStyles.labelMedium.copyWith(color: const Color(0xFFB0B0B0)),
+        labelSmall: AppTextStyles.labelSmall.copyWith(color: const Color(0xFF707070)),
       ),
     );
   }
@@ -103,14 +109,12 @@ class AppTheme {
         error: AppColors.error,
       ),
       scaffoldBackgroundColor: AppColors.backgroundLight,
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.backgroundLight,
         elevation: 0,
         scrolledUnderElevation: 0,
-        centerTitle: false,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
-        titleTextStyle: AppTextStyles.h3.copyWith(color: AppColors.textPrimaryLight),
-        iconTheme: const IconThemeData(color: AppColors.textPrimaryLight),
+        iconTheme: IconThemeData(color: AppColors.textPrimaryLight),
       ),
       cardTheme: CardThemeData(
         color: AppColors.cardLight,
@@ -128,13 +132,11 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          textStyle: AppTextStyles.button,
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: AppTextStyles.buttonSmall,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -152,10 +154,11 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        hintStyle: AppTextStyles.bodyMedium.copyWith(
-          color: AppColors.textTertiaryLight,
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.error, width: 1),
         ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: AppColors.surfaceLight,
@@ -171,6 +174,7 @@ class AppTheme {
         color: AppColors.textPrimaryLight,
         size: 24,
       ),
+      // ✅ Colores de texto definidos aquí para light mode
       textTheme: TextTheme(
         displayLarge: AppTextStyles.h1.copyWith(color: AppColors.textPrimaryLight),
         displayMedium: AppTextStyles.h2.copyWith(color: AppColors.textPrimaryLight),

@@ -39,9 +39,9 @@ class _CreateTripPageState extends ConsumerState<CreateTripPage> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
+            colorScheme: ColorScheme.dark(
               primary: AppColors.primary,
-              surface: AppColors.surfaceDark,
+              surface: AppColors.surface(context),
             ),
           ),
           child: child!,
@@ -68,9 +68,9 @@ class _CreateTripPageState extends ConsumerState<CreateTripPage> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
+            colorScheme: ColorScheme.dark(
               primary: AppColors.primary,
-              surface: AppColors.surfaceDark,
+              surface: AppColors.surface(context),
             ),
           ),
           child: child!,
@@ -180,7 +180,7 @@ class _CreateTripPageState extends ConsumerState<CreateTripPage> {
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.cardDark,
+                    color: AppColors.card(context),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -202,8 +202,8 @@ class _CreateTripPageState extends ConsumerState<CreateTripPage> {
                                   : 'Select date',
                               style: AppTextStyles.bodyMedium.copyWith(
                                 color: _startDate != null
-                                    ? AppColors.textPrimary
-                                    : AppColors.textTertiary,
+                                    ? AppColors.textPrimary(context)
+                                    : AppColors.textTertiary(context),
                               ),
                             ),
                           ],
@@ -245,8 +245,8 @@ class _CreateTripPageState extends ConsumerState<CreateTripPage> {
                                   : 'Select date',
                               style: AppTextStyles.bodyMedium.copyWith(
                                 color: _endDate != null
-                                    ? AppColors.textPrimary
-                                    : AppColors.textTertiary,
+                                    ? AppColors.textPrimary(context)
+                                    : AppColors.textTertiary(context),
                               ),
                             ),
                           ],

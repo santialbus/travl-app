@@ -87,7 +87,7 @@ class _ExpensesContent extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surfaceDark,
+      //backgroundColor: AppColors.surfaceDark,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -106,8 +106,6 @@ class _ExpensesContent extends ConsumerWidget {
     final grouped = _groupByDate();
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
-
       body: expenses.isEmpty
           ? _EmptyExpenses(
         onAdd: () => _showAddExpenseSheet(context, ref),
@@ -221,7 +219,7 @@ class _SummarySection extends ConsumerWidget {
           Text(
             'Total spent',
             style: AppTextStyles.labelSmall.copyWith(
-              color: AppColors.textTertiary,
+              color: AppColors.textTertiary(context),
               letterSpacing: 1.2,
             ),
           ),
@@ -241,7 +239,7 @@ class _SummarySection extends ConsumerWidget {
             Text(
               'BALANCES',
               style: AppTextStyles.labelSmall.copyWith(
-                color: AppColors.textTertiary,
+                color: AppColors.textTertiary(context),
                 letterSpacing: 1.2,
               ),
             ),
@@ -262,7 +260,7 @@ class _SummarySection extends ConsumerWidget {
                       width: 36,
                       height: 36,
                       decoration: BoxDecoration(
-                        color: AppColors.cardDark,
+                        color: AppColors.card(context),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -281,7 +279,7 @@ class _SummarySection extends ConsumerWidget {
                           Text(
                             positive ? 'gets back' : 'owes',
                             style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.textTertiary,
+                              color: AppColors.textTertiary(context),
                             ),
                           ),
                         ],
@@ -310,7 +308,7 @@ class _SummarySection extends ConsumerWidget {
             Text(
               'SETTLEMENTS',
               style: AppTextStyles.labelSmall.copyWith(
-                color: AppColors.textTertiary,
+                color: AppColors.textTertiary(context),
                 letterSpacing: 1.2,
               ),
             ),
@@ -355,10 +353,10 @@ class _SummarySection extends ConsumerWidget {
                     const SizedBox(width: 8),
 
                     // Arrow
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward,
                       size: 16,
-                      color: AppColors.textTertiary,
+                      color: AppColors.textTertiary(context),
                     ),
 
                     const SizedBox(width: 8),
@@ -393,19 +391,19 @@ class _SummarySection extends ConsumerWidget {
                           children: [
                             TextSpan(
                               text: fromName,
-                              style: const TextStyle(
-                                color: AppColors.textPrimary,
+                              style: TextStyle(
+                                color: AppColors.textPrimary(context),
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                             TextSpan(
                               text: ' owes ',
-                              style: TextStyle(color: AppColors.textTertiary),
+                              style: TextStyle(color: AppColors.textTertiary(context)),
                             ),
                             TextSpan(
                               text: toName,
-                              style: const TextStyle(
-                                color: AppColors.textPrimary,
+                              style: TextStyle(
+                                color: AppColors.textPrimary(context),
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -486,7 +484,7 @@ class _ExpenseDateGroup extends StatelessWidget {
           child: Text(
             date,
             style: AppTextStyles.labelSmall.copyWith(
-              color: AppColors.textTertiary,
+              color: AppColors.textTertiary(context),
               letterSpacing: 1.2,
               fontSize: 11,
             ),
@@ -527,11 +525,11 @@ class _ExpenseRow extends ConsumerWidget {
         return await showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            backgroundColor: AppColors.surfaceDark,
+            backgroundColor: AppColors.surface(context),
             title: Text('Delete expense?', style: AppTextStyles.h4),
             content: Text(expense.title,
                 style: AppTextStyles.bodyMedium
-                    .copyWith(color: AppColors.textSecondary)),
+                    .copyWith(color: AppColors.textSecondary(context))),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
@@ -563,7 +561,7 @@ class _ExpenseRow extends ConsumerWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: AppColors.cardDark,
+                color: AppColors.card(context),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Center(
@@ -586,7 +584,7 @@ class _ExpenseRow extends ConsumerWidget {
                   Text(
                     'Paid by $paidByName · ${expense.participants.length} ${expense.participants.length == 1 ? 'person' : 'people'}',
                     style: AppTextStyles.labelSmall
-                        .copyWith(color: AppColors.textTertiary),
+                        .copyWith(color: AppColors.textTertiary(context)),
                   ),
                 ],
               ),
@@ -606,7 +604,7 @@ class _ExpenseRow extends ConsumerWidget {
                 Text(
                   '${expense.currency} ${expense.splitAmount.toStringAsFixed(2)}/p',
                   style: AppTextStyles.labelSmall
-                      .copyWith(color: AppColors.textTertiary),
+                      .copyWith(color: AppColors.textTertiary(context)),
                 ),
               ],
             ),
@@ -744,7 +742,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.textTertiary,
+                    color: AppColors.textTertiary(context),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -773,7 +771,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
               Text(
                 'CATEGORY',
                 style: AppTextStyles.labelSmall.copyWith(
-                  color: AppColors.textTertiary,
+                  color: AppColors.textTertiary(context),
                   letterSpacing: 1.2,
                 ),
               ),
@@ -794,7 +792,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                       decoration: BoxDecoration(
                         color: isSelected
                             ? AppColors.primary.withOpacity(0.15)
-                            : AppColors.cardDark,
+                            : AppColors.card(context),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: isSelected
@@ -812,7 +810,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                             style: AppTextStyles.labelSmall.copyWith(
                               color: isSelected
                                   ? AppColors.primary
-                                  : AppColors.textSecondary,
+                                  : AppColors.textSecondary(context),
                             ),
                           ),
                         ],
@@ -842,7 +840,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
               Text(
                 'CURRENCY',
                 style: AppTextStyles.labelSmall.copyWith(
-                  color: AppColors.textTertiary,
+                  color: AppColors.textTertiary(context),
                   letterSpacing: 1.2,
                 ),
               ),
@@ -861,7 +859,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? AppColors.primary.withOpacity(0.15)
-                                : AppColors.cardDark,
+                                : AppColors.card(context),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
                               color: isSelected
@@ -876,7 +874,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                                 style: AppTextStyles.h4.copyWith(
                                   color: isSelected
                                       ? AppColors.primary
-                                      : AppColors.textSecondary,
+                                      : AppColors.textSecondary(context),
                                 ),
                               ),
                               const SizedBox(height: 2),
@@ -885,7 +883,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                                 style: AppTextStyles.labelSmall.copyWith(
                                   color: isSelected
                                       ? AppColors.primary
-                                      : AppColors.textTertiary,
+                                      : AppColors.textTertiary(context),
                                   fontSize: 10,
                                 ),
                               ),
@@ -928,7 +926,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                     child: Text(
                       'SPLIT WITH',
                       style: AppTextStyles.labelSmall.copyWith(
-                        color: AppColors.textTertiary,
+                        color: AppColors.textTertiary(context),
                         letterSpacing: 1.2,
                       ),
                     ),
@@ -936,7 +934,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                   Text(
                     '${_selectedParticipants.length} of ${widget.members.length}',
                     style: AppTextStyles.labelSmall.copyWith(
-                      color: AppColors.textTertiary,
+                      color: AppColors.textTertiary(context),
                     ),
                   ),
                 ],
@@ -968,7 +966,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? AppColors.primary.withOpacity(0.15)
-                                : AppColors.cardDark,
+                                : AppColors.card(context),
                             shape: BoxShape.circle,
                           ),
                           child: Center(
@@ -977,7 +975,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                               style: AppTextStyles.labelLarge.copyWith(
                                 color: isSelected
                                     ? AppColors.primary
-                                    : AppColors.textSecondary,
+                                    : AppColors.textSecondary(context),
                               ),
                             ),
                           ),
@@ -998,7 +996,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                           Text(
                             '$symbol ${_splitAmount.toStringAsFixed(2)}',
                             style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.textTertiary,
+                              color: AppColors.textTertiary(context),
                             ),
                           ),
 
@@ -1013,7 +1011,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                             border: Border.all(
                               color: isSelected
                                   ? AppColors.primary
-                                  : AppColors.textTertiary.withOpacity(0.4),
+                                  : AppColors.textTertiary(context).withOpacity(0.4),
                               width: 1.5,
                             ),
                             color: isSelected
@@ -1041,15 +1039,15 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.cardDark,
+                    color: AppColors.card(context),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.people_outline,
                         size: 18,
-                        color: AppColors.textSecondary,
+                        color: AppColors.textSecondary(context),
                       ),
                       const SizedBox(width: 8),
                       Text(

@@ -108,7 +108,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
               Text(
                 'Plan your adventures together',
                 style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary,
+                  color: AppColors.textSecondary(context),
                 ),
                 textAlign: TextAlign.center,
               ),
