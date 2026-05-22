@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "1067877391744",
+    "project_id": "travl-cd57a",
+    "storage_bucket": "travl-cd57a.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1067877391744:android:104a698657ab7a475a3565",
+        "android_client_info": {
+          "package_name": "com.albus.travl"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDYpB45R8v88zMPcPjhY-DY15A4DfbCss"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1067877391744:android:db29236ddc6fdc025a3565",
+        "android_client_info": {
+          "package_name": "com.albus.travl.travl"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDYpB45R8v88zMPcPjhY-DY15A4DfbCss"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

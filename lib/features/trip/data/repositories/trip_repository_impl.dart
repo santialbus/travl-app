@@ -1,0 +1,62 @@
+import '../../domain/entities/trip_entity.dart';
+import '../../domain/entities/day_entity.dart';
+import '../../domain/repositories/trip_repository.dart';
+import '../datasources/trip_remote_datasource.dart';
+
+class TripRepositoryImpl implements TripRepository {
+  final TripRemoteDataSource _remoteDataSource;
+
+  TripRepositoryImpl(this._remoteDataSource);
+
+  @override
+  Future<TripEntity> createTrip({
+    required String name,
+    required String destination,
+    required DateTime startDate,
+    required DateTime endDate,
+    required String ownerId,
+  }) async {
+    return await _remoteDataSource.createTrip(
+      name: name,
+      destination: destination,
+      startDate: startDate,
+      endDate: endDate,
+      ownerId: ownerId,
+    );
+  }
+
+  @override
+  Stream<List<TripEntity>> getUserTrips(String userId) {
+    return _remoteDataSource.getUserTrips(userId);
+  }
+
+  @override
+  Future<TripEntity> getTrip(String tripId) async {
+    return await _remoteDataSource.getTrip(tripId);
+  }
+
+  @override
+  Stream<TripEntity> getTripStream(String tripId) {
+    return _remoteDataSource.getTripStream(tripId);
+  }
+
+  @override
+  Future<TripEntity> joinTripByCode(String inviteCode, String userId) async {
+    return await _remoteDataSource.joinTripByCode(inviteCode, userId);
+  }
+
+  @override
+  Stream<List<DayEntity>> getTripDays(String tripId) {
+    return _remoteDataSource.getTripDays(tripId);
+  }
+
+  @override
+  Future<void> updateTrip(TripEntity trip) async {
+    await _remoteDataSource.updateTrip(trip as dynamic);
+  }
+
+  @override
+  Future<void> deleteTrip(String tripId) async {
+    await _remoteDataSource.deleteTrip(tripId);
+  }
+}
