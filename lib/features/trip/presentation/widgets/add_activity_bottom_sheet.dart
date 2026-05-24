@@ -46,9 +46,9 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.dark(
+            colorScheme: ColorScheme.dark(
               primary: AppColors.primary,
-              surface: AppColors.surfaceDark,
+              surface: AppColors.surface(context),
             ),
           ),
           child: child!,
@@ -168,12 +168,12 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? AppColors.primary
-                                  : AppColors.surfaceDark,
+                                  : AppColors.surface(context),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
                                 color: isSelected
                                     ? AppColors.primary
-                                    : AppColors.border,
+                                    : AppColors.borderColor(context),
                               ),
                             ),
                             child: Column(
@@ -188,9 +188,7 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
                                 Text(
                                   type.value,
                                   style: AppTextStyles.labelSmall.copyWith(
-                                    color: isSelected
-                                        ? Colors.white
-                                        : AppColors.textSecondary,
+                                    color: AppColors.textSecondary(context),
                                     fontSize: 11, // ✅ Añadido tamaño específico
                                   ),
                                   maxLines: 1,
@@ -245,7 +243,7 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.cardDark,
+                      color: AppColors.card(context),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
@@ -259,8 +257,8 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
                                 : 'Time (optional)',
                             style: AppTextStyles.bodyMedium.copyWith(
                               color: _selectedTime != null
-                                  ? AppColors.textPrimary
-                                  : AppColors.textTertiary,
+                                  ? AppColors.textPrimary(context)
+                                  : AppColors.textTertiary(context),
                             ),
                           ),
                         ),

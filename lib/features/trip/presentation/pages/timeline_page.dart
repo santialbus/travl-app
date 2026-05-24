@@ -24,24 +24,26 @@ class TimelinePage extends ConsumerWidget {
             child: Text(
               'No days yet',
               style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
+                color: AppColors.textSecondary(context),
               ),
             ),
           );
         }
 
-        return SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ...days.map((day) => DaySection(
-                day: day,
-                tripId: tripId,
-              )),
-
-              // Bottom padding
-              const SizedBox(height: 100),
-            ],
+        // ✅ Añadir color de fondo adaptativo
+        return ColoredBox(
+          color: AppColors.background(context),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ...days.map((day) => DaySection(
+                  day: day,
+                  tripId: tripId,
+                )),
+                const SizedBox(height: 100),
+              ],
+            ),
           ),
         );
       },

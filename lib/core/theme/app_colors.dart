@@ -17,9 +17,12 @@ class AppColors {
   static const Color cardDark = Color(0xFF252525);
 
   // Text Colors
-  static const Color textPrimary = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFFB0B0B0);
-  static const Color textTertiary = Color(0xFF707070);
+  static const Color textPrimaryDark = Color(0xFFFFFFFF);
+  static const Color textSecondaryDark = Color(0xFFB0B0B0);
+  static const Color textTertiaryDark = Color(0xFF707070);
+  //static const Color textPrimary = Color(0xFFFFFFFF);
+  //static const Color textSecondary = Color(0xFFB0B0B0);
+  //static const Color textTertiary = Color(0xFF707070);
 
   // Activity Type Colors
   static const Color flightColor = Color(0xFF4ECDC4);
@@ -110,7 +113,7 @@ class AppColors {
         : cardLight;
   }
 
-  /*static Color textPrimary(BuildContext context) {
+  static Color textPrimary(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark
         ? const Color(0xFFFFFFFF)
         : textPrimaryLight;
@@ -126,7 +129,7 @@ class AppColors {
     return Theme.of(context).brightness == Brightness.dark
         ? const Color(0xFF707070)
         : textTertiaryLight;
-  }*/
+  }
 
   static Color dividerColor(BuildContext context) {
     return Theme.of(context).brightness == Brightness.dark

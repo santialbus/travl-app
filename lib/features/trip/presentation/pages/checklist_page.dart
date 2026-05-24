@@ -39,7 +39,6 @@ class _ChecklistContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
       body: items.isEmpty
           ? _EmptyChecklist(
         onAdd: () => _showAddSheet(context),
@@ -81,7 +80,7 @@ class _ChecklistContent extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surfaceDark,
+      backgroundColor: AppColors.surface(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -117,7 +116,7 @@ class _ProgressHeader extends StatelessWidget {
                 style: AppTextStyles.labelSmall.copyWith(
                   color: isComplete
                       ? AppColors.success
-                      : AppColors.textTertiary,
+                      : AppColors.textTertiary(context),
                   letterSpacing: 1.2,
                 ),
               ),
@@ -125,7 +124,7 @@ class _ProgressHeader extends StatelessWidget {
               Text(
                 '${(progress * 100).toInt()}%',
                 style: AppTextStyles.labelSmall.copyWith(
-                  color: AppColors.textTertiary,
+                  color: AppColors.textTertiary(context),
                 ),
               ),
             ],
@@ -138,7 +137,7 @@ class _ProgressHeader extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: AppColors.cardDark,
+              backgroundColor: AppColors.card(context),
               valueColor: AlwaysStoppedAnimation(
                 isComplete ? AppColors.success : AppColors.primary,
               ),
@@ -176,7 +175,7 @@ class _ChecklistSection extends ConsumerWidget {
               Text(
                 '${type.emoji}  ${type.value.toUpperCase()}',
                 style: AppTextStyles.labelSmall.copyWith(
-                  color: AppColors.textTertiary,
+                  color: AppColors.textTertiary(context),
                   letterSpacing: 1.2,
                   fontSize: 11,
                 ),
@@ -185,7 +184,7 @@ class _ChecklistSection extends ConsumerWidget {
               Text(
                 '· $done/${items.length}',
                 style: AppTextStyles.labelSmall.copyWith(
-                  color: AppColors.textTertiary,
+                  color: AppColors.textTertiary(context),
                   fontSize: 11,
                 ),
               ),
@@ -237,7 +236,7 @@ class _ChecklistRow extends ConsumerWidget {
                   border: Border.all(
                     color: item.isDone
                         ? AppColors.success
-                        : AppColors.textTertiary.withOpacity(0.4),
+                        : AppColors.textTertiary(context).withOpacity(0.4),
                     width: 1.5,
                   ),
                   color: item.isDone
@@ -261,12 +260,12 @@ class _ChecklistRow extends ConsumerWidget {
                   item.title,
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: item.isDone
-                        ? AppColors.textTertiary
-                        : AppColors.textPrimary,
+                        ? AppColors.textTertiary(context)
+                        : AppColors.textPrimary(context),
                     decoration: item.isDone
                         ? TextDecoration.lineThrough
                         : null,
-                    decorationColor: AppColors.textTertiary,
+                    decorationColor: AppColors.textTertiary(context),
                   ),
                 ),
               ),
@@ -299,7 +298,7 @@ class _EmptyChecklist extends StatelessWidget {
             Text(
               'Add things to pack or tasks\nto complete before your trip',
               style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
+                color: AppColors.textSecondary(context),
               ),
               textAlign: TextAlign.center,
             ),
@@ -372,7 +371,7 @@ class _AddChecklistItemSheetState
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.textTertiary,
+                  color: AppColors.textTertiary(context),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -401,7 +400,7 @@ class _AddChecklistItemSheetState
             Text(
               'WHEN',
               style: AppTextStyles.labelSmall.copyWith(
-                color: AppColors.textTertiary,
+                color: AppColors.textTertiary(context),
                 letterSpacing: 1.2,
               ),
             ),
@@ -420,7 +419,7 @@ class _AddChecklistItemSheetState
                         decoration: BoxDecoration(
                           color: isSelected
                               ? AppColors.primary.withOpacity(0.15)
-                              : AppColors.cardDark,
+                              : AppColors.card(context),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
                             color: isSelected
@@ -440,7 +439,7 @@ class _AddChecklistItemSheetState
                               style: AppTextStyles.labelSmall.copyWith(
                                 color: isSelected
                                     ? AppColors.primary
-                                    : AppColors.textSecondary,
+                                    : AppColors.textSecondary(context),
                                 fontSize: 10,
                               ),
                               textAlign: TextAlign.center,

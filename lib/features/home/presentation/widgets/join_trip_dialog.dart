@@ -102,7 +102,7 @@ class _JoinTripDialogState extends ConsumerState<JoinTripDialog> {
             Text(
               'Enter the invite code',
               style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
+                color: AppColors.textSecondary(context),
               ),
             ),
             const SizedBox(height: 16),

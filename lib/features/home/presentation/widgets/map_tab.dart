@@ -17,7 +17,6 @@ class MapTab extends ConsumerWidget {
     final tripsAsync = ref.watch(userTripsProvider(userId));
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -33,7 +32,7 @@ class MapTab extends ConsumerWidget {
                   Text(
                     'All your destinations',
                     style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textSecondary,
+                      color: AppColors.textSecondary(context),
                     ),
                   ),
                 ],
@@ -170,9 +169,8 @@ class _TripChip extends StatelessWidget {
       margin: const EdgeInsets.only(right: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        color: AppColors.card(context),
+        border: Border.all(color: AppColors.borderColor(context)),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

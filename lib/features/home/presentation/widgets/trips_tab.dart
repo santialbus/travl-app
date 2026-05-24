@@ -26,7 +26,6 @@ class TripsTab extends ConsumerWidget {
     );
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
@@ -48,7 +47,7 @@ class TripsTab extends ConsumerWidget {
                           onPressed: () => _showJoinDialog(context, ref),
                           icon: const Icon(Icons.qr_code_scanner),
                           style: IconButton.styleFrom(
-                            backgroundColor: AppColors.cardDark,
+                            backgroundColor: AppColors.card(context),
                             padding: const EdgeInsets.all(12),
                           ),
                         ),
@@ -58,7 +57,7 @@ class TripsTab extends ConsumerWidget {
                     Text(
                       _getGreeting(userName),
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.textSecondary,
+                        color: AppColors.textSecondary(context),
                       ),
                     ),
                   ],
@@ -167,12 +166,12 @@ class _TripCard extends ConsumerWidget {
         return await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
+            backgroundColor: AppColors.surface(context),
             title: Text('Delete trip?', style: AppTextStyles.h4),
             content: Text(
               'This will permanently delete "${trip.name}" and all its activities, expenses and checklist items.',
               style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
+                color: AppColors.textSecondary(context),
               ),
             ),
             actions: [
@@ -197,7 +196,7 @@ class _TripCard extends ConsumerWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('${trip.name} deleted'),
-              backgroundColor: AppColors.surfaceDark,
+              backgroundColor: AppColors.surface(context),
             ),
           );
         }
@@ -253,7 +252,7 @@ class _TripCardContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardColor = isDark ? AppColors.cardDark : AppColors.cardLight;
+    final cardColor = isDark ? AppColors.card(context) : AppColors.cardLight;
 
     return GestureDetector(
       onTap: onTap,
@@ -303,7 +302,7 @@ class _TripCardContent extends StatelessWidget {
                 style: AppTextStyles.h3.copyWith(
                   fontSize: 22,
                   color: isDark
-                      ? AppColors.textPrimary
+                      ? AppColors.textPrimary(context)
                       : AppColors.textPrimaryLight,
                 ),
               ),
@@ -312,7 +311,7 @@ class _TripCardContent extends StatelessWidget {
                 trip.name,
                 style: AppTextStyles.bodyMedium.copyWith(
                   color: isDark
-                      ? AppColors.textSecondary
+                      ? AppColors.textSecondary(context)
                       : AppColors.textSecondaryLight,
                 ),
               ),
@@ -326,7 +325,7 @@ class _TripCardContent extends StatelessWidget {
                     Icons.calendar_today_outlined,
                     size: 14,
                     color: isDark
-                        ? AppColors.textTertiary
+                        ? AppColors.textTertiary(context)
                         : AppColors.textTertiaryLight,
                   ),
                   const SizedBox(width: 6),
@@ -334,7 +333,7 @@ class _TripCardContent extends StatelessWidget {
                     '${DateFormat('MMM dd').format(trip.startDate)} → ${DateFormat('MMM dd, yyyy').format(trip.endDate)}',
                     style: AppTextStyles.bodySmall.copyWith(
                       color: isDark
-                          ? AppColors.textSecondary
+                          ? AppColors.textSecondary(context)
                           : AppColors.textSecondaryLight,
                     ),
                   ),
@@ -376,8 +375,8 @@ class _StatusBadge extends StatelessWidget {
       textColor = AppColors.success;
       label = 'Upcoming';
     } else {
-      bgColor = AppColors.textTertiary.withOpacity(0.15);
-      textColor = AppColors.textTertiary;
+      bgColor = AppColors.textTertiary(context).withOpacity(0.15);
+      textColor = AppColors.textTertiary(context);
       label = 'Past';
     }
 
@@ -431,7 +430,7 @@ class _MemberAvatars extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.primary.withOpacity(0.3 + i * 0.2),
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.cardDark, width: 2),
+                border: Border.all(color: AppColors.card(context), width: 2),
               ),
               child: Center(
                 child: Icon(
@@ -450,9 +449,9 @@ class _MemberAvatars extends StatelessWidget {
               width: 28,
               height: 28,
               decoration: BoxDecoration(
-                color: AppColors.surfaceDark,
+                color: AppColors.surface(context),
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.cardDark, width: 2),
+                border: Border.all(color: AppColors.card(context), width: 2),
               ),
               child: Center(
                 child: Text(
@@ -491,7 +490,7 @@ class _EmptyTrips extends StatelessWidget {
             Text(
               'Create your first trip or join\nan existing one with a code',
               style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
+                color: AppColors.textSecondary(context),
               ),
               textAlign: TextAlign.center,
             ),

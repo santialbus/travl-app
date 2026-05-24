@@ -77,7 +77,7 @@ class DaySection extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surfaceDark,
+      backgroundColor: AppColors.surface(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -107,7 +107,7 @@ class _DaySeparator extends StatelessWidget {
           Text(
             '${day.title.toUpperCase()} · $dateStr',
             style: AppTextStyles.labelSmall.copyWith(
-              color: AppColors.textTertiary,
+              color: AppColors.textTertiary(context),
               letterSpacing: 1.2,
               fontSize: 11,
             ),
@@ -136,13 +136,13 @@ class _AddActivityRow extends StatelessWidget {
             Icon(
               Icons.add,
               size: 16,
-              color: AppColors.textTertiary,
+              color: AppColors.textTertiary(context),
             ),
             const SizedBox(width: 12),
             Text(
               'Add activity',
               style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textTertiary,
+                color: AppColors.textTertiary(context),
               ),
             ),
           ],

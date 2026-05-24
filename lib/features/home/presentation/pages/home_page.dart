@@ -84,7 +84,7 @@ class _HomeContentState extends ConsumerState<_HomeContent> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? AppColors.surfaceDark
+          ? AppColors.surface(context)
           : AppColors.surfaceLight,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -107,10 +107,10 @@ class _BottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
+    final bgColor = AppColors.surface(context);
     final activeColor = AppColors.primary;
     final inactiveColor = isDark
-        ? AppColors.textTertiary
+        ? AppColors.textTertiary(context)
         : AppColors.textTertiaryLight;
 
     return Container(
@@ -224,7 +224,7 @@ class _CreateOrJoinSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? AppColors.cardDark : AppColors.cardLight;
+    final cardColor = isDark ? AppColors.card(context) : AppColors.cardLight;
 
     return Padding(
       padding: const EdgeInsets.all(24),
@@ -236,7 +236,7 @@ class _CreateOrJoinSheet extends ConsumerWidget {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.textTertiary,
+              color: AppColors.textTertiary(context),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -289,10 +289,10 @@ class _CreateOrJoinSheet extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  const Icon(
+                  Icon(
                     Icons.arrow_forward_ios,
                     size: 16,
-                    color: AppColors.textTertiary,
+                    color: AppColors.textTertiary(context),
                   ),
                 ],
               ),
@@ -318,7 +318,7 @@ class _CreateOrJoinSheet extends ConsumerWidget {
                 color: cardColor,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isDark ? AppColors.border : AppColors.borderLight,
+                  color: isDark ? AppColors.borderColor(context) : AppColors.borderLight,
                 ),
               ),
               child: Row(
@@ -328,12 +328,12 @@ class _CreateOrJoinSheet extends ConsumerWidget {
                     height: 48,
                     decoration: BoxDecoration(
                       color: isDark
-                          ? AppColors.surfaceDark
+                          ? AppColors.surface(context)
                           : AppColors.backgroundLight,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isDark
-                            ? AppColors.border
+                            ? AppColors.borderColor(context)
                             : AppColors.borderLight,
                       ),
                     ),
@@ -353,10 +353,10 @@ class _CreateOrJoinSheet extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  const Icon(
+                  Icon(
                     Icons.arrow_forward_ios,
                     size: 16,
-                    color: AppColors.textTertiary,
+                    color: AppColors.textTertiary(context),
                   ),
                 ],
               ),

@@ -42,10 +42,10 @@ class TripCard extends StatelessWidget {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.location_on,
                               size: 14,
-                              color: AppColors.textSecondary,
+                              color: AppColors.textSecondary(context),
                             ),
                             const SizedBox(width: 4),
                             Expanded(
@@ -86,15 +86,15 @@ class TripCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceDark,
+                  color: AppColors.surface(context),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.calendar_today,
                       size: 16,
-                      color: AppColors.textSecondary,
+                      color: AppColors.textSecondary(context),
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -110,10 +110,10 @@ class TripCard extends StatelessWidget {
               // Members
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.people,
                     size: 16,
-                    color: AppColors.textSecondary,
+                    color: AppColors.textSecondary(context),
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -124,7 +124,7 @@ class TripCard extends StatelessWidget {
                   Icon(
                     Icons.arrow_forward_ios,
                     size: 16,
-                    color: AppColors.textTertiary,
+                    color: AppColors.textTertiary(context),
                   ),
                 ],
               ),
