@@ -252,7 +252,7 @@ class _TripCardContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardColor = isDark ? AppColors.cardDark : AppColors.cardLight;
+    final cardColor = isDark ? AppColors.card(context) : AppColors.cardLight;
 
     return GestureDetector(
       onTap: onTap,
@@ -451,7 +451,7 @@ class _MemberAvatars extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.surface(context),
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.cardDark, width: 2),
+                border: Border.all(color: AppColors.card(context), width: 2),
               ),
               child: Center(
                 child: Text(
