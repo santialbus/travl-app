@@ -22,4 +22,10 @@ abstract class AuthRepository {
 
   // Stream of auth state changes
   Stream<UserEntity?> authStateChanges();
+
+  // Update display name
+  Future<void> updateDisplayName(String name);
+
+// Update password
+  Future<void> updatePassword(String newPassword);
 }

@@ -64,4 +64,22 @@ class AuthRepositoryImpl implements AuthRepository {
   Stream<UserEntity?> authStateChanges() {
     return _remoteDataSource.authStateChanges();
   }
+
+  @override
+  Future<void> updateDisplayName(String name) async {
+    try {
+      await _remoteDataSource.updateDisplayName(name);
+    } catch (e) {
+      throw Exception('Failed to update name: $e');
+    }
+  }
+
+  @override
+  Future<void> updatePassword(String newPassword) async {
+    try {
+      await _remoteDataSource.updatePassword(newPassword);
+    } catch (e) {
+      throw Exception('Failed to update password: $e');
+    }
+  }
 }

@@ -190,4 +190,35 @@ class AuthRemoteDataSource {
       });
     }
   }
+
+  // Update display name
+  Future<void> updateDisplayName(String name) async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null) throw Exception('No user logged in');
+
+      // Update in Firebase Auth
+      await user.updateDisplayName(name);
+
+      // Update in Firestore
+      await _firestore
+          .collection(FirebaseConstants.usersCollection)
+          .doc(user.uid)
+          .update({FirebaseConstants.userNameField: name});
+    } catch (e) {
+      throw Exception('Failed to update name: $e');
+    }
+  }
+
+// Update password
+  Future<void> updatePassword(String newPassword) async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null) throw Exception('No user logged in');
+
+      await user.updatePassword(newPassword);
+    } catch (e) {
+      throw Exception('Failed to update password: $e');
+    }
+  }
 }
