@@ -235,12 +235,23 @@ class TripRemoteDataSource {
   }
 
   // Update trip
-  Future<void> updateTrip(TripModel trip) async {
+  Future<void> updateTrip({
+    required String tripId,
+    required String name,
+    required String destination,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
     try {
       await _firestore
           .collection(FirebaseConstants.tripsCollection)
-          .doc(trip.id)
-          .update(trip.toFirestore());
+          .doc(tripId)
+          .update({
+        FirebaseConstants.tripNameField: name,
+        FirebaseConstants.tripDestinationField: destination,
+        FirebaseConstants.tripStartDateField: Timestamp.fromDate(startDate),
+        FirebaseConstants.tripEndDateField: Timestamp.fromDate(endDate),
+      });
     } catch (e) {
       throw Exception('Failed to update trip: $e');
     }

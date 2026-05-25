@@ -109,4 +109,28 @@ class TripController extends StateNotifier<TripState> {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
+
+  Future<bool> updateTrip({
+    required String tripId,
+    required String name,
+    required String destination,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _repository.updateTrip(
+        tripId: tripId,
+        name: name,
+        destination: destination,
+        startDate: startDate,
+        endDate: endDate,
+      );
+      state = TripState();
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      return false;
+    }
+  }
 }

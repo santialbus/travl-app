@@ -12,11 +12,13 @@ import 'add_activity_bottom_sheet.dart';
 class DaySection extends ConsumerWidget {
   final DayEntity day;
   final String tripId;
+  final String userId; // ✅ Añadido
 
   const DaySection({
     super.key,
     required this.day,
     required this.tripId,
+    required this.userId, // ✅ Añadido
   });
 
   @override
@@ -26,22 +28,20 @@ class DaySection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Day separator
         _DaySeparator(day: day),
 
-        // Activities
         activitiesAsync.when(
           data: (activities) {
             return Column(
               children: [
                 ...activities.map((activity) => ActivityCard(
                   activity: activity,
-                  onTap: () {
-                    // TODO: Activity detail
-                  },
+                  tripId: tripId,       // ✅ Añadido
+                  dayId: day.id,        // ✅ Añadido
+                  userId: userId,       // ✅ Añadido
+                  onTap: () {},
                 )),
 
-                // Add activity button
                 _AddActivityRow(
                   onTap: () => _showAddActivitySheet(context, ref),
                 ),
@@ -70,10 +70,7 @@ class DaySection extends ConsumerWidget {
   }
 
   void _showAddActivitySheet(BuildContext context, WidgetRef ref) async {
-    final user = await ref.read(currentUserProvider.future);
-    if (user == null) return;
-    if (!context.mounted) return;
-
+    // ✅ Ya tenemos userId, no necesitamos leerlo de currentUserProvider
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -84,13 +81,13 @@ class DaySection extends ConsumerWidget {
       builder: (context) => AddActivityBottomSheet(
         tripId: tripId,
         dayId: day.id,
-        userId: user.id,
+        userId: userId, // ✅ Directo
       ),
     );
   }
 }
 
-// Day separator — solo texto
+// Day separator
 class _DaySeparator extends StatelessWidget {
   final DayEntity day;
 
@@ -132,7 +129,7 @@ class _AddActivityRow extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: Row(
           children: [
-            const SizedBox(width: 36), // Alineado con los iconos de actividad
+            const SizedBox(width: 36),
             Icon(
               Icons.add,
               size: 16,

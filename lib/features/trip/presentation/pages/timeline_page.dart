@@ -7,10 +7,12 @@ import '../widgets/day_section.dart';
 
 class TimelinePage extends ConsumerWidget {
   final String tripId;
+  final String userId; // ✅ Añadido
 
   const TimelinePage({
     super.key,
     required this.tripId,
+    required this.userId, // ✅ Añadido
   });
 
   @override
@@ -30,7 +32,6 @@ class TimelinePage extends ConsumerWidget {
           );
         }
 
-        // ✅ Añadir color de fondo adaptativo
         return ColoredBox(
           color: AppColors.background(context),
           child: SingleChildScrollView(
@@ -40,6 +41,7 @@ class TimelinePage extends ConsumerWidget {
                 ...days.map((day) => DaySection(
                   day: day,
                   tripId: tripId,
+                  userId: userId, // ✅ Ahora existe
                 )),
                 const SizedBox(height: 100),
               ],

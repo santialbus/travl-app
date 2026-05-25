@@ -8,6 +8,7 @@ import '../../../../core/constants/route_constants.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../trip/presentation/providers/trip_provider.dart';
 import '../../../trip/domain/entities/trip_entity.dart';
+import '../../../trip/presentation/widgets/edit_trip_bottom_sheet.dart';
 import '../../presentation/widgets/join_trip_dialog.dart';
 
 class TripsTab extends ConsumerWidget {
@@ -160,37 +161,111 @@ class _TripCard extends ConsumerWidget {
     }
 
     return Dismissible(
-      key: Key(trip.id),
-      direction: DismissDirection.endToStart,
-      confirmDismiss: (_) async {
-        return await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            backgroundColor: AppColors.surface(context),
-            title: Text('Delete trip?', style: AppTextStyles.h4),
-            content: Text(
-              'This will permanently delete "${trip.name}" and all its activities, expenses and checklist items.',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textSecondary(context),
+    key: Key(trip.id),
+    direction: DismissDirection.horizontal, // ✅ Ambas direcciones
+
+    // ✅ Fondo azul — swipe derecha (editar)
+    background: Container(
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.only(left: 20),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.edit_outlined, color: AppColors.primary),
+          const SizedBox(height: 4),
+          Text(
+            'Edit',
+            style: AppTextStyles.labelSmall.copyWith(
+              color: AppColors.primary,
+            ),
+          ),
+        ],
+      ),
+    ),
+
+    // ✅ Fondo rojo — swipe izquierda (borrar) — solo si es owner
+    secondaryBackground: isOwner
+        ? Container(
+      alignment: Alignment.centerRight,
+      padding: const EdgeInsets.only(right: 20),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: AppColors.error.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.delete_outline, color: AppColors.error),
+          const SizedBox(height: 4),
+          Text(
+            'Delete',
+            style: AppTextStyles.labelSmall.copyWith(
+              color: AppColors.error,
+            ),
+          ),
+        ],
+      ),
+    )
+        : const SizedBox.shrink(),
+
+    confirmDismiss: (direction) async {
+      if (direction == DismissDirection.startToEnd) {
+        // ✅ Swipe derecha — editar
+        Future.delayed(Duration.zero, () {
+          if (context.mounted) {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: AppColors.surface(context),
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              builder: (context) => EditTripBottomSheet(trip: trip),
+            );
+          }
+        });
+        return false;
+      }
+
+      // ✅ Swipe izquierda — borrar (solo owner)
+      if (!isOwner) return false;
+
+      return await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: AppColors.surface(context),
+          title: Text('Delete trip?', style: AppTextStyles.h4),
+          content: Text(
+            'This will permanently delete "${trip.name}" and all its data.',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.textSecondary(context),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(
+                'Delete',
+                style: TextStyle(color: AppColors.error),
               ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: Text(
-                  'Delete',
-                  style: TextStyle(color: AppColors.error),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-      onDismissed: (_) async {
+          ],
+        ),
+      );
+    },
+
+    onDismissed: (direction) async {
+      if (direction == DismissDirection.endToStart && isOwner) {
         await ref.read(tripControllerProvider.notifier).deleteTrip(trip.id);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -200,36 +275,16 @@ class _TripCard extends ConsumerWidget {
             ),
           );
         }
-      },
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: AppColors.error.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.delete_outline, color: AppColors.error),
-            const SizedBox(height: 4),
-            Text(
-              'Delete',
-              style: AppTextStyles.labelSmall.copyWith(
-                color: AppColors.error,
-              ),
-            ),
-          ],
-        ),
-      ),
-      child: _TripCardContent(
-        trip: trip,
-        isDark: isDark,
-        isOngoing: isOngoing,
-        isUpcoming: isUpcoming,
-        onTap: onTap,
-      ),
+      }
+    },
+
+    child: _TripCardContent(
+      trip: trip,
+      isDark: isDark,
+      isOngoing: isOngoing,
+      isUpcoming: isUpcoming,
+      onTap: onTap,
+    ),
     );
   }
 }

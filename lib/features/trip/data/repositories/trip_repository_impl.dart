@@ -51,8 +51,20 @@ class TripRepositoryImpl implements TripRepository {
   }
 
   @override
-  Future<void> updateTrip(TripEntity trip) async {
-    await _remoteDataSource.updateTrip(trip as dynamic);
+  Future<void> updateTrip({
+    required String tripId,
+    required String name,
+    required String destination,
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    await _remoteDataSource.updateTrip(
+      tripId: tripId,
+      name: name,
+      destination: destination,
+      startDate: startDate,
+      endDate: endDate,
+    );
   }
 
   @override

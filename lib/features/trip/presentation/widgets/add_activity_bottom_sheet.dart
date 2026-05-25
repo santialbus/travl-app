@@ -10,19 +10,23 @@ class AddActivityBottomSheet extends ConsumerStatefulWidget {
   final String tripId;
   final String dayId;
   final String userId;
+  final ActivityEntity? activityToEdit;
 
   const AddActivityBottomSheet({
     super.key,
     required this.tripId,
     required this.dayId,
     required this.userId,
+    this.activityToEdit,
   });
 
   @override
-  ConsumerState<AddActivityBottomSheet> createState() => _AddActivityBottomSheetState();
+  ConsumerState<AddActivityBottomSheet> createState() =>
+      _AddActivityBottomSheetState();
 }
 
-class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet> {
+class _AddActivityBottomSheetState
+    extends ConsumerState<AddActivityBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -30,6 +34,22 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
 
   ActivityType _selectedType = ActivityType.place;
   DateTime? _selectedTime;
+
+  bool get _isEditing => widget.activityToEdit != null;
+
+  @override
+  void initState() {
+    super.initState();
+
+    if (_isEditing) {
+      final activity = widget.activityToEdit!;
+      _titleController.text = activity.title;
+      _descriptionController.text = activity.description ?? '';
+      _locationController.text = activity.locationName ?? '';
+      _selectedType = activity.type;
+      _selectedTime = activity.time;
+    }
+  }
 
   @override
   void dispose() {
@@ -42,7 +62,12 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
   Future<void> _selectTime() async {
     final time = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.now(),
+      initialTime: _selectedTime != null
+          ? TimeOfDay(
+        hour: _selectedTime!.hour,
+        minute: _selectedTime!.minute,
+      )
+          : TimeOfDay.now(),
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
@@ -69,23 +94,44 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
     }
   }
 
-  Future<void> _createActivity() async {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final success = await ref.read(activityControllerProvider.notifier).createActivity(
-      tripId: widget.tripId,
-      dayId: widget.dayId,
-      title: _titleController.text.trim(),
-      type: _selectedType,
-      description: _descriptionController.text.trim().isNotEmpty
-          ? _descriptionController.text.trim()
-          : null,
-      time: _selectedTime,
-      locationName: _locationController.text.trim().isNotEmpty
-          ? _locationController.text.trim()
-          : null,
-      createdBy: widget.userId,
-    );
+    bool success;
+
+    if (_isEditing) {
+      success = await ref
+          .read(activityControllerProvider.notifier)
+          .updateActivity(
+        activityId: widget.activityToEdit!.id,
+        title: _titleController.text.trim(),
+        type: _selectedType,
+        description: _descriptionController.text.trim().isNotEmpty
+            ? _descriptionController.text.trim()
+            : null,
+        time: _selectedTime,
+        locationName: _locationController.text.trim().isNotEmpty
+            ? _locationController.text.trim()
+            : null,
+      );
+    } else {
+      success = await ref
+          .read(activityControllerProvider.notifier)
+          .createActivity(
+        tripId: widget.tripId,
+        dayId: widget.dayId,
+        title: _titleController.text.trim(),
+        type: _selectedType,
+        description: _descriptionController.text.trim().isNotEmpty
+            ? _descriptionController.text.trim()
+            : null,
+        time: _selectedTime,
+        locationName: _locationController.text.trim().isNotEmpty
+            ? _locationController.text.trim()
+            : null,
+        createdBy: widget.userId,
+      );
+    }
 
     if (!mounted) return;
 
@@ -95,7 +141,7 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
       final error = ref.read(activityControllerProvider).error;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error ?? 'Failed to create activity'),
+          content: Text(error ?? 'Something went wrong'),
           backgroundColor: AppColors.error,
         ),
       );
@@ -119,12 +165,26 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.textTertiary(context),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
                 // Header
                 Row(
                   children: [
                     Expanded(
                       child: Text(
-                        'Add Activity',
+                        _isEditing ? 'Edit Activity' : 'Add Activity',
                         style: AppTextStyles.h3,
                       ),
                     ),
@@ -139,14 +199,17 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
 
                 const SizedBox(height: 24),
 
-                // Activity Type Selector
+                // Type selector
                 Text(
-                  'Type',
-                  style: AppTextStyles.labelLarge,
+                  'TYPE',
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: AppColors.textTertiary(context),
+                    letterSpacing: 1.2,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
-                  height: 70, // ✅ Aumentado de 60 a 70
+                  height: 70,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: ActivityType.values.length,
@@ -160,14 +223,14 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
                           onTap: () => setState(() => _selectedType = type),
                           borderRadius: BorderRadius.circular(12),
                           child: Container(
-                            width: 80, // ✅ Añadido ancho fijo
+                            width: 80,
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 12, // ✅ Reducido de 16 a 12
+                              horizontal: 12,
                               vertical: 8,
                             ),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? AppColors.primary
+                                  ? AppColors.primary.withOpacity(0.15)
                                   : AppColors.surface(context),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
@@ -178,18 +241,20 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
                             ),
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
-                              mainAxisSize: MainAxisSize.min, // ✅ Añadido
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
                                   type.emoji,
-                                  style: const TextStyle(fontSize: 22), // ✅ Aumentado de 20 a 22
+                                  style: const TextStyle(fontSize: 22),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   type.value,
                                   style: AppTextStyles.labelSmall.copyWith(
-                                    color: AppColors.textSecondary(context),
-                                    fontSize: 11, // ✅ Añadido tamaño específico
+                                    color: isSelected
+                                        ? AppColors.primary
+                                        : AppColors.textSecondary(context),
+                                    fontSize: 11,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -263,11 +328,10 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
                           ),
                         ),
                         if (_selectedTime != null)
-                          IconButton(
-                            icon: const Icon(Icons.clear, size: 20),
-                            onPressed: () => setState(() => _selectedTime = null),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
+                          GestureDetector(
+                            onTap: () =>
+                                setState(() => _selectedTime = null),
+                            child: const Icon(Icons.clear, size: 20),
                           ),
                       ],
                     ),
@@ -276,7 +340,7 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
 
                 const SizedBox(height: 16),
 
-                // Description
+                // Notes
                 TextFormField(
                   controller: _descriptionController,
                   decoration: const InputDecoration(
@@ -289,18 +353,20 @@ class _AddActivityBottomSheetState extends ConsumerState<AddActivityBottomSheet>
 
                 const SizedBox(height: 24),
 
-                // Create Button
+                // Submit
                 SizedBox(
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: activityState.isLoading ? null : _createActivity,
+                    onPressed: activityState.isLoading ? null : _submit,
                     child: activityState.isLoading
                         ? const SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                        : const Text('Add Activity'),
+                        : Text(
+                      _isEditing ? 'Save Changes' : 'Add Activity',
+                    ),
                   ),
                 ),
               ],
