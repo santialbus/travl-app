@@ -69,11 +69,12 @@ class _AddActivityBottomSheetState
       )
           : TimeOfDay.now(),
       builder: (context, child) {
+        final theme = Theme.of(context);
+
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
+          data: theme.copyWith(
+            colorScheme: theme.colorScheme.copyWith(
               primary: AppColors.primary,
-              surface: AppColors.surface(context),
             ),
           ),
           child: child!,

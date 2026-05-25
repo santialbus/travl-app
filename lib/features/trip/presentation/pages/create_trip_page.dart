@@ -37,11 +37,12 @@ class _CreateTripPageState extends ConsumerState<CreateTripPage> {
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 730)),
       builder: (context, child) {
+        final theme = Theme.of(context);
+
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
+          data: theme.copyWith(
+            colorScheme: theme.colorScheme.copyWith(
               primary: AppColors.primary,
-              surface: AppColors.surface(context),
             ),
           ),
           child: child!,
@@ -66,11 +67,12 @@ class _CreateTripPageState extends ConsumerState<CreateTripPage> {
       firstDate: _startDate ?? DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 730)),
       builder: (context, child) {
+        final theme = Theme.of(context);
+
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
+          data: theme.copyWith(
+            colorScheme: theme.colorScheme.copyWith(
               primary: AppColors.primary,
-              surface: AppColors.surface(context),
             ),
           ),
           child: child!,
@@ -223,7 +225,7 @@ class _CreateTripPageState extends ConsumerState<CreateTripPage> {
                 child: Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.cardDark,
+                    color: AppColors.card(context),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(

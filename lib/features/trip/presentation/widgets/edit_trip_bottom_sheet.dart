@@ -53,11 +53,12 @@ class _EditTripBottomSheetState extends ConsumerState<EditTripBottomSheet> {
       firstDate: DateTime(2020),
       lastDate: DateTime.now().add(const Duration(days: 730)),
       builder: (context, child) {
+        final theme = Theme.of(context);
+
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
+          data: theme.copyWith(
+            colorScheme: theme.colorScheme.copyWith(
               primary: AppColors.primary,
-              surface: AppColors.surface(context),
             ),
           ),
           child: child!,
@@ -82,11 +83,12 @@ class _EditTripBottomSheetState extends ConsumerState<EditTripBottomSheet> {
       firstDate: _startDate ?? DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 730)),
       builder: (context, child) {
+        final theme = Theme.of(context);
+
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
+          data: theme.copyWith(
+            colorScheme: theme.colorScheme.copyWith(
               primary: AppColors.primary,
-              surface: AppColors.surface(context),
             ),
           ),
           child: child!,
