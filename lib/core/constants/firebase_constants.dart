@@ -9,6 +9,7 @@ class FirebaseConstants {
   static const String expensesCollection = 'expenses';
   static const String checklistCollection = 'checklist';
   static const String filesCollection = 'files';
+  static const String placesCollection = 'places';
 
   // Storage Paths
   static const String tripCoverImages = 'trip_covers';
