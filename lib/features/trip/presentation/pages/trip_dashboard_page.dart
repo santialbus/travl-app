@@ -12,6 +12,8 @@ import '../../domain/entities/trip_entity.dart';
 import 'timeline_page.dart';
 import 'expenses_page.dart';
 import 'checklist_page.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+
 
 class TripDashboardPage extends ConsumerWidget {
   final String tripId;
@@ -312,7 +314,20 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
           body: TabBarView(
             controller: _tabController,
             children: [
-              TimelinePage(tripId: trip.id),
+              // ✅ Consumer para obtener userId
+              Consumer(
+                builder: (context, ref, _) {
+                  final authAsync = ref.watch(authStateProvider);
+                  final userId = authAsync.maybeWhen(
+                    data: (user) => user?.id ?? '',
+                    orElse: () => '',
+                  );
+                  return TimelinePage(
+                    tripId: trip.id,
+                    userId: userId, // ✅ Pasamos userId
+                  );
+                },
+              ),
               ExpensesPage(tripId: trip.id),
               ChecklistPage(tripId: trip.id),
             ],

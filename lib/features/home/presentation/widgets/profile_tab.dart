@@ -6,19 +6,11 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../core/providers/theme_provider.dart';
 
-class ProfileTab extends ConsumerStatefulWidget {
+class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
 
   @override
-  ConsumerState<ProfileTab> createState() => _ProfileTabState();
-}
-
-class _ProfileTabState extends ConsumerState<ProfileTab> {
-  bool _notificationsEnabled = true;
-  bool _darkModeEnabled = true;
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final authAsync = ref.watch(authStateProvider);
 
     return authAsync.when(
@@ -26,132 +18,61 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
         if (user == null) return const SizedBox.shrink();
 
         return Scaffold(
-          backgroundColor: AppColors.background(context),
           body: SafeArea(
             child: SingleChildScrollView(
               child: Column(
                 children: [
-                  // Header with avatar
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
-                    child: Column(
-                      children: [
-                        // Avatar
-                        Stack(
-                          children: [
-                            Container(
-                              width: 96,
-                              height: 96,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                gradient: AppColors.primaryGradient,
-                              ),
-                              child: user.photoUrl != null
-                                  ? ClipOval(
-                                child: Image.network(
-                                  user.photoUrl!,
-                                  fit: BoxFit.cover,
-                                ),
-                              )
-                                  : Center(
-                                child: Text(
-                                  user.name.isNotEmpty
-                                      ? user.name[0].toUpperCase()
-                                      : '?',
-                                  style: AppTextStyles.h1.copyWith(
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: GestureDetector(
-                                onTap: () {
-                                  // TODO: Image picker
-                                },
-                                child: Container(
-                                  width: 30,
-                                  height: 30,
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(
-                                      color: AppColors.background(context),
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: const Icon(
-                                    Icons.camera_alt,
-                                    size: 14,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        Text(user.name, style: AppTextStyles.h3),
-                        const SizedBox(height: 4),
-                        Text(
-                          user.email,
-                          style: AppTextStyles.bodySmall,
-                        ),
-                      ],
-                    ),
+                  // Header avatar
+                  _ProfileHeader(
+                    name: user.name,
+                    email: user.email,
+                    photoUrl: user.photoUrl,
                   ),
 
-                  // Account Section
+                  // Account
                   _SectionTitle(title: 'ACCOUNT'),
-
                   _SettingsItem(
                     icon: Icons.person_outline,
                     title: 'Name',
                     value: user.name,
-                    onTap: () => _showEditNameDialog(context, user.name),
+                    onTap: () => _showEditNameDialog(context, ref, user.name),
                   ),
                   _SettingsItem(
                     icon: Icons.email_outlined,
                     title: 'Email',
                     value: user.email,
-                    onTap: null, // Read only
+                    onTap: null,
                   ),
                   _SettingsItem(
                     icon: Icons.lock_outline,
                     title: 'Change Password',
-                    onTap: () => _showChangePasswordDialog(context),
+                    onTap: () => _showChangePasswordDialog(context, ref),
                   ),
 
                   const SizedBox(height: 8),
 
-                  // Preferences Section
+                  // Preferences
                   _SectionTitle(title: 'PREFERENCES'),
-
                   _SettingsToggle(
                     icon: Icons.notifications_outlined,
                     title: 'Notifications',
-                    value: _notificationsEnabled,
-                    onChanged: (val) =>
-                        setState(() => _notificationsEnabled = val),
+                    value: true,
+                    onChanged: (_) {},
                   ),
-                  // Reemplaza el _SettingsToggle de Dark Mode por este:
                   Consumer(
                     builder: (context, ref, _) {
                       final themeMode = ref.watch(themeModeProvider);
-                      final isDarkEnabled = themeMode == AppThemeMode.dark ||
+                      final isDark = themeMode == AppThemeMode.dark ||
                           (themeMode == AppThemeMode.system &&
-                              MediaQuery.of(context).platformBrightness == Brightness.dark);
+                              MediaQuery.of(context).platformBrightness ==
+                                  Brightness.dark);
 
                       return _SettingsToggle(
                         icon: Icons.dark_mode_outlined,
                         title: 'Dark Mode',
-                        value: isDarkEnabled,
-                        onChanged: (_) => ref.read(themeModeProvider.notifier).toggle(),
+                        value: isDark,
+                        onChanged: (_) =>
+                            ref.read(themeModeProvider.notifier).toggle(),
                       );
                     },
                   ),
@@ -171,7 +92,12 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
                       width: double.infinity,
                       height: 56,
                       child: OutlinedButton.icon(
-                        onPressed: () => _signOut(context),
+                        onPressed: () async {
+                          await ref
+                              .read(authControllerProvider.notifier)
+                              .signOut();
+                          if (context.mounted) context.go('/auth');
+                        },
                         icon: const Icon(Icons.logout, color: AppColors.error),
                         label: Text(
                           'Sign Out',
@@ -201,75 +127,280 @@ class _ProfileTabState extends ConsumerState<ProfileTab> {
     );
   }
 
-  void _showEditNameDialog(BuildContext context, String currentName) {
+  void _showEditNameDialog(
+      BuildContext context,
+      WidgetRef ref,
+      String currentName,
+      ) {
     final controller = TextEditingController(text: currentName);
+    final formKey = GlobalKey<FormState>();
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface(context),
-        title: Text('Edit Name', style: AppTextStyles.h4),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Name',
-          ),
-          textCapitalization: TextCapitalization.words,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // TODO: Update name in Firebase
-              Navigator.pop(context);
-            },
-            child: const Text('Save'),
-          ),
-        ],
+      builder: (context) => Consumer(
+        builder: (context, ref, _) {
+          final authState = ref.watch(authControllerProvider);
+
+          return AlertDialog(
+            backgroundColor: AppColors.surface(context),
+            title: Text('Edit Name', style: AppTextStyles.h4),
+            content: Form(
+              key: formKey,
+              child: TextFormField(
+                controller: controller,
+                decoration: const InputDecoration(
+                  labelText: 'Name',
+                ),
+                textCapitalization: TextCapitalization.words,
+                autofocus: true,
+                validator: (v) =>
+                v == null || v.trim().isEmpty ? 'Name is required' : null,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: authState.isLoading
+                    ? null
+                    : () async {
+                  if (!formKey.currentState!.validate()) return;
+
+                  final success = await ref
+                      .read(authControllerProvider.notifier)
+                      .updateDisplayName(controller.text.trim());
+
+                  if (!context.mounted) return;
+
+                  if (success) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('Name updated!'),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          authState.error ?? 'Failed to update name',
+                        ),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                  }
+                },
+                child: authState.isLoading
+                    ? const SizedBox(
+                  height: 16,
+                  width: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+                    : const Text('Save'),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  void _showChangePasswordDialog(BuildContext context) {
-    final controller = TextEditingController();
+  void _showChangePasswordDialog(BuildContext context, WidgetRef ref) {
+    final formKey = GlobalKey<FormState>();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.surface(context),
-        title: Text('Change Password', style: AppTextStyles.h4),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'New Password',
-          ),
-          obscureText: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              // TODO: Update password in Firebase
-              Navigator.pop(context);
-            },
-            child: const Text('Save'),
-          ),
-        ],
+      builder: (context) => Consumer(
+        builder: (context, ref, _) {
+          final authState = ref.watch(authControllerProvider);
+
+          return AlertDialog(
+            backgroundColor: AppColors.surface(context),
+            title: Text('Change Password', style: AppTextStyles.h4),
+            content: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: newPasswordController,
+                    decoration: const InputDecoration(
+                      labelText: 'New Password',
+                    ),
+                    obscureText: true,
+                    autofocus: true,
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Required';
+                      if (v.length < 6) return 'Min 6 characters';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: confirmPasswordController,
+                    decoration: const InputDecoration(
+                      labelText: 'Confirm Password',
+                    ),
+                    obscureText: true,
+                    validator: (v) {
+                      if (v != newPasswordController.text) {
+                        return 'Passwords do not match';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: authState.isLoading
+                    ? null
+                    : () async {
+                  if (!formKey.currentState!.validate()) return;
+
+                  final success = await ref
+                      .read(authControllerProvider.notifier)
+                      .updatePassword(newPasswordController.text);
+
+                  if (!context.mounted) return;
+
+                  if (success) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('Password updated!'),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+                  } else {
+                    final error = authState.error ?? '';
+                    final needsRelogin = error.contains('requires-recent-login');
+
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          needsRelogin
+                              ? 'Please sign out and sign in again to change your password'
+                              : 'Failed to update password',
+                        ),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                  }
+                },
+                child: authState.isLoading
+                    ? const SizedBox(
+                  height: 16,
+                  width: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+                    : const Text('Save'),
+              ),
+            ],
+          );
+        },
       ),
     );
-  }
-
-  Future<void> _signOut(BuildContext context) async {
-    await ref.read(authControllerProvider.notifier).signOut();
-    if (context.mounted) context.go('/auth');
   }
 }
 
-// Section Title
+// Profile header widget
+class _ProfileHeader extends StatelessWidget {
+  final String name;
+  final String email;
+  final String? photoUrl;
+
+  const _ProfileHeader({
+    required this.name,
+    required this.email,
+    this.photoUrl,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
+      child: Column(
+        children: [
+          // Avatar
+          Stack(
+            children: [
+              Container(
+                width: 96,
+                height: 96,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: AppColors.primaryGradient,
+                ),
+                child: photoUrl != null
+                    ? ClipOval(
+                  child: Image.network(
+                    photoUrl!,
+                    fit: BoxFit.cover,
+                  ),
+                )
+                    : Center(
+                  child: Text(
+                    name.isNotEmpty ? name[0].toUpperCase() : '?',
+                    style: AppTextStyles.h1.copyWith(
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.background(context),
+                      width: 2,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt,
+                    size: 14,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          Text(name, style: AppTextStyles.h3),
+          const SizedBox(height: 4),
+          Text(
+            email,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textSecondary(context),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Section title
 class _SectionTitle extends StatelessWidget {
   final String title;
 
@@ -293,7 +424,7 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-// Settings Item with value
+// Settings item
 class _SettingsItem extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -331,7 +462,9 @@ class _SettingsItem extends StatelessWidget {
             if (value != null)
               Text(
                 value!,
-                style: AppTextStyles.bodySmall,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textSecondary(context),
+                ),
               ),
             if (onTap != null) ...[
               const SizedBox(width: 8),
@@ -348,7 +481,7 @@ class _SettingsItem extends StatelessWidget {
   }
 }
 
-// Settings Toggle
+// Settings toggle
 class _SettingsToggle extends StatelessWidget {
   final IconData icon;
   final String title;

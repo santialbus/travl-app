@@ -107,4 +107,30 @@ class ActivityController extends StateNotifier<ActivityState> {
       return false;
     }
   }
+
+  Future<bool> updateActivity({
+    required String activityId,
+    required String title,
+    required ActivityType type,
+    String? description,
+    DateTime? time,
+    String? locationName,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _dataSource.updateActivity(
+        activityId: activityId,
+        title: title,
+        type: type,
+        description: description,
+        time: time,
+        locationName: locationName,
+      );
+      state = ActivityState();
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      return false;
+    }
+  }
 }

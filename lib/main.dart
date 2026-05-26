@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -7,7 +8,9 @@ import 'app.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  // ✅ Preservar el native splash hasta que estemos listos
+  final widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   // Initialize Firebase
   await Firebase.initializeApp(
@@ -34,6 +37,8 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
+  // ✅ Quitar el native splash — entra la animated splash
+  FlutterNativeSplash.remove();
   runApp(
     const ProviderScope(
       child: TravlApp(),

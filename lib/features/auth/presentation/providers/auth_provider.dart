@@ -111,4 +111,28 @@ class AuthController extends StateNotifier<AuthState> {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
+
+  Future<bool> updateDisplayName(String name) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _repository.updateDisplayName(name);
+      state = state.copyWith(isLoading: false);
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> updatePassword(String newPassword) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _repository.updatePassword(newPassword);
+      state = state.copyWith(isLoading: false);
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      return false;
+    }
+  }
 }

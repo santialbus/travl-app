@@ -26,8 +26,13 @@ abstract class TripRepository {
   // Get days for trip
   Stream<List<DayEntity>> getTripDays(String tripId);
 
-  // Update trip
-  Future<void> updateTrip(TripEntity trip);
+  Future<void> updateTrip({
+    required String tripId,
+    required String name,
+    required String destination,
+    required DateTime startDate,
+    required DateTime endDate,
+  });
 
   // Delete trip
   Future<void> deleteTrip(String tripId);

@@ -101,13 +101,32 @@ class ActivityRemoteDataSource {
     }
   }
 
-  // Update activity
-  Future<void> updateActivity(ActivityModel activity) async {
+  Future<void> updateActivity({
+    required String activityId,
+    required String title,
+    required ActivityType type,
+    String? description,
+    DateTime? time,
+    String? locationName,
+  }) async {
     try {
+      String? mapsUrl;
+      if (locationName != null && locationName.isNotEmpty) {
+        mapsUrl =
+        'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(locationName)}';
+      }
+
       await _firestore
           .collection(FirebaseConstants.activitiesCollection)
-          .doc(activity.id)
-          .update(activity.toFirestore());
+          .doc(activityId)
+          .update({
+        'title': title,
+        'type': type.value,
+        'description': description,
+        'time': time != null ? Timestamp.fromDate(time) : null,
+        'locationName': locationName,
+        'mapsUrl': mapsUrl,
+      });
     } catch (e) {
       throw Exception('Failed to update activity: $e');
     }
