@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:travl/features/trip/presentation/pages/places_page.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_utils.dart';
@@ -76,7 +75,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
   }
@@ -305,7 +304,6 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                       Tab(text: 'Timeline'),
                       Tab(text: 'Expenses'),
                       Tab(text: 'Checklist'),
-                      Tab(text: 'Places'),
                     ],
                   ),
                   backgroundColor: AppColors.background(context),
@@ -332,7 +330,6 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
               ),
               ExpensesPage(tripId: trip.id),
               ChecklistPage(tripId: trip.id),
-              PlacesPage(tripId: trip.id),
             ],
           ),
         ),

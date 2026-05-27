@@ -70,6 +70,9 @@ class ActivityRemoteDataSource {
       String? mapsUrl;
       if (latitude != null && longitude != null) {
         mapsUrl = 'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
+      } else if (locationName != null && locationName.isNotEmpty) {
+        // ✅ Usar el nombre de la ubicación directamente
+        mapsUrl = 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(locationName)}';
       }
 
       final activity = ActivityModel(
@@ -112,8 +115,7 @@ class ActivityRemoteDataSource {
     try {
       String? mapsUrl;
       if (locationName != null && locationName.isNotEmpty) {
-        mapsUrl =
-        'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(locationName)}';
+        mapsUrl = 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(locationName)}';
       }
 
       await _firestore
@@ -125,7 +127,7 @@ class ActivityRemoteDataSource {
         'description': description,
         'time': time != null ? Timestamp.fromDate(time) : null,
         'locationName': locationName,
-        'mapsUrl': mapsUrl,
+        'mapsUrl': mapsUrl, // ✅ Actualiza también el mapsUrl
       });
     } catch (e) {
       throw Exception('Failed to update activity: $e');
