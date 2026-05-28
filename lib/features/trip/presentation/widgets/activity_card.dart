@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/services/maps_launcher_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_utils.dart';
@@ -174,7 +175,7 @@ class ActivityCard extends ConsumerWidget {
                   // Maps icon
                   if (activity.mapsUrl != null)
                     GestureDetector(
-                      onTap: () => _openMaps(activity.mapsUrl!),
+                      onTap: () => _openMaps(context, activity.mapsUrl!),
                       child: Padding(
                         padding: const EdgeInsets.all(4),
                         child: Icon(
@@ -258,10 +259,17 @@ class ActivityCard extends ConsumerWidget {
     );
   }
 
-  Future<void> _openMaps(String url) async {
+  Future<void> _openMaps(BuildContext context, String url) async {
+    // Extraer query de la URL existente
     final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+    final query = uri.queryParameters['query'] ?? '';
+
+    await MapsLauncherService.openMap(
+      context: context,
+      title: activity.title,
+      query: query,
+      latitude: activity.latitude,
+      longitude: activity.longitude,
+    );
   }
 }

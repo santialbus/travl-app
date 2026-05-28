@@ -4,6 +4,8 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/services/geocoding_service.dart';
+import '../../../../core/providers/geocoding_provider.dart';
 import '../../../trip/presentation/providers/trip_provider.dart';
 import '../../../trip/domain/entities/trip_entity.dart';
 
@@ -42,26 +44,26 @@ class MapTab extends ConsumerWidget {
             // Map
             Expanded(
               child: tripsAsync.when(
-                data: (trips) => _TripMap(trips: trips),
-                loading: () => const Center(child: CircularProgressIndicator()),
+                data: (trips) => _GeocodedMap(trips: trips),
+                loading: () =>
+                const Center(child: CircularProgressIndicator()),
                 error: (e, _) => Center(child: Text('Error: $e')),
               ),
             ),
 
-            // Trips list below map
+            // Chips de destinos
             tripsAsync.when(
               data: (trips) {
                 if (trips.isEmpty) return const SizedBox.shrink();
                 return Container(
-                  height: 100,
+                  height: 88,
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: trips.length,
-                    itemBuilder: (context, index) {
-                      return _TripChip(trip: trips[index]);
-                    },
+                    itemBuilder: (context, index) =>
+                        _TripChip(trip: trips[index]),
                   ),
                 );
               },
@@ -75,15 +77,84 @@ class MapTab extends ConsumerWidget {
   }
 }
 
-class _TripMap extends StatelessWidget {
+class _GeocodedMap extends ConsumerWidget {
   final List<TripEntity> trips;
 
-  const _TripMap({required this.trips});
+  const _GeocodedMap({required this.trips});
 
   @override
-  Widget build(BuildContext context) {
-    // Default center (world view)
-    const defaultCenter = LatLng(20, 0);
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (trips.isEmpty) return _EmptyMap();
+
+    // ✅ Geocodificar cada destino individualmente
+    final markers = <Marker>[];
+    double totalLat = 0;
+    double totalLng = 0;
+    int validCount = 0;
+
+    for (final trip in trips) {
+      if (trip.destination.isEmpty) continue;
+
+      final geocodingAsync = ref.watch(geocodingProvider(trip.destination));
+
+      geocodingAsync.whenData((result) {
+        if (result != null) {
+          totalLat += result.latitude;
+          totalLng += result.longitude;
+          validCount++;
+        }
+      });
+    }
+
+    // Construir marcadores
+    final tripMarkers = trips.map((trip) {
+      if (trip.destination.isEmpty) return null;
+
+      final geocodingAsync = ref.watch(geocodingProvider(trip.destination));
+
+      return geocodingAsync.when(
+        data: (result) {
+          if (result == null) return null;
+
+          return Marker(
+            point: LatLng(result.latitude, result.longitude),
+            width: 160,
+            height: 60,
+            child: _TripMarker(trip: trip),
+          );
+        },
+        loading: () => null,
+        error: (_, __) => null,
+      );
+    }).whereType<Marker>().toList();
+
+    // Si ninguno ha cargado aún
+    if (tripMarkers.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Loading destinations...'),
+          ],
+        ),
+      );
+    }
+
+    // Calcular centro
+    final center = tripMarkers.isNotEmpty
+        ? LatLng(
+      tripMarkers
+          .map((m) => m.point.latitude)
+          .reduce((a, b) => a + b) /
+          tripMarkers.length,
+      tripMarkers
+          .map((m) => m.point.longitude)
+          .reduce((a, b) => a + b) /
+          tripMarkers.length,
+    )
+        : const LatLng(20, 0);
 
     return ClipRRect(
       borderRadius: const BorderRadius.all(Radius.circular(20)),
@@ -91,42 +162,20 @@ class _TripMap extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: FlutterMap(
           options: MapOptions(
-            initialCenter: defaultCenter,
-            initialZoom: 1.5,
+            initialCenter: center,
+            initialZoom: tripMarkers.length == 1 ? 8.0 : 3.0,
           ),
           children: [
             TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              urlTemplate:
+              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.travl.app',
             ),
-            MarkerLayer(
-              markers: trips
-                  .where((t) => t.destination.isNotEmpty)
-                  .map(
-                    (trip) => Marker(
-                  point: _getCoordinates(trip.destination),
-                  width: 40,
-                  height: 40,
-                  child: _TripMarker(trip: trip),
-                ),
-              )
-                  .toList(),
-            ),
+            MarkerLayer(markers: tripMarkers),
           ],
         ),
       ),
     );
-  }
-
-  // Simple coordinates mapping
-  // In V2 we'll use geocoding API
-  LatLng _getCoordinates(String destination) {
-    // Fallback to random-ish coordinates based on destination string
-    // This will be replaced with real geocoding in V2
-    final hash = destination.hashCode;
-    final lat = (hash % 140) - 70.0;
-    final lng = ((hash ~/ 140) % 360) - 180.0;
-    return LatLng(lat.clamp(-85, 85), lng.clamp(-180, 180));
   }
 }
 
@@ -137,23 +186,45 @@ class _TripMarker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withOpacity(0.4),
-            blurRadius: 8,
-            spreadRadius: 2,
+    final isOngoing = trip.startDate.isBefore(DateTime.now()) &&
+        trip.endDate.isAfter(DateTime.now());
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Label
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: isOngoing ? AppColors.primary : AppColors.cardDark,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: const Icon(
-        Icons.flight_takeoff,
-        color: Colors.white,
-        size: 20,
-      ),
+          child: Text(
+            trip.destination,
+            style: AppTextStyles.labelSmall.copyWith(
+              color: Colors.white,
+              fontSize: 11,
+            ),
+          ),
+        ),
+
+        // Pin
+        Container(
+          width: 10,
+          height: 10,
+          decoration: BoxDecoration(
+            color: isOngoing ? AppColors.primary : AppColors.cardDark,
+            shape: BoxShape.circle,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -167,25 +238,60 @@ class _TripChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
         color: AppColors.card(context),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.borderColor(context)),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min, // ✅ Añadir esto
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             trip.destination,
             style: AppTextStyles.labelLarge,
+            maxLines: 1,                    // ✅ Añadir
+            overflow: TextOverflow.ellipsis, // ✅ Añadir
           ),
-          const SizedBox(height: 2),
           Text(
             trip.name,
             style: AppTextStyles.bodySmall,
+            maxLines: 1,                    // ✅ Añadir
+            overflow: TextOverflow.ellipsis, // ✅ Añadir
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _EmptyMap extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('🗺️', style: TextStyle(fontSize: 48)),
+            const SizedBox(height: 16),
+            Text(
+              'No destinations yet',
+              style: AppTextStyles.h4,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Create a trip to see your\ndestinations on the map',
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textSecondary(context),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
