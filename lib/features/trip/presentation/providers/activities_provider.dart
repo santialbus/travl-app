@@ -133,4 +133,27 @@ class ActivityController extends StateNotifier<ActivityState> {
       return false;
     }
   }
+
+  Future<void> reorderActivitiesInDay(
+      String dayId,
+      List<String> activityIds,
+      ) async {
+    try {
+      await _dataSource.reorderActivitiesInDay(dayId, activityIds);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  Future<void> moveActivityToDay(
+      String activityId,
+      String newDayId,
+      int newOrderIndex,
+      ) async {
+    try {
+      await _dataSource.moveActivityToDay(activityId, newDayId, newOrderIndex);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
 }

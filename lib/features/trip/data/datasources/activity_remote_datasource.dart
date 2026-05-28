@@ -176,4 +176,44 @@ class ActivityRemoteDataSource {
       throw Exception('Failed to reorder activities: $e');
     }
   }
+
+  // Reordenar actividades dentro de un día
+  Future<void> reorderActivitiesInDay(
+      String dayId,
+      List<String> activityIds,
+      ) async {
+    try {
+      final batch = _firestore.batch();
+
+      for (int i = 0; i < activityIds.length; i++) {
+        final ref = _firestore
+            .collection(FirebaseConstants.activitiesCollection)
+            .doc(activityIds[i]);
+        batch.update(ref, {'orderIndex': i});
+      }
+
+      await batch.commit();
+    } catch (e) {
+      throw Exception('Failed to reorder activities: $e');
+    }
+  }
+
+// Mover actividad a otro día
+  Future<void> moveActivityToDay(
+      String activityId,
+      String newDayId,
+      int newOrderIndex,
+      ) async {
+    try {
+      await _firestore
+          .collection(FirebaseConstants.activitiesCollection)
+          .doc(activityId)
+          .update({
+        'dayId': newDayId,
+        'orderIndex': newOrderIndex,
+      });
+    } catch (e) {
+      throw Exception('Failed to move activity: $e');
+    }
+  }
 }

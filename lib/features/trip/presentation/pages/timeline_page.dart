@@ -55,6 +55,7 @@ class TimelinePage extends ConsumerWidget {
                   day: day,
                   tripId: tripId,
                   userId: userId,
+                  allDays: days,
                 )),
 
                 const SizedBox(height: 100),
