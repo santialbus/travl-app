@@ -32,6 +32,12 @@ class _AddActivityBottomSheetState
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController();
 
+  final _flightNumberController = TextEditingController();
+  final _trainNumberController = TextEditingController();
+  final _transportCompanyController = TextEditingController();
+  final _bookingReferenceController = TextEditingController();
+  final _bookingUrlController = TextEditingController();
+
   ActivityType _selectedType = ActivityType.place;
   DateTime? _selectedTime;
 
@@ -48,6 +54,11 @@ class _AddActivityBottomSheetState
       _locationController.text = activity.locationName ?? '';
       _selectedType = activity.type;
       _selectedTime = activity.time;
+      _flightNumberController.text = activity.flightNumber ?? '';
+      _trainNumberController.text = activity.trainNumber ?? '';
+      _transportCompanyController.text = activity.transportCompany ?? '';
+      _bookingReferenceController.text = activity.bookingReference ?? '';
+      _bookingUrlController.text = activity.bookingUrl ?? '';
     }
   }
 
@@ -56,6 +67,11 @@ class _AddActivityBottomSheetState
     _titleController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
+    _flightNumberController.dispose();
+    _trainNumberController.dispose();
+    _transportCompanyController.dispose();
+    _bookingReferenceController.dispose();
+    _bookingUrlController.dispose();
     super.dispose();
   }
 
@@ -114,6 +130,21 @@ class _AddActivityBottomSheetState
         locationName: _locationController.text.trim().isNotEmpty
             ? _locationController.text.trim()
             : null,
+        flightNumber: _flightNumberController.text.trim().isNotEmpty
+            ? _flightNumberController.text.trim()
+            : null,
+        trainNumber: _trainNumberController.text.trim().isNotEmpty
+            ? _trainNumberController.text.trim()
+            : null,
+        transportCompany: _transportCompanyController.text.trim().isNotEmpty
+            ? _transportCompanyController.text.trim()
+            : null,
+        bookingReference: _bookingReferenceController.text.trim().isNotEmpty
+            ? _bookingReferenceController.text.trim()
+            : null,
+        bookingUrl: _bookingUrlController.text.trim().isNotEmpty
+            ? _bookingUrlController.text.trim()
+            : null,
       );
     } else {
       success = await ref
@@ -131,6 +162,21 @@ class _AddActivityBottomSheetState
             ? _locationController.text.trim()
             : null,
         createdBy: widget.userId,
+        flightNumber: _flightNumberController.text.trim().isNotEmpty
+            ? _flightNumberController.text.trim()
+            : null,
+        trainNumber: _trainNumberController.text.trim().isNotEmpty
+            ? _trainNumberController.text.trim()
+            : null,
+        transportCompany: _transportCompanyController.text.trim().isNotEmpty
+            ? _transportCompanyController.text.trim()
+            : null,
+        bookingReference: _bookingReferenceController.text.trim().isNotEmpty
+            ? _bookingReferenceController.text.trim()
+            : null,
+        bookingUrl: _bookingUrlController.text.trim().isNotEmpty
+            ? _bookingUrlController.text.trim()
+            : null,
       );
     }
 
@@ -352,6 +398,7 @@ class _AddActivityBottomSheetState
                   textCapitalization: TextCapitalization.sentences,
                 ),
 
+                _buildTypeSpecificFields(),
                 const SizedBox(height: 24),
 
                 // Submit
@@ -377,4 +424,107 @@ class _AddActivityBottomSheetState
       ),
     );
   }
+
+  Widget _buildTypeSpecificFields() {
+    switch (_selectedType) {
+      case ActivityType.flight:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 16),
+            Text(
+              'FLIGHT DETAILS',
+              style: AppTextStyles.labelSmall.copyWith(
+                color: AppColors.textTertiary(context),
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _flightNumberController,
+              decoration: const InputDecoration(
+                labelText: 'Flight Number',
+                hintText: 'e.g., IB3456',
+                prefixIcon: Icon(Icons.flight),
+              ),
+              textCapitalization: TextCapitalization.characters,
+            ),
+          ],
+        );
+
+      case ActivityType.transport:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 16),
+            Text(
+              'TRANSPORT DETAILS',
+              style: AppTextStyles.labelSmall.copyWith(
+                color: AppColors.textTertiary(context),
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _transportCompanyController,
+              decoration: const InputDecoration(
+                labelText: 'Company',
+                hintText: 'e.g., Renfe, Blablacar',
+                prefixIcon: Icon(Icons.train),
+              ),
+              textCapitalization: TextCapitalization.words,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _trainNumberController,
+              decoration: const InputDecoration(
+                labelText: 'Train / Bus Number',
+                hintText: 'e.g., AVE 02145',
+                prefixIcon: Icon(Icons.confirmation_number),
+              ),
+              textCapitalization: TextCapitalization.characters,
+            ),
+          ],
+        );
+
+      case ActivityType.hotel:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 16),
+            Text(
+              'BOOKING DETAILS',
+              style: AppTextStyles.labelSmall.copyWith(
+                color: AppColors.textTertiary(context),
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _bookingReferenceController,
+              decoration: const InputDecoration(
+                labelText: 'Booking Reference',
+                hintText: 'e.g., #ABC123456',
+                prefixIcon: Icon(Icons.tag),
+              ),
+              textCapitalization: TextCapitalization.characters,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _bookingUrlController,
+              decoration: const InputDecoration(
+                labelText: 'Booking Link (optional)',
+                hintText: 'https://booking.com/...',
+                prefixIcon: Icon(Icons.link),
+              ),
+              keyboardType: TextInputType.url,
+            ),
+          ],
+        );
+
+      default:
+        return const SizedBox.shrink();
+    }
+  }
 }
+

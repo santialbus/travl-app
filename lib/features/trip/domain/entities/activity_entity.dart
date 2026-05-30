@@ -15,6 +15,13 @@ class ActivityEntity {
   final String createdBy;
   final DateTime createdAt;
 
+  // ✅ Campos extra por tipo
+  final String? flightNumber;      // ✈️ IB3456
+  final String? trainNumber;       // 🚆 AVE02145
+  final String? transportCompany;  // 🚆 Renfe, Blablacar...
+  final String? bookingReference;  // 🏨 #ABC123456
+  final String? bookingUrl;        // 🏨 https://booking.com/...
+
   const ActivityEntity({
     required this.id,
     required this.tripId,
@@ -31,6 +38,11 @@ class ActivityEntity {
     required this.orderIndex,
     required this.createdBy,
     required this.createdAt,
+    this.flightNumber,
+    this.trainNumber,
+    this.transportCompany,
+    this.bookingReference,
+    this.bookingUrl,
   });
 
   String get emoji => type.emoji;

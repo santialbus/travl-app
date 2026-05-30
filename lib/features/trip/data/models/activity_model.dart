@@ -18,6 +18,11 @@ class ActivityModel extends ActivityEntity {
     required super.orderIndex,
     required super.createdBy,
     required super.createdAt,
+    super.flightNumber,
+    super.trainNumber,
+    super.transportCompany,
+    super.bookingReference,
+    super.bookingUrl
   });
 
   factory ActivityModel.fromFirestore(DocumentSnapshot doc) {
@@ -39,6 +44,12 @@ class ActivityModel extends ActivityEntity {
       orderIndex: data['orderIndex'] as int,
       createdBy: data['createdBy'] as String,
       createdAt: (data['createdAt'] as Timestamp).toDate(),
+      // ✅ Nuevos campos
+      flightNumber: data['flightNumber'] as String?,
+      trainNumber: data['trainNumber'] as String?,
+      transportCompany: data['transportCompany'] as String?,
+      bookingReference: data['bookingReference'] as String?,
+      bookingUrl: data['bookingUrl'] as String?,
     );
   }
 
@@ -59,25 +70,22 @@ class ActivityModel extends ActivityEntity {
       'orderIndex': orderIndex,
       'createdBy': createdBy,
       'createdAt': Timestamp.fromDate(createdAt),
+      // ✅ Nuevos campos
+      'flightNumber': flightNumber,
+      'trainNumber': trainNumber,
+      'transportCompany': transportCompany,
+      'bookingReference': bookingReference,
+      'bookingUrl': bookingUrl,
     };
   }
 
   ActivityModel copyWith({
-    String? id,
-    String? tripId,
-    String? dayId,
-    String? title,
-    ActivityType? type,
-    String? description,
-    DateTime? time,
-    String? locationName,
-    double? latitude,
-    double? longitude,
-    String? mapsUrl,
-    bool? isCompleted,
-    int? orderIndex,
-    String? createdBy,
-    DateTime? createdAt,
+    // ... campos existentes ...
+    String? flightNumber,
+    String? trainNumber,
+    String? transportCompany,
+    String? bookingReference,
+    String? bookingUrl,
   }) {
     return ActivityModel(
       id: id ?? this.id,
@@ -95,6 +103,11 @@ class ActivityModel extends ActivityEntity {
       orderIndex: orderIndex ?? this.orderIndex,
       createdBy: createdBy ?? this.createdBy,
       createdAt: createdAt ?? this.createdAt,
+      flightNumber: flightNumber ?? this.flightNumber,
+      trainNumber: trainNumber ?? this.trainNumber,
+      transportCompany: transportCompany ?? this.transportCompany,
+      bookingReference: bookingReference ?? this.bookingReference,
+      bookingUrl: bookingUrl ?? this.bookingUrl,
     );
   }
 }

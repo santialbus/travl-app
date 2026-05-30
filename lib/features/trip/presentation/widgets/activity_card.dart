@@ -186,6 +186,53 @@ class ActivityCard extends ConsumerWidget {
                       ),
                     ),
 
+                  // En activity_card.dart, después del botón de mapa:
+
+                  // ✅ Flight tracker
+                  if (activity.type == ActivityType.flight &&
+                      activity.flightNumber != null)
+                    GestureDetector(
+                      onTap: () => _showFlightTrackerOptions(context),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(
+                          Icons.radar,
+                          size: 18,
+                          color: AppColors.flightColor,
+                        ),
+                      ),
+                    ),
+
+                  // ✅ Train tracker
+                  if (activity.type == ActivityType.transport &&
+                      activity.trainNumber != null)
+                    GestureDetector(
+                      onTap: () => _openTrainTracker(context),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(
+                          Icons.train,
+                          size: 18,
+                          color: AppColors.transportColor,
+                        ),
+                      ),
+                    ),
+
+                  // ✅ Hotel booking
+                  if (activity.type == ActivityType.hotel &&
+                      activity.bookingUrl != null)
+                    GestureDetector(
+                      onTap: () => _openBooking(activity.bookingUrl!),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(
+                          Icons.hotel,
+                          size: 18,
+                          color: AppColors.hotelColor,
+                        ),
+                      ),
+                    ),
+
                   const SizedBox(width: 4),
 
                   // ✅ Edit button
@@ -270,6 +317,187 @@ class ActivityCard extends ConsumerWidget {
       query: query,
       latitude: activity.latitude,
       longitude: activity.longitude,
+    );
+  }
+
+  void _showFlightTrackerOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Handle
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.textTertiary(context),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            Text(
+              'Track Flight ${activity.flightNumber}',
+              style: AppTextStyles.h3,
+            ),
+
+            const SizedBox(height: 20),
+
+            // FlightRadar24
+            _TrackerOption(
+              emoji: '📡',
+              name: 'FlightRadar24',
+              description: 'Real-time flight tracking',
+              onTap: () {
+                Navigator.pop(context);
+                _openUrl(
+                  'https://www.flightradar24.com/${activity.flightNumber}',
+                );
+              },
+            ),
+
+            const SizedBox(height: 12),
+
+            // FlightAware
+            _TrackerOption(
+              emoji: '✈️',
+              name: 'FlightAware',
+              description: 'Flight status & tracking',
+              onTap: () {
+                Navigator.pop(context);
+                _openUrl(
+                  'https://www.flightaware.com/live/flight/${activity.flightNumber}',
+                );
+              },
+            ),
+
+            const SizedBox(height: 12),
+
+            // Google Flights
+            _TrackerOption(
+              emoji: '🔍',
+              name: 'Google Flights',
+              description: 'Check flight status',
+              onTap: () {
+                Navigator.pop(context);
+                _openUrl(
+                  'https://www.google.com/travel/flights?q=${activity.flightNumber}',
+                );
+              },
+            ),
+
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openTrainTracker(BuildContext context) async {
+    final company =
+        activity.transportCompany?.toLowerCase() ?? '';
+
+    String url;
+    if (company.contains('renfe')) {
+      url =
+      'https://www.renfe.com/es/es/viajar/informacion-al-viajero/estado-del-tren';
+    } else if (company.contains('ouigo')) {
+      url = 'https://www.ouigo.com/es/informacion-viaje';
+    } else {
+      // Trainline como fallback
+      url =
+      'https://www.thetrainline.com/train-times/${activity.trainNumber ?? ''}';
+    }
+
+    await _openUrl(url);
+  }
+
+  Future<void> _openBooking(String url) async {
+    await _openUrl(url);
+  }
+
+  Future<void> _openUrl(String url) async {
+    String finalUrl = url;
+    if (!url.startsWith('http')) {
+      finalUrl = 'https://$url';
+    }
+    final uri = Uri.parse(finalUrl);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+}
+
+class _TrackerOption extends StatelessWidget {
+  final String emoji;
+  final String name;
+  final String description;
+  final VoidCallback onTap;
+
+  const _TrackerOption({
+    required this.emoji,
+    required this.name,
+    required this.description,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AppColors.card(context),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  emoji,
+                  style: const TextStyle(fontSize: 22),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name, style: AppTextStyles.bodyMedium),
+                  Text(
+                    description,
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: AppColors.textTertiary(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 14,
+              color: AppColors.textTertiary(context),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

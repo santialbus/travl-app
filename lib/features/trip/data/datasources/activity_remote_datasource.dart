@@ -42,7 +42,6 @@ class ActivityRemoteDataSource {
     });
   }
 
-  // Create activity
   Future<ActivityModel> createActivity({
     required String tripId,
     required String dayId,
@@ -54,11 +53,16 @@ class ActivityRemoteDataSource {
     double? latitude,
     double? longitude,
     required String createdBy,
+    // ✅ Nuevos campos
+    String? flightNumber,
+    String? trainNumber,
+    String? transportCompany,
+    String? bookingReference,
+    String? bookingUrl,
   }) async {
     try {
       final activityId = _uuid.v4();
 
-      // Get current count of activities for this day to set orderIndex
       final existingActivities = await _firestore
           .collection(FirebaseConstants.activitiesCollection)
           .where('dayId', isEqualTo: dayId)
@@ -66,12 +70,10 @@ class ActivityRemoteDataSource {
 
       final orderIndex = existingActivities.docs.length;
 
-      // Generate maps URL if location is provided
       String? mapsUrl;
       if (latitude != null && longitude != null) {
         mapsUrl = 'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
       } else if (locationName != null && locationName.isNotEmpty) {
-        // ✅ Usar el nombre de la ubicación directamente
         mapsUrl = 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(locationName)}';
       }
 
@@ -91,6 +93,11 @@ class ActivityRemoteDataSource {
         orderIndex: orderIndex,
         createdBy: createdBy,
         createdAt: DateTime.now(),
+        flightNumber: flightNumber,
+        trainNumber: trainNumber,
+        transportCompany: transportCompany,
+        bookingReference: bookingReference,
+        bookingUrl: bookingUrl,
       );
 
       await _firestore
@@ -111,6 +118,12 @@ class ActivityRemoteDataSource {
     String? description,
     DateTime? time,
     String? locationName,
+    // ✅ Nuevos campos
+    String? flightNumber,
+    String? trainNumber,
+    String? transportCompany,
+    String? bookingReference,
+    String? bookingUrl,
   }) async {
     try {
       String? mapsUrl;
@@ -127,7 +140,12 @@ class ActivityRemoteDataSource {
         'description': description,
         'time': time != null ? Timestamp.fromDate(time) : null,
         'locationName': locationName,
-        'mapsUrl': mapsUrl, // ✅ Actualiza también el mapsUrl
+        'mapsUrl': mapsUrl,
+        'flightNumber': flightNumber,
+        'trainNumber': trainNumber,
+        'transportCompany': transportCompany,
+        'bookingReference': bookingReference,
+        'bookingUrl': bookingUrl,
       });
     } catch (e) {
       throw Exception('Failed to update activity: $e');
