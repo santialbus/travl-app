@@ -7,6 +7,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_utils.dart';
+import '../../../../core/widgets/offline_indicator.dart';
 import '../providers/trip_provider.dart';
 import '../../domain/entities/trip_entity.dart';
 import 'timeline_page.dart';
@@ -121,13 +122,19 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                 scrolledUnderElevation: 0,
                 backgroundColor: AppColors.background(context),
 
-                // ✅ Título animado que aparece/desaparece
                 title: AnimatedOpacity(
                   opacity: _showTitle ? 1.0 : 0.0,
                   duration: const Duration(milliseconds: 200),
-                  child: Text(
-                    widget.trip.destination,
-                    style: AppTextStyles.h4,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.trip.destination,
+                        style: AppTextStyles.h4,
+                      ),
+                      const SizedBox(width: 8),
+                      const OfflineIndicator(), // ✅
+                    ],
                   ),
                 ),
                 centerTitle: true,

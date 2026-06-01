@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_utils.dart';
+import '../../../../core/utils/offline_utils.dart';
 import '../../domain/entities/activity_entity.dart';
 import '../providers/activities_provider.dart';
 
@@ -11,6 +12,7 @@ class AddActivityBottomSheet extends ConsumerStatefulWidget {
   final String dayId;
   final String userId;
   final ActivityEntity? activityToEdit;
+  final bool isOffline; // ✅
 
   const AddActivityBottomSheet({
     super.key,
@@ -18,6 +20,7 @@ class AddActivityBottomSheet extends ConsumerStatefulWidget {
     required this.dayId,
     required this.userId,
     this.activityToEdit,
+    this.isOffline = false,
   });
 
   @override
@@ -183,6 +186,14 @@ class _AddActivityBottomSheetState
     if (!mounted) return;
 
     if (success) {
+      if (!mounted) return;
+
+      if (widget.isOffline) {
+        Future.microtask(() {
+          OfflineUtils.showSyncPendingMessage(context);
+        });
+      }
+
       Navigator.of(context).pop();
     } else {
       final error = ref.read(activityControllerProvider).error;
@@ -243,6 +254,40 @@ class _AddActivityBottomSheetState
                     ),
                   ],
                 ),
+
+                const SizedBox(height: 24),
+
+                // Justo después del Header en el build:
+                if (widget.isOffline)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.warning.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.warning.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.wifi_off,
+                          size: 16,
+                          color: AppColors.warning,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'You\'re offline. Changes will sync when connected.',
+                            style: AppTextStyles.labelSmall.copyWith(
+                              color: AppColors.warning,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
                 const SizedBox(height: 24),
 

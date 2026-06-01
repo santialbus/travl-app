@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/providers/connectivity_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/activity_entity.dart';
@@ -125,7 +126,9 @@ class _DayActivities extends ConsumerWidget {
     );
   }
 
-  void _showAddActivitySheet(BuildContext context, WidgetRef ref) {
+  void _showAddActivitySheet(BuildContext context, WidgetRef ref) async {
+    final isOnline = ref.read(isOnlineProvider);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -137,6 +140,7 @@ class _DayActivities extends ConsumerWidget {
         tripId: tripId,
         dayId: day.id,
         userId: userId,
+        isOffline: !isOnline, // ✅ Pasar estado offline
       ),
     );
   }

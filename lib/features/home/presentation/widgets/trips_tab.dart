@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/route_constants.dart';
+import '../../../../core/widgets/offline_indicator.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../trip/presentation/providers/trip_provider.dart';
 import '../../../trip/domain/entities/trip_entity.dart';
@@ -43,6 +44,8 @@ class TripsTab extends ConsumerWidget {
                           'Travl ✈️',
                           style: AppTextStyles.h1.copyWith(fontSize: 36),
                         ),
+                        const SizedBox(width: 12),
+                        const OfflineIndicator(),
                         const Spacer(),
                         IconButton(
                           onPressed: () => _showJoinDialog(context, ref),
