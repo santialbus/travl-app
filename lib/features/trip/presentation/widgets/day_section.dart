@@ -7,6 +7,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/activity_entity.dart';
 import '../../domain/entities/day_entity.dart';
 import '../providers/activities_provider.dart';
+import '../providers/permissions_provider.dart';
 import 'activity_card.dart';
 import 'add_activity_bottom_sheet.dart';
 
@@ -32,7 +33,6 @@ class DaySection extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _DaySeparator(day: day),
-
         activitiesAsync.when(
           data: (activities) => _DayActivities(
             day: day,
@@ -56,7 +56,6 @@ class DaySection extends ConsumerWidget {
             child: Text('Error: $e', style: AppTextStyles.bodySmall),
           ),
         ),
-
         const SizedBox(height: 8),
       ],
     );
@@ -80,6 +79,8 @@ class _DayActivities extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final member = ref.watch(currentMemberProvider(tripId));
+    final canAdd = member?.canAddActivities ?? false;
     return Column(
       children: [
         // ✅ ReorderableListView para drag & drop
@@ -90,19 +91,20 @@ class _DayActivities extends ConsumerWidget {
           // ✅ Handle visible a la izquierda
           buildDefaultDragHandles: false,
           onReorder: (oldIndex, newIndex) async {
+            if (!canAdd) return;
+
             if (oldIndex < newIndex) newIndex--;
 
             final reordered = List<ActivityEntity>.from(activities);
             final item = reordered.removeAt(oldIndex);
             reordered.insert(newIndex, item);
 
-            // ✅ Guardar nuevo orden en Firestore
             await ref
                 .read(activityControllerProvider.notifier)
                 .reorderActivitiesInDay(
-              day.id,
-              reordered.map((a) => a.id).toList(),
-            );
+                  day.id,
+                  reordered.map((a) => a.id).toList(),
+                );
           },
           itemBuilder: (context, index) {
             final activity = activities[index];
@@ -119,9 +121,10 @@ class _DayActivities extends ConsumerWidget {
         ),
 
         // Add activity button
-        _AddActivityRow(
-          onTap: () => _showAddActivitySheet(context, ref),
-        ),
+        if (canAdd)
+          _AddActivityRow(
+            onTap: () => _showAddActivitySheet(context, ref),
+          ),
       ],
     );
   }
@@ -167,6 +170,8 @@ class _DraggableActivityRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final member = ref.watch(currentMemberProvider(tripId));
+    final canEdit = member?.canEditActivities ?? false;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -175,20 +180,22 @@ class _DraggableActivityRow extends ConsumerWidget {
           onLongPress: allDays.isNotEmpty
               ? () => _showMoveToDaySheet(context, ref)
               : null,
-          child: ReorderableDragStartListener(
-            index: index,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 8, right: 4),
-              child: Tooltip(
-                message: 'Drag to reorder · Hold to move to another day',
-                child: Icon(
-                  Icons.drag_handle,
-                  size: 20,
-                  color: AppColors.textTertiary(context).withOpacity(0.5),
-                ),
-              ),
-            ),
-          ),
+          child: canEdit
+              ? ReorderableDragStartListener(
+                  index: index,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 8, right: 4),
+                    child: Tooltip(
+                      message: 'Drag to reorder · Hold to move to another day',
+                      child: Icon(
+                        Icons.drag_handle,
+                        size: 20,
+                        color: AppColors.textTertiary(context).withOpacity(0.5),
+                      ),
+                    ),
+                  ),
+                )
+              : const SizedBox(width: 32),
         ),
 
         // Activity card
@@ -225,13 +232,11 @@ class _DraggableActivityRow extends ConsumerWidget {
               .getDayActivities(targetDayId)
               .first;
 
-          await ref
-              .read(activityControllerProvider.notifier)
-              .moveActivityToDay(
-            activity.id,
-            targetDayId,
-            targetActivities.length,
-          );
+          await ref.read(activityControllerProvider.notifier).moveActivityToDay(
+                activity.id,
+                targetDayId,
+                targetActivities.length,
+              );
         },
       ),
     );
@@ -254,9 +259,7 @@ class _MoveToDaySheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Filtrar el día actual
-    final otherDays = allDays
-        .where((d) => d.id != currentDayId)
-        .toList();
+    final otherDays = allDays.where((d) => d.id != currentDayId).toList();
 
     return Padding(
       padding: const EdgeInsets.all(24),
@@ -300,9 +303,8 @@ class _MoveToDaySheet extends StatelessWidget {
             )
           else
             ...otherDays.map((day) {
-              final dateStr = DateFormat('MMM dd')
-                  .format(day.date)
-                  .toUpperCase();
+              final dateStr =
+                  DateFormat('MMM dd').format(day.date).toUpperCase();
 
               return InkWell(
                 onTap: () => onMove(day.id),

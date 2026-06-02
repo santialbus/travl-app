@@ -110,28 +110,26 @@ class MemberPermissions {
 
 class MemberEntity {
   final String userId;
-  final String role; // 'host' or 'member'
+  final String role; // 'host' | 'cohost' | 'member'
   final DateTime joinedAt;
-  final MemberPermissions permissions;
 
   const MemberEntity({
     required this.userId,
     required this.role,
     required this.joinedAt,
-    required this.permissions,
   });
 
   bool get isHost => role == 'host';
+  bool get isCoHost => role == 'cohost';
+  bool get isMember => role == 'member';
 
-  // ✅ Host siempre puede todo
-  bool get canAddActivities =>
-      isHost || permissions.canAddActivities;
-  bool get canEditActivities =>
-      isHost || permissions.canEditActivities;
-  bool get canDeleteActivities =>
-      isHost || permissions.canDeleteActivities;
-  bool get canAddExpenses =>
-      isHost || permissions.canAddExpenses;
-  bool get canAddChecklistItems =>
-      isHost || permissions.canAddChecklistItems;
+  // ✅ Permisos simples
+  bool get canAddActivities => true; // todos pueden
+  bool get canEditActivities => isHost || isCoHost;
+  bool get canDeleteActivities => isHost || isCoHost;
+  bool get canAddExpenses => true; // todos pueden
+  bool get canAddChecklistItems => true; // todos pueden
+  bool get canInviteMembers => isHost || isCoHost;
+  bool get canDeleteTrip => isHost; // solo host
+  bool get canManageRoles => isHost; // solo host
 }

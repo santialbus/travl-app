@@ -133,4 +133,20 @@ class TripController extends StateNotifier<TripState> {
       return false;
     }
   }
+
+  Future<void> updateMemberRole({
+    required String tripId,
+    required String userId,
+    required String newRole,
+  }) async {
+    try {
+      await (_repository as TripRepositoryImpl).updateMemberRole(
+        tripId: tripId,
+        userId: userId,
+        newRole: newRole,
+      );
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
+    }
+  }
 }

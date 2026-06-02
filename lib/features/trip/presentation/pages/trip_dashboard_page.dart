@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_utils.dart';
 import '../../../../core/widgets/offline_indicator.dart';
+import '../providers/permissions_provider.dart';
 import '../providers/trip_provider.dart';
 import '../../domain/entities/trip_entity.dart';
 import 'timeline_page.dart';
@@ -100,9 +101,34 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
     }
   }
 
+  void _toggleCoHost(
+      BuildContext rootContext,
+      TripEntity trip,
+      MemberEntity member,
+      ) async {
+    final newRole = member.isCoHost ? 'member' : 'cohost';
+    final action = member.isCoHost ? 'removed as co-host' : 'made co-host';
+
+    // 👉 feedback inmediato
+    showTopSnackBar(rootContext, 'Updating role...');
+
+    try {
+      await ref.read(tripControllerProvider.notifier).updateMemberRole(
+        tripId: trip.id,
+        userId: member.userId,
+        newRole: newRole,
+      );
+
+      // 👉 feedback final
+      showTopSnackBar(rootContext, 'Member $action');
+    } catch (e) {
+      showTopSnackBar(rootContext, 'Error updating role');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final trip = widget.trip;
+    final trip = ref.watch(tripStreamProvider(widget.trip.id)).value ?? widget.trip;
     final isOngoing = trip.startDate.isBefore(DateTime.now()) &&
         trip.endDate.isAfter(DateTime.now());
     final isUpcoming = trip.startDate.isAfter(DateTime.now());
@@ -345,105 +371,203 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
   }
 
   void _showMembersSheet(BuildContext context, TripEntity trip) {
+    final rootContext = context;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.textTertiary(context),
-                  borderRadius: BorderRadius.circular(2),
+      builder: (context) => Consumer(
+        builder: (context, ref, _) {
+          final tripAsync = ref.watch(tripStreamProvider(trip.id));
+          final tripData = tripAsync.value ?? trip;
+
+          final currentMember = ref.watch(currentMemberProvider(trip.id));
+          final isHost = currentMember?.isHost ?? false;
+
+          return Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.textTertiary(context),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
                 ),
-              ),
-            ),
 
-            const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-            Text(
-              'Members (${trip.members.length})',
-              style: AppTextStyles.h3,
-            ),
+                Text(
+                  'Members (${tripData.members.length})',
+                  style: AppTextStyles.h3,
+                ),
 
-            const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-            ...trip.members.map((member) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: AppColors.card(context),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      Icons.person,
-                      color: AppColors.textSecondary(context),
-                      size: 22,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      member.userId,
-                      style: AppTextStyles.bodyMedium,
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: member.isHost
-                          ? AppColors.primary.withOpacity(0.15)
-                          : AppColors.card(context),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      member.isHost ? '👑 Host' : 'Member',
-                      style: AppTextStyles.labelSmall.copyWith(
-                        color: member.isHost
-                            ? AppColors.primary
-                            : AppColors.textSecondary(context),
+                ...tripData.members.map((member) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      // Avatar
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: AppColors.card(context),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.person,
+                          color: AppColors.textSecondary(context),
+                          size: 22,
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 12),
+
+                      // Nombre/ID
+                      Expanded(
+                        child: Text(
+                          member.userId,
+                          style: AppTextStyles.bodyMedium,
+                        ),
+                      ),
+
+                      // Badge rol
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: member.isHost
+                              ? AppColors.primary.withOpacity(0.15)
+                              : member.isCoHost
+                              ? AppColors.primary.withOpacity(0.1)
+                              : AppColors.card(context),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          member.isHost
+                              ? '👑 Host'
+                              : member.isCoHost
+                              ? '🤝 Co-host'
+                              : 'Member',
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: member.isHost || member.isCoHost
+                                ? AppColors.primary
+                                : AppColors.textSecondary(context),
+                          ),
+                        ),
+                      ),
+
+                      // Toggle co-host
+                      if (isHost && !member.isHost) ...[
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () {
+                            _toggleCoHost(rootContext, tripData, member);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: member.isCoHost
+                                  ? AppColors.primary.withOpacity(0.15)
+                                  : AppColors.card(context),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: member.isCoHost
+                                    ? AppColors.primary
+                                    : AppColors.borderColor(context),
+                              ),
+                            ),
+                            child: Text(
+                              member.isCoHost
+                                  ? '✓ Co-host'
+                                  : 'Make co-host',
+                              style: AppTextStyles.labelSmall.copyWith(
+                                color: member.isCoHost
+                                    ? AppColors.primary
+                                    : AppColors.textTertiary(context),
+                                fontSize: 10,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
-              ),
-            )),
+                )),
 
-            const SizedBox(height: 16),
+                const SizedBox(height: 16),
 
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _showInviteSheet(context, trip.inviteCode);
-                },
-                icon: const Icon(Icons.person_add_outlined),
-                label: const Text('Invite Someone'),
-              ),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      _showInviteSheet(context, tripData.inviteCode);
+                    },
+                    icon: const Icon(Icons.person_add_outlined),
+                    label: const Text('Invite Someone'),
+                  ),
+                ),
+              ],
             ),
-          ],
+          );
+        },
+      ),
+    );
+  }
+
+  void showTopSnackBar(BuildContext context, String message) {
+    final overlay = Overlay.of(context);
+    final overlayEntry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: 60,
+        left: 16,
+        right: 16,
+        child: Material(
+          color: Colors.transparent,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: AppColors.success,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 10,
+                )
+              ],
+            ),
+            child: Text(
+              message,
+              style: const TextStyle(color: Colors.white),
+            ),
+          ),
         ),
       ),
     );
+
+    overlay.insert(overlayEntry);
+
+    Future.delayed(const Duration(seconds: 2), () {
+      overlayEntry.remove();
+    });
   }
 
   void _showInviteSheet(BuildContext context, String inviteCode) {

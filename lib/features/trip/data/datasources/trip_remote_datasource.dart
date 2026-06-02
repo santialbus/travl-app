@@ -282,4 +282,45 @@ class TripRemoteDataSource {
       throw Exception('Failed to delete trip: $e');
     }
   }
+
+  Future<void> updateMemberRole({
+    required String tripId,
+    required String userId,
+    required String newRole, // 'cohost' | 'member'
+  }) async {
+    try {
+      final tripDoc = await _firestore
+          .collection(FirebaseConstants.tripsCollection)
+          .doc(tripId)
+          .get();
+
+      if (!tripDoc.exists) throw Exception('Trip not found');
+
+      final data = tripDoc.data()!;
+      final members = (data[FirebaseConstants.tripMembersField] as List)
+          .map((m) => MemberModel.fromMap(m as Map<String, dynamic>))
+          .toList();
+
+      final updatedMembers = members.map((member) {
+        if (member.userId == userId) {
+          return MemberModel(
+            userId: member.userId,
+            role: newRole,
+            joinedAt: member.joinedAt,
+          );
+        }
+        return member;
+      }).toList();
+
+      await _firestore
+          .collection(FirebaseConstants.tripsCollection)
+          .doc(tripId)
+          .update({
+        FirebaseConstants.tripMembersField:
+        updatedMembers.map((m) => m.toMap()).toList(),
+      });
+    } catch (e) {
+      throw Exception('Failed to update member role: $e');
+    }
+  }
 }
