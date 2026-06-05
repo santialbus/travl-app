@@ -69,7 +69,7 @@ class TripsTab extends ConsumerWidget {
               ),
             ),
 
-            // Trips Content
+            // Trips content
             tripsAsync.when(
               data: (trips) {
                 if (trips.isEmpty) {
@@ -81,20 +81,55 @@ class TripsTab extends ConsumerWidget {
                   );
                 }
 
+                final now = DateTime.now();
+                final archiveThreshold = now.subtract(const Duration(days: 5));
+
+                // Clasificar
+                final ongoing = trips.where((t) =>
+                t.startDate.isBefore(now) && t.endDate.isAfter(now)
+                ).toList();
+
+                final upcoming = trips.where((t) =>
+                    t.startDate.isAfter(now)
+                ).toList()
+                  ..sort((a, b) => a.startDate.compareTo(b.startDate));
+
+                final recent = trips.where((t) =>
+                t.endDate.isBefore(now) &&
+                    t.endDate.isAfter(archiveThreshold)
+                ).toList()
+                  ..sort((a, b) => b.endDate.compareTo(a.endDate));
+
+                final archived = trips.where((t) =>
+                    t.endDate.isBefore(archiveThreshold)
+                ).toList()
+                  ..sort((a, b) => b.endDate.compareTo(a.endDate));
+
+                final activeTrips = [...ongoing, ...upcoming, ...recent];
+
                 return SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                        (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                        child: _TripCard(
-                          trip: trips[index],
-                          userId: userId,
-                          onTap: () => context.go('/trip/${trips[index].id}'),
-                        ),
-                      );
-                    },
-                    childCount: trips.length,
-                  ),
+                  delegate: SliverChildListDelegate([
+                    // — ACTIVE TRIPS —
+                    ...activeTrips.map((trip) => Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      child: _TripCard(
+                        trip: trip,
+                        userId: userId,
+                        onTap: () => context.go('/trip/${trip.id}'),
+                      ),
+                    )),
+
+                    // — ARCHIVED SECTION —
+                    if (archived.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      _ArchivedSection(
+                        trips: archived,
+                        userId: userId,
+                      ),
+                    ],
+
+                    const SizedBox(height: 100),
+                  ]),
                 );
               },
               loading: () => const SliverFillRemaining(
@@ -107,11 +142,6 @@ class TripsTab extends ConsumerWidget {
           ],
         ),
       ),
-      /*floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push(RouteConstants.createTrip),
-        icon: const Icon(Icons.add),
-        label: const Text('New Trip'),
-      ),*/
     );
   }
 
@@ -133,171 +163,255 @@ class TripsTab extends ConsumerWidget {
   }
 }
 
+// ─── ARCHIVED SECTION (colapsable) ───────────────────────────────────────────
+
+class _ArchivedSection extends StatefulWidget {
+  final List<TripEntity> trips;
+  final String userId;
+
+  const _ArchivedSection({required this.trips, required this.userId});
+
+  @override
+  State<_ArchivedSection> createState() => _ArchivedSectionState();
+}
+
+class _ArchivedSectionState extends State<_ArchivedSection> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header colapsable
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            borderRadius: BorderRadius.circular(12),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.archive_outlined,
+                    size: 16,
+                    color: AppColors.textTertiary(context),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Archived',
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: AppColors.textTertiary(context),
+                      letterSpacing: 1.2,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.textTertiary(context).withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '${widget.trips.length}',
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: AppColors.textTertiary(context),
+                        fontSize: 11,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  AnimatedRotation(
+                    turns: _expanded ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: Icon(
+                      Icons.keyboard_arrow_down,
+                      size: 18,
+                      color: AppColors.textTertiary(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Lista colapsable
+          AnimatedSize(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeInOut,
+            child: _expanded
+                ? Column(
+              children: widget.trips.map((trip) => Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: _TripCard(
+                  trip: trip,
+                  userId: widget.userId,
+                  onTap: () {},
+                  isArchived: true,
+                ),
+              )).toList(),
+            )
+                : const SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── TRIP CARD ────────────────────────────────────────────────────────────────
+
 class _TripCard extends ConsumerWidget {
   final TripEntity trip;
   final String userId;
   final VoidCallback onTap;
+  final bool isArchived;
 
   const _TripCard({
     required this.trip,
     required this.userId,
     required this.onTap,
+    this.isArchived = false,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isOwner = trip.ownerId == userId;
-    final isOngoing = trip.startDate.isBefore(DateTime.now()) &&
-        trip.endDate.isAfter(DateTime.now());
-    final isUpcoming = trip.startDate.isAfter(DateTime.now());
+    final now = DateTime.now();
+    final isOngoing = trip.startDate.isBefore(now) && trip.endDate.isAfter(now);
+    final isUpcoming = trip.startDate.isAfter(now);
 
-    // Solo el host puede borrar — swipe solo si es owner
     if (!isOwner) {
       return _TripCardContent(
         trip: trip,
         isDark: isDark,
         isOngoing: isOngoing,
         isUpcoming: isUpcoming,
+        isArchived: isArchived,
         onTap: onTap,
       );
     }
 
     return Dismissible(
-    key: Key(trip.id),
-    direction: DismissDirection.horizontal, // ✅ Ambas direcciones
+      key: Key(trip.id),
+      direction: DismissDirection.horizontal,
 
-    // ✅ Fondo azul — swipe derecha (editar)
-    background: Container(
-      alignment: Alignment.centerLeft,
-      padding: const EdgeInsets.only(left: 20),
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.edit_outlined, color: AppColors.primary),
-          const SizedBox(height: 4),
-          Text(
-            'Edit',
-            style: AppTextStyles.labelSmall.copyWith(
-              color: AppColors.primary,
-            ),
-          ),
-        ],
-      ),
-    ),
-
-    // ✅ Fondo rojo — swipe izquierda (borrar) — solo si es owner
-    secondaryBackground: isOwner
-        ? Container(
-      alignment: Alignment.centerRight,
-      padding: const EdgeInsets.only(right: 20),
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: AppColors.error.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.delete_outline, color: AppColors.error),
-          const SizedBox(height: 4),
-          Text(
-            'Delete',
-            style: AppTextStyles.labelSmall.copyWith(
-              color: AppColors.error,
-            ),
-          ),
-        ],
-      ),
-    )
-        : const SizedBox.shrink(),
-
-    confirmDismiss: (direction) async {
-      if (direction == DismissDirection.startToEnd) {
-        // ✅ Swipe derecha — editar
-        Future.delayed(Duration.zero, () {
-          if (context.mounted) {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              backgroundColor: AppColors.surface(context),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              builder: (context) => EditTripBottomSheet(trip: trip),
-            );
-          }
-        });
-        return false;
-      }
-
-      // ✅ Swipe izquierda — borrar (solo owner)
-      if (!isOwner) return false;
-
-      return await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          backgroundColor: AppColors.surface(context),
-          title: Text('Delete trip?', style: AppTextStyles.h4),
-          content: Text(
-            'This will permanently delete "${trip.name}" and all its data.',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary(context),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(
-                'Delete',
-                style: TextStyle(color: AppColors.error),
-              ),
-            ),
+      background: Container(
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.only(left: 20),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: AppColors.primary.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.edit_outlined, color: AppColors.primary),
+            const SizedBox(height: 4),
+            Text('Edit', style: AppTextStyles.labelSmall.copyWith(color: AppColors.primary)),
           ],
         ),
-      );
-    },
+      ),
 
-    onDismissed: (direction) async {
-      if (direction == DismissDirection.endToStart && isOwner) {
-        await ref.read(tripControllerProvider.notifier).deleteTrip(trip.id);
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${trip.name} deleted'),
-              backgroundColor: AppColors.surface(context),
-            ),
-          );
+      secondaryBackground: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: AppColors.error.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.delete_outline, color: AppColors.error),
+            const SizedBox(height: 4),
+            Text('Delete', style: AppTextStyles.labelSmall.copyWith(color: AppColors.error)),
+          ],
+        ),
+      ),
+
+      confirmDismiss: (direction) async {
+        if (direction == DismissDirection.startToEnd) {
+          Future.delayed(Duration.zero, () {
+            if (context.mounted) {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: AppColors.surface(context),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                builder: (context) => EditTripBottomSheet(trip: trip),
+              );
+            }
+          });
+          return false;
         }
-      }
-    },
 
-    child: _TripCardContent(
-      trip: trip,
-      isDark: isDark,
-      isOngoing: isOngoing,
-      isUpcoming: isUpcoming,
-      onTap: onTap,
-    ),
+        if (!isOwner) return false;
+
+        return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            backgroundColor: AppColors.surface(context),
+            title: Text('Delete trip?', style: AppTextStyles.h4),
+            content: Text(
+              'This will permanently delete "${trip.name}" and all its data.',
+              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary(context)),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: Text('Delete', style: TextStyle(color: AppColors.error)),
+              ),
+            ],
+          ),
+        );
+      },
+
+      onDismissed: (direction) async {
+        if (direction == DismissDirection.endToStart && isOwner) {
+          await ref.read(tripControllerProvider.notifier).deleteTrip(trip.id);
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('${trip.name} deleted'),
+                backgroundColor: AppColors.surface(context),
+              ),
+            );
+          }
+        }
+      },
+
+      child: _TripCardContent(
+        trip: trip,
+        isDark: isDark,
+        isOngoing: isOngoing,
+        isUpcoming: isUpcoming,
+        isArchived: isArchived,
+        onTap: onTap,
+      ),
     );
   }
 }
 
-// Contenido visual de la card (separado para reusar)
-class _TripCardContent extends StatelessWidget {
+// ─── TRIP CARD CONTENT ────────────────────────────────────────────────────────
+
+class _TripCardContent extends StatefulWidget {
   final TripEntity trip;
   final bool isDark;
   final bool isOngoing;
   final bool isUpcoming;
+  final bool isArchived;
   final VoidCallback onTap;
 
   const _TripCardContent({
@@ -305,106 +419,175 @@ class _TripCardContent extends StatelessWidget {
     required this.isDark,
     required this.isOngoing,
     required this.isUpcoming,
+    required this.isArchived,
     required this.onTap,
   });
 
   @override
+  State<_TripCardContent> createState() => _TripCardContentState();
+}
+
+class _TripCardContentState extends State<_TripCardContent>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+    );
+    _pulseAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+    if (widget.isOngoing) {
+      _pulseController.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final cardColor = isDark ? AppColors.card(context) : AppColors.cardLight;
+    final cardColor = widget.isDark
+        ? AppColors.card(context)
+        : AppColors.cardLight;
 
     return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(20),
-          border: isOngoing
-              ? Border.all(
-            color: AppColors.primary.withOpacity(0.4),
-            width: 1.5,
-          )
-              : null,
-          boxShadow: isDark
-              ? null
-              : [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
+      onTap: widget.onTap,
+      child: AnimatedBuilder(
+        animation: _pulseAnim,
+        builder: (context, child) {
+          // Aura pulsante para ongoing
+          final glowOpacity = widget.isOngoing
+              ? 0.2 + (_pulseAnim.value * 0.35)
+              : 0.0;
+          final glowSpread = widget.isOngoing
+              ? 0.0 + (_pulseAnim.value * 4.0)
+              : 0.0;
+          final glowBlur = widget.isOngoing
+              ? 8.0 + (_pulseAnim.value * 12.0)
+              : 0.0;
+
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: widget.isArchived
+                  ? cardColor.withOpacity(0.5)
+                  : cardColor,
+              borderRadius: BorderRadius.circular(20),
+              border: widget.isOngoing
+                  ? Border.all(
+                color: AppColors.primary.withOpacity(0.5 + _pulseAnim.value * 0.3),
+                width: 1.5,
+              )
+                  : widget.isArchived
+                  ? Border.all(
+                color: AppColors.borderColor(context).withOpacity(0.4),
+                width: 1,
+              )
+                  : null,
+              boxShadow: [
+                if (!widget.isDark && !widget.isArchived)
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                // Aura pulsante
+                if (widget.isOngoing)
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(glowOpacity),
+                    blurRadius: glowBlur,
+                    spreadRadius: glowSpread,
+                  ),
+              ],
             ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Status + Members
-              Row(
-                children: [
-                  _StatusBadge(
-                    isOngoing: isOngoing,
-                    isUpcoming: isUpcoming,
-                  ),
-                  const Spacer(),
-                  _MemberAvatars(count: trip.members.length),
-                ],
-              ),
-
-              const SizedBox(height: 16),
-
-              // Destination
-              Text(
-                trip.destination,
-                style: AppTextStyles.h3.copyWith(
-                  fontSize: 22,
-                  color: isDark
-                      ? AppColors.textPrimary(context)
-                      : AppColors.textPrimaryLight,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                trip.name,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: isDark
-                      ? AppColors.textSecondary(context)
-                      : AppColors.textSecondaryLight,
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Dates
-              Row(
-                children: [
-                  Icon(
-                    Icons.calendar_today_outlined,
-                    size: 14,
-                    color: isDark
-                        ? AppColors.textTertiary(context)
-                        : AppColors.textTertiaryLight,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '${DateFormat('MMM dd').format(trip.startDate)} → ${DateFormat('MMM dd, yyyy').format(trip.endDate)}',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: isDark
-                          ? AppColors.textSecondary(context)
-                          : AppColors.textSecondaryLight,
+            child: child,
+          );
+        },
+        child: Opacity(
+          opacity: widget.isArchived ? 0.65 : 1.0,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Status + Members
+                Row(
+                  children: [
+                    _StatusBadge(
+                      isOngoing: widget.isOngoing,
+                      isUpcoming: widget.isUpcoming,
+                      isArchived: widget.isArchived,
                     ),
+                    const Spacer(),
+                    _MemberAvatars(count: widget.trip.members.length),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Destination
+                Text(
+                  widget.trip.destination,
+                  style: AppTextStyles.h3.copyWith(
+                    fontSize: 22,
+                    color: widget.isDark
+                        ? AppColors.textPrimary(context)
+                        : AppColors.textPrimaryLight,
                   ),
-                  const Spacer(),
-                  Text(
-                    '${trip.numberOfDays} days',
-                    style: AppTextStyles.labelSmall.copyWith(
-                      color: AppColors.primary,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  widget.trip.name,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: widget.isDark
+                        ? AppColors.textSecondary(context)
+                        : AppColors.textSecondaryLight,
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Dates
+                Row(
+                  children: [
+                    Icon(
+                      Icons.calendar_today_outlined,
+                      size: 14,
+                      color: widget.isDark
+                          ? AppColors.textTertiary(context)
+                          : AppColors.textTertiaryLight,
                     ),
-                  ),
-                ],
-              ),
-            ],
+                    const SizedBox(width: 6),
+                    Text(
+                      '${DateFormat('MMM dd').format(widget.trip.startDate)} → ${DateFormat('MMM dd, yyyy').format(widget.trip.endDate)}',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: widget.isDark
+                            ? AppColors.textSecondary(context)
+                            : AppColors.textSecondaryLight,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${widget.trip.numberOfDays} days',
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: widget.isArchived
+                            ? AppColors.textTertiary(context)
+                            : AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -412,11 +595,18 @@ class _TripCardContent extends StatelessWidget {
   }
 }
 
+// ─── STATUS BADGE ─────────────────────────────────────────────────────────────
+
 class _StatusBadge extends StatelessWidget {
   final bool isOngoing;
   final bool isUpcoming;
+  final bool isArchived;
 
-  const _StatusBadge({required this.isOngoing, required this.isUpcoming});
+  const _StatusBadge({
+    required this.isOngoing,
+    required this.isUpcoming,
+    this.isArchived = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -424,7 +614,11 @@ class _StatusBadge extends StatelessWidget {
     Color textColor;
     String label;
 
-    if (isOngoing) {
+    if (isArchived) {
+      bgColor = AppColors.textTertiary(context).withOpacity(0.1);
+      textColor = AppColors.textTertiary(context);
+      label = 'Archived';
+    } else if (isOngoing) {
       bgColor = AppColors.primary.withOpacity(0.15);
       textColor = AppColors.primary;
       label = 'Ongoing';
@@ -468,6 +662,8 @@ class _StatusBadge extends StatelessWidget {
   }
 }
 
+// ─── MEMBER AVATARS ───────────────────────────────────────────────────────────
+
 class _MemberAvatars extends StatelessWidget {
   final int count;
 
@@ -491,11 +687,7 @@ class _MemberAvatars extends StatelessWidget {
                 border: Border.all(color: AppColors.card(context), width: 2),
               ),
               child: Center(
-                child: Icon(
-                  Icons.person,
-                  size: 14,
-                  color: AppColors.primary,
-                ),
+                child: Icon(Icons.person, size: 14, color: AppColors.primary),
               ),
             ),
           );
@@ -524,14 +716,13 @@ class _MemberAvatars extends StatelessWidget {
   }
 }
 
+// ─── EMPTY STATE ──────────────────────────────────────────────────────────────
+
 class _EmptyTrips extends StatelessWidget {
   final VoidCallback onCreateTrip;
   final VoidCallback onJoinTrip;
 
-  const _EmptyTrips({
-    required this.onCreateTrip,
-    required this.onJoinTrip,
-  });
+  const _EmptyTrips({required this.onCreateTrip, required this.onJoinTrip});
 
   @override
   Widget build(BuildContext context) {
