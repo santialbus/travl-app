@@ -107,7 +107,7 @@ class TripsTab extends ConsumerWidget {
 
                 final activeTrips = [...ongoing, ...upcoming, ...recent];
 
-                return SliverList(
+                /*return SliverList(
                   delegate: SliverChildListDelegate([
                     // — ACTIVE TRIPS —
                     ...activeTrips.map((trip) => Padding(
@@ -131,7 +131,17 @@ class TripsTab extends ConsumerWidget {
                     const SizedBox(height: 100),
                   ]),
                 );
+                */
+
+                return SliverToBoxAdapter(
+                  child: _TripsList(
+                      trips: trips,
+                      userId: userId,
+                    ),
+                  );
               },
+
+
               loading: () => const SliverFillRemaining(
                 child: Center(child: CircularProgressIndicator()),
               ),
@@ -268,12 +278,14 @@ class _TripCard extends ConsumerWidget {
   final String userId;
   final VoidCallback onTap;
   final bool isArchived;
+  final VoidCallback? onDeleted;
 
   const _TripCard({
     required this.trip,
     required this.userId,
     required this.onTap,
     this.isArchived = false,
+    this.onDeleted,
   });
 
   @override
@@ -296,7 +308,8 @@ class _TripCard extends ConsumerWidget {
     }
 
     return Dismissible(
-      key: Key(trip.id),
+      //key: Key(trip.id),
+      key: ValueKey(trip.id),
       direction: DismissDirection.horizontal,
 
       background: Container(
@@ -378,7 +391,7 @@ class _TripCard extends ConsumerWidget {
         );
       },
 
-      onDismissed: (direction) async {
+      /*onDismissed: (direction) async {
         if (direction == DismissDirection.endToStart && isOwner) {
           await ref.read(tripControllerProvider.notifier).deleteTrip(trip.id);
           if (context.mounted) {
@@ -388,6 +401,22 @@ class _TripCard extends ConsumerWidget {
                 backgroundColor: AppColors.surface(context),
               ),
             );
+          }
+        }
+      },*/
+
+      onDismissed: (direction) {
+        if (direction == DismissDirection.endToStart && isOwner) {
+
+          // 🔥 1. QUITAR DE LA UI INMEDIATAMENTE
+          onDeleted?.call();
+
+          // 🔥 2. BACKEND SIN ESPERAR
+          ref.read(tripControllerProvider.notifier).deleteTrip(trip.id);
+
+          // 🔥 3. FEEDBACK
+          if (context.mounted) {
+            showBottomSnackBar(context, '${trip.name} deleted');
           }
         }
       },
@@ -760,6 +789,186 @@ class _EmptyTrips extends StatelessWidget {
               label: const Text('Join with code'),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TripsList extends StatefulWidget {
+  final List<TripEntity> trips;
+  final String userId;
+
+  const _TripsList({required this.trips, required this.userId});
+
+  @override
+  State<_TripsList> createState() => _TripsListState();
+}
+
+class _TripsListState extends State<_TripsList> {
+  late List<TripEntity> _trips;
+
+  @override
+  void initState() {
+    super.initState();
+    _trips = List.from(widget.trips);
+  }
+
+  @override
+  void didUpdateWidget(covariant _TripsList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.trips != widget.trips) {
+      _trips = List.from(widget.trips);
+    }
+  }
+
+  void _removeTrip(String id) {
+    setState(() {
+      _trips.removeWhere((t) => t.id == id);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final archiveThreshold = now.subtract(const Duration(days: 5));
+
+    final ongoing = _trips.where((t) =>
+    t.startDate.isBefore(now) && t.endDate.isAfter(now)).toList();
+
+    final upcoming = _trips.where((t) =>
+        t.startDate.isAfter(now)).toList()
+      ..sort((a, b) => a.startDate.compareTo(b.startDate));
+
+    final recent = _trips.where((t) =>
+    t.endDate.isBefore(now) &&
+        t.endDate.isAfter(archiveThreshold)).toList()
+      ..sort((a, b) => b.endDate.compareTo(a.endDate));
+
+    final archived = _trips.where((t) =>
+        t.endDate.isBefore(archiveThreshold)).toList()
+      ..sort((a, b) => b.endDate.compareTo(a.endDate));
+
+    final activeTrips = [...ongoing, ...upcoming, ...recent];
+
+    return Column(
+      children: [
+        ...activeTrips.map((trip) => Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: _TripCard(
+            trip: trip,
+            userId: widget.userId,
+            onTap: () => context.go('/trip/${trip.id}'),
+            onDeleted: () => _removeTrip(trip.id), // 🔥 CLAVE
+          ),
+        )),
+
+        if (archived.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          _ArchivedSection(
+            trips: archived,
+            userId: widget.userId,
+          ),
+        ],
+
+        const SizedBox(height: 100),
+      ],
+    );
+  }
+}
+
+void showBottomSnackBar(BuildContext context, String message) {
+  final overlay = Overlay.of(context);
+
+  final overlayEntry = OverlayEntry(
+    builder: (context) => _BottomSnackBar(message: message),
+  );
+
+  overlay.insert(overlayEntry);
+
+  Future.delayed(const Duration(seconds: 2), () {
+    overlayEntry.remove();
+  });
+}
+
+class _BottomSnackBar extends StatefulWidget {
+  final String message;
+
+  const _BottomSnackBar({required this.message});
+
+  @override
+  State<_BottomSnackBar> createState() => _BottomSnackBarState();
+}
+
+class _BottomSnackBarState extends State<_BottomSnackBar>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<Offset> _slide;
+  late Animation<double> _fade;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 1),
+      end: const Offset(0, 0),
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+
+    _fade = Tween<double>(begin: 0, end: 1).animate(_controller);
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      bottom: 30,
+      left: 16,
+      right: 16,
+      child: Material(
+        color: Colors.transparent,
+        child: SlideTransition(
+          position: _slide,
+          child: FadeTransition(
+            opacity: _fade,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: AppColors.error, // 🔴 rojo delete
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.25),
+                    blurRadius: 12,
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.delete_outline, color: Colors.white),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      widget.message,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
