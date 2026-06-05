@@ -224,7 +224,7 @@ class ActivityCard extends ConsumerWidget {
                 children: [
                   if (activity.mapsUrl != null)
                     GestureDetector(
-                      onTap: () => _openMaps(context, activity.mapsUrl!),
+                      onTap: () => _showMapOptions(context),
                       child: Padding(
                         padding: const EdgeInsets.all(4),
                         child: Icon(
@@ -427,7 +427,7 @@ class ActivityCard extends ConsumerWidget {
                 onTap: activity.mapsUrl != null
                     ? () {
                   Navigator.pop(context);
-                  _openMaps(context, activity.mapsUrl!);
+                  _showMapOptions(context);
                 }
                     : null,
               ),
@@ -641,6 +641,102 @@ class ActivityCard extends ConsumerWidget {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
+  }
+
+  void _showMapOptions(BuildContext context) {
+    final hasCoords = activity.latitude != null && activity.longitude != null;
+
+    final lat = activity.latitude;
+    final lng = activity.longitude;
+    final query = activity.locationName ?? activity.title;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Handle
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.textTertiary(context),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            Text('Open location', style: AppTextStyles.h3),
+
+            const SizedBox(height: 20),
+
+            /// GOOGLE MAPS
+            _TrackerOption(
+              emoji: '🗺️',
+              name: 'Google Maps',
+              description: 'Navigation & places',
+              onTap: () {
+                Navigator.pop(context);
+
+                final url = hasCoords
+                    ? 'https://www.google.com/maps/search/?api=1&query=$lat,$lng'
+                    : 'https://www.google.com/maps/search/?api=1&query=$query';
+
+                _openUrl(url);
+              },
+            ),
+
+            const SizedBox(height: 12),
+
+            /// APPLE MAPS (también funciona en iOS)
+            _TrackerOption(
+              emoji: '🍎',
+              name: 'Apple Maps',
+              description: 'Default on iPhone',
+              onTap: () {
+                Navigator.pop(context);
+
+                final url = hasCoords
+                    ? 'http://maps.apple.com/?ll=$lat,$lng'
+                    : 'http://maps.apple.com/?q=$query';
+
+                _openUrl(url);
+              },
+            ),
+
+            const SizedBox(height: 12),
+
+            /// WAZE
+            _TrackerOption(
+              emoji: '🚗',
+              name: 'Waze',
+              description: 'Best for driving',
+              onTap: () {
+                Navigator.pop(context);
+
+                final url = hasCoords
+                    ? 'https://waze.com/ul?ll=$lat,$lng&navigate=yes'
+                    : 'https://waze.com/ul?q=$query&navigate=yes';
+
+                _openUrl(url);
+              },
+            ),
+
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
   }
 }
 
