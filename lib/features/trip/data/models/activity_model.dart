@@ -22,7 +22,6 @@ class ActivityModel extends ActivityEntity {
     super.trainNumber,
     super.transportCompany,
     super.bookingReference,
-    super.bookingUrl
   });
 
   factory ActivityModel.fromFirestore(DocumentSnapshot doc) {
@@ -49,7 +48,6 @@ class ActivityModel extends ActivityEntity {
       trainNumber: data['trainNumber'] as String?,
       transportCompany: data['transportCompany'] as String?,
       bookingReference: data['bookingReference'] as String?,
-      bookingUrl: data['bookingUrl'] as String?,
     );
   }
 
@@ -75,7 +73,6 @@ class ActivityModel extends ActivityEntity {
       'trainNumber': trainNumber,
       'transportCompany': transportCompany,
       'bookingReference': bookingReference,
-      'bookingUrl': bookingUrl,
     };
   }
 
@@ -85,7 +82,6 @@ class ActivityModel extends ActivityEntity {
     String? trainNumber,
     String? transportCompany,
     String? bookingReference,
-    String? bookingUrl,
   }) {
     return ActivityModel(
       id: id ?? this.id,
@@ -107,7 +103,6 @@ class ActivityModel extends ActivityEntity {
       trainNumber: trainNumber ?? this.trainNumber,
       transportCompany: transportCompany ?? this.transportCompany,
       bookingReference: bookingReference ?? this.bookingReference,
-      bookingUrl: bookingUrl ?? this.bookingUrl,
     );
   }
 }

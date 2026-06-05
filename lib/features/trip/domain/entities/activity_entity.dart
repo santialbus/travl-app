@@ -20,7 +20,6 @@ class ActivityEntity {
   final String? trainNumber;       // 🚆 AVE02145
   final String? transportCompany;  // 🚆 Renfe, Blablacar...
   final String? bookingReference;  // 🏨 #ABC123456
-  final String? bookingUrl;        // 🏨 https://booking.com/...
 
   const ActivityEntity({
     required this.id,
@@ -42,7 +41,6 @@ class ActivityEntity {
     this.trainNumber,
     this.transportCompany,
     this.bookingReference,
-    this.bookingUrl,
   });
 
   String get emoji => type.emoji;

@@ -58,7 +58,6 @@ class ActivityRemoteDataSource {
     String? trainNumber,
     String? transportCompany,
     String? bookingReference,
-    String? bookingUrl,
   }) async {
     try {
       final activityId = _uuid.v4();
@@ -97,7 +96,6 @@ class ActivityRemoteDataSource {
         trainNumber: trainNumber,
         transportCompany: transportCompany,
         bookingReference: bookingReference,
-        bookingUrl: bookingUrl,
       );
 
       await _firestore
@@ -123,7 +121,6 @@ class ActivityRemoteDataSource {
     String? trainNumber,
     String? transportCompany,
     String? bookingReference,
-    String? bookingUrl,
   }) async {
     try {
       String? mapsUrl;
@@ -145,7 +142,6 @@ class ActivityRemoteDataSource {
         'trainNumber': trainNumber,
         'transportCompany': transportCompany,
         'bookingReference': bookingReference,
-        'bookingUrl': bookingUrl,
       });
     } catch (e) {
       throw Exception('Failed to update activity: $e');

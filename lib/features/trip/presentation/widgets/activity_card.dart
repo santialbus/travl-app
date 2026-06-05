@@ -80,13 +80,11 @@ class ActivityCard extends ConsumerWidget {
         );
       },
       onDismissed: (_) {
-        ref
-            .read(activityControllerProvider.notifier)
-            .deleteActivity(activity.id);
+        ref.read(activityControllerProvider.notifier).deleteActivity(activity.id);
       },
       child: InkWell(
         onTap: onTap,
-        onLongPress: () => _showEditSheet(context, ref), // ✅ Long press
+        onLongPress: () => _showEditSheet(context, ref),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           child: Row(
@@ -126,33 +124,54 @@ class ActivityCard extends ConsumerWidget {
                             : null,
                       ),
                     ),
-                    if (activity.time != null ||
-                        activity.locationName != null)
+                    if (_hasSecondaryInfo())
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
-                        child: Row(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (activity.time != null) ...[
-                              Text(
-                                AppDateUtils.formatTime(activity.time!),
-                                style: AppTextStyles.labelSmall.copyWith(
-                                  color: AppColors.textTertiary(context),
-                                ),
+                            // Línea 1: time + location
+                            if (activity.time != null || activity.locationName != null)
+                              Row(
+                                children: [
+                                  if (activity.time != null) ...[
+                                    Text(
+                                      AppDateUtils.formatTime(activity.time!),
+                                      style: AppTextStyles.labelSmall.copyWith(
+                                        color: AppColors.textTertiary(context),
+                                      ),
+                                    ),
+                                    if (activity.locationName != null)
+                                      Text(
+                                        '  ·  ',
+                                        style: AppTextStyles.labelSmall.copyWith(
+                                          color: AppColors.textTertiary(context),
+                                        ),
+                                      ),
+                                  ],
+                                  if (activity.locationName != null)
+                                    Expanded(
+                                      child: Text(
+                                        activity.locationName!,
+                                        style: AppTextStyles.labelSmall.copyWith(
+                                          color: AppColors.textTertiary(context),
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                ],
                               ),
-                              if (activity.locationName != null)
-                                Text(
-                                  '  ·  ',
-                                  style: AppTextStyles.labelSmall.copyWith(
-                                    color: AppColors.textTertiary(context),
-                                  ),
-                                ),
-                            ],
-                            if (activity.locationName != null)
-                              Expanded(
+
+                            // Línea 2: dato contextual por tipo
+                            if (_getSecondaryLabel() != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
                                 child: Text(
-                                  activity.locationName!,
+                                  _getSecondaryLabel()!,
                                   style: AppTextStyles.labelSmall.copyWith(
                                     color: AppColors.textTertiary(context),
+                                    fontStyle: FontStyle.italic,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -168,11 +187,10 @@ class ActivityCard extends ConsumerWidget {
               const SizedBox(width: 8),
 
               // Right actions
-              // Right actions
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Maps icon
+                  // Maps
                   if (activity.mapsUrl != null)
                     GestureDetector(
                       onTap: () => _openMaps(context, activity.mapsUrl!),
@@ -186,9 +204,7 @@ class ActivityCard extends ConsumerWidget {
                       ),
                     ),
 
-                  // En activity_card.dart, después del botón de mapa:
-
-                  // ✅ Flight tracker
+                  // Flight tracker
                   if (activity.type == ActivityType.flight &&
                       activity.flightNumber != null)
                     GestureDetector(
@@ -203,7 +219,7 @@ class ActivityCard extends ConsumerWidget {
                       ),
                     ),
 
-                  // ✅ Train tracker
+                  // Train tracker
                   if (activity.type == ActivityType.transport &&
                       activity.trainNumber != null)
                     GestureDetector(
@@ -218,24 +234,9 @@ class ActivityCard extends ConsumerWidget {
                       ),
                     ),
 
-                  // ✅ Hotel booking
-                  if (activity.type == ActivityType.hotel &&
-                      activity.bookingUrl != null)
-                    GestureDetector(
-                      onTap: () => _openBooking(activity.bookingUrl!),
-                      child: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: Icon(
-                          Icons.hotel,
-                          size: 18,
-                          color: AppColors.hotelColor,
-                        ),
-                      ),
-                    ),
-
                   const SizedBox(width: 4),
 
-                  // ✅ Edit button
+                  // Edit
                   GestureDetector(
                     onTap: () => _showEditSheet(context, ref),
                     child: Padding(
@@ -255,10 +256,7 @@ class ActivityCard extends ConsumerWidget {
                     onTap: () {
                       ref
                           .read(activityControllerProvider.notifier)
-                          .toggleCompletion(
-                        activity.id,
-                        !activity.isCompleted,
-                      );
+                          .toggleCompletion(activity.id, !activity.isCompleted);
                     },
                     child: Container(
                       width: 22,
@@ -289,6 +287,31 @@ class ActivityCard extends ConsumerWidget {
     );
   }
 
+  bool _hasSecondaryInfo() {
+    return activity.time != null ||
+        activity.locationName != null ||
+        activity.flightNumber != null ||
+        activity.trainNumber != null ||
+        (activity.bookingReference != null) ||
+        (activity.description != null && activity.description!.isNotEmpty);
+  }
+
+  String? _getSecondaryLabel() {
+    if (activity.type == ActivityType.flight && activity.flightNumber != null) {
+      return '✈️ ${activity.flightNumber}';
+    }
+    if (activity.type == ActivityType.transport && activity.trainNumber != null) {
+      return '🚆 ${activity.trainNumber}';
+    }
+    if (activity.type == ActivityType.hotel && activity.bookingReference != null) {
+      return '🏨 ${activity.bookingReference}';
+    }
+    if (activity.description != null && activity.description!.isNotEmpty) {
+      return '📝 ${activity.description}';
+    }
+    return null;
+  }
+
   void _showEditSheet(BuildContext context, WidgetRef ref) {
     showModalBottomSheet(
       context: context,
@@ -301,16 +324,14 @@ class ActivityCard extends ConsumerWidget {
         tripId: tripId,
         dayId: dayId,
         userId: userId,
-        activityToEdit: activity, // ✅ Pre-rellena el sheet
+        activityToEdit: activity,
       ),
     );
   }
 
   Future<void> _openMaps(BuildContext context, String url) async {
-    // Extraer query de la URL existente
     final uri = Uri.parse(url);
     final query = uri.queryParameters['query'] ?? '';
-
     await MapsLauncherService.openMap(
       context: context,
       title: activity.title,
@@ -333,7 +354,6 @@ class ActivityCard extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Handle
             Center(
               child: Container(
                 width: 40,
@@ -344,59 +364,38 @@ class ActivityCard extends ConsumerWidget {
                 ),
               ),
             ),
-
             const SizedBox(height: 24),
-
-            Text(
-              'Track Flight ${activity.flightNumber}',
-              style: AppTextStyles.h3,
-            ),
-
+            Text('Track Flight ${activity.flightNumber}', style: AppTextStyles.h3),
             const SizedBox(height: 20),
-
-            // FlightRadar24
             _TrackerOption(
               emoji: '📡',
               name: 'FlightRadar24',
               description: 'Real-time flight tracking',
               onTap: () {
                 Navigator.pop(context);
-                _openUrl(
-                  'https://www.flightradar24.com/${activity.flightNumber}',
-                );
+                _openUrl('https://www.flightradar24.com/${activity.flightNumber}');
               },
             ),
-
             const SizedBox(height: 12),
-
-            // FlightAware
             _TrackerOption(
               emoji: '✈️',
               name: 'FlightAware',
               description: 'Flight status & tracking',
               onTap: () {
                 Navigator.pop(context);
-                _openUrl(
-                  'https://www.flightaware.com/live/flight/${activity.flightNumber}',
-                );
+                _openUrl('https://www.flightaware.com/live/flight/${activity.flightNumber}');
               },
             ),
-
             const SizedBox(height: 12),
-
-            // Google Flights
             _TrackerOption(
               emoji: '🔍',
               name: 'Google Flights',
               description: 'Check flight status',
               onTap: () {
                 Navigator.pop(context);
-                _openUrl(
-                  'https://www.google.com/travel/flights?q=${activity.flightNumber}',
-                );
+                _openUrl('https://www.google.com/travel/flights?q=${activity.flightNumber}');
               },
             ),
-
             const SizedBox(height: 16),
           ],
         ),
@@ -405,33 +404,21 @@ class ActivityCard extends ConsumerWidget {
   }
 
   Future<void> _openTrainTracker(BuildContext context) async {
-    final company =
-        activity.transportCompany?.toLowerCase() ?? '';
-
+    final company = activity.transportCompany?.toLowerCase() ?? '';
     String url;
     if (company.contains('renfe')) {
-      url =
-      'https://www.renfe.com/es/es/viajar/informacion-al-viajero/estado-del-tren';
+      url = 'https://www.renfe.com/es/es/viajar/informacion-al-viajero/estado-del-tren';
     } else if (company.contains('ouigo')) {
       url = 'https://www.ouigo.com/es/informacion-viaje';
     } else {
-      // Trainline como fallback
-      url =
-      'https://www.thetrainline.com/train-times/${activity.trainNumber ?? ''}';
+      url = 'https://www.thetrainline.com/train-times/${activity.trainNumber ?? ''}';
     }
-
-    await _openUrl(url);
-  }
-
-  Future<void> _openBooking(String url) async {
     await _openUrl(url);
   }
 
   Future<void> _openUrl(String url) async {
     String finalUrl = url;
-    if (!url.startsWith('http')) {
-      finalUrl = 'https://$url';
-    }
+    if (!url.startsWith('http')) finalUrl = 'https://$url';
     final uri = Uri.parse(finalUrl);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -469,10 +456,7 @@ class _TrackerOption extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
-                child: Text(
-                  emoji,
-                  style: const TextStyle(fontSize: 22),
-                ),
+                child: Text(emoji, style: const TextStyle(fontSize: 22)),
               ),
             ),
             const SizedBox(width: 16),

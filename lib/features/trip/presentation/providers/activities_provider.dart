@@ -68,7 +68,6 @@ class ActivityController extends StateNotifier<ActivityState> {
     String? trainNumber,
     String? transportCompany,
     String? bookingReference,
-    String? bookingUrl,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
@@ -87,7 +86,6 @@ class ActivityController extends StateNotifier<ActivityState> {
         trainNumber: trainNumber,
         transportCompany: transportCompany,
         bookingReference: bookingReference,
-        bookingUrl: bookingUrl,
       );
       state = ActivityState();
       return true;
@@ -108,7 +106,6 @@ class ActivityController extends StateNotifier<ActivityState> {
     String? trainNumber,
     String? transportCompany,
     String? bookingReference,
-    String? bookingUrl,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
@@ -123,7 +120,6 @@ class ActivityController extends StateNotifier<ActivityState> {
         trainNumber: trainNumber,
         transportCompany: transportCompany,
         bookingReference: bookingReference,
-        bookingUrl: bookingUrl,
       );
       state = ActivityState();
       return true;

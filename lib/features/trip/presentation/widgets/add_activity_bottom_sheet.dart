@@ -39,7 +39,6 @@ class _AddActivityBottomSheetState
   final _trainNumberController = TextEditingController();
   final _transportCompanyController = TextEditingController();
   final _bookingReferenceController = TextEditingController();
-  final _bookingUrlController = TextEditingController();
 
   ActivityType _selectedType = ActivityType.place;
   DateTime? _selectedTime;
@@ -61,7 +60,6 @@ class _AddActivityBottomSheetState
       _trainNumberController.text = activity.trainNumber ?? '';
       _transportCompanyController.text = activity.transportCompany ?? '';
       _bookingReferenceController.text = activity.bookingReference ?? '';
-      _bookingUrlController.text = activity.bookingUrl ?? '';
     }
   }
 
@@ -74,7 +72,6 @@ class _AddActivityBottomSheetState
     _trainNumberController.dispose();
     _transportCompanyController.dispose();
     _bookingReferenceController.dispose();
-    _bookingUrlController.dispose();
     super.dispose();
   }
 
@@ -145,9 +142,6 @@ class _AddActivityBottomSheetState
         bookingReference: _bookingReferenceController.text.trim().isNotEmpty
             ? _bookingReferenceController.text.trim()
             : null,
-        bookingUrl: _bookingUrlController.text.trim().isNotEmpty
-            ? _bookingUrlController.text.trim()
-            : null,
       );
     } else {
       success = await ref
@@ -176,9 +170,6 @@ class _AddActivityBottomSheetState
             : null,
         bookingReference: _bookingReferenceController.text.trim().isNotEmpty
             ? _bookingReferenceController.text.trim()
-            : null,
-        bookingUrl: _bookingUrlController.text.trim().isNotEmpty
-            ? _bookingUrlController.text.trim()
             : null,
       );
     }
@@ -553,16 +544,6 @@ class _AddActivityBottomSheetState
                 prefixIcon: Icon(Icons.tag),
               ),
               textCapitalization: TextCapitalization.characters,
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _bookingUrlController,
-              decoration: const InputDecoration(
-                labelText: 'Booking Link (optional)',
-                hintText: 'https://booking.com/...',
-                prefixIcon: Icon(Icons.link),
-              ),
-              keyboardType: TextInputType.url,
             ),
           ],
         );
