@@ -31,7 +31,6 @@ class TripsTab extends ConsumerWidget {
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            // Header
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
@@ -69,7 +68,6 @@ class TripsTab extends ConsumerWidget {
               ),
             ),
 
-            // Trips content
             tripsAsync.when(
               data: (trips) {
                 if (trips.isEmpty) {
@@ -80,68 +78,10 @@ class TripsTab extends ConsumerWidget {
                     ),
                   );
                 }
-
-                final now = DateTime.now();
-                final archiveThreshold = now.subtract(const Duration(days: 5));
-
-                // Clasificar
-                final ongoing = trips.where((t) =>
-                t.startDate.isBefore(now) && t.endDate.isAfter(now)
-                ).toList();
-
-                final upcoming = trips.where((t) =>
-                    t.startDate.isAfter(now)
-                ).toList()
-                  ..sort((a, b) => a.startDate.compareTo(b.startDate));
-
-                final recent = trips.where((t) =>
-                t.endDate.isBefore(now) &&
-                    t.endDate.isAfter(archiveThreshold)
-                ).toList()
-                  ..sort((a, b) => b.endDate.compareTo(a.endDate));
-
-                final archived = trips.where((t) =>
-                    t.endDate.isBefore(archiveThreshold)
-                ).toList()
-                  ..sort((a, b) => b.endDate.compareTo(a.endDate));
-
-                final activeTrips = [...ongoing, ...upcoming, ...recent];
-
-                /*return SliverList(
-                  delegate: SliverChildListDelegate([
-                    // — ACTIVE TRIPS —
-                    ...activeTrips.map((trip) => Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                      child: _TripCard(
-                        trip: trip,
-                        userId: userId,
-                        onTap: () => context.go('/trip/${trip.id}'),
-                      ),
-                    )),
-
-                    // — ARCHIVED SECTION —
-                    if (archived.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      _ArchivedSection(
-                        trips: archived,
-                        userId: userId,
-                      ),
-                    ],
-
-                    const SizedBox(height: 100),
-                  ]),
-                );
-                */
-
                 return SliverToBoxAdapter(
-                  child: _TripsList(
-                      trips: trips,
-                      userId: userId,
-                    ),
-                  );
+                  child: _TripsList(trips: trips, userId: userId),
+                );
               },
-
-
               loading: () => const SliverFillRemaining(
                 child: Center(child: CircularProgressIndicator()),
               ),
@@ -173,13 +113,107 @@ class TripsTab extends ConsumerWidget {
   }
 }
 
-// ─── ARCHIVED SECTION (colapsable) ───────────────────────────────────────────
+// ─── TRIPS LIST ───────────────────────────────────────────────────────────────
+
+class _TripsList extends StatefulWidget {
+  final List<TripEntity> trips;
+  final String userId;
+
+  const _TripsList({required this.trips, required this.userId});
+
+  @override
+  State<_TripsList> createState() => _TripsListState();
+}
+
+class _TripsListState extends State<_TripsList> {
+  late List<TripEntity> _trips;
+
+  @override
+  void initState() {
+    super.initState();
+    _trips = List.from(widget.trips);
+  }
+
+  @override
+  void didUpdateWidget(covariant _TripsList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.trips != widget.trips) {
+      _trips = List.from(widget.trips);
+    }
+  }
+
+  void _removeTrip(String id) {
+    setState(() {
+      _trips.removeWhere((t) => t.id == id);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final archiveThreshold = now.subtract(const Duration(days: 5));
+
+    final ongoing = _trips
+        .where((t) => t.startDate.isBefore(now) && t.endDate.isAfter(now))
+        .toList();
+
+    final upcoming = _trips
+        .where((t) => t.startDate.isAfter(now))
+        .toList()
+      ..sort((a, b) => a.startDate.compareTo(b.startDate));
+
+    final recent = _trips
+        .where((t) =>
+    t.endDate.isBefore(now) && t.endDate.isAfter(archiveThreshold))
+        .toList()
+      ..sort((a, b) => b.endDate.compareTo(a.endDate));
+
+    final archived = _trips
+        .where((t) => t.endDate.isBefore(archiveThreshold))
+        .toList()
+      ..sort((a, b) => b.endDate.compareTo(a.endDate));
+
+    final activeTrips = [...ongoing, ...upcoming, ...recent];
+
+    return Column(
+      children: [
+        ...activeTrips.map((trip) => Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+          child: _TripCard(
+            trip: trip,
+            userId: widget.userId,
+            onTap: () => context.go('/trip/${trip.id}'),
+            onDeleted: () => _removeTrip(trip.id),
+          ),
+        )),
+
+        if (archived.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          _ArchivedSection(
+            trips: archived,
+            userId: widget.userId,
+            onDeleted: _removeTrip, // ✅ fix
+          ),
+        ],
+
+        const SizedBox(height: 100),
+      ],
+    );
+  }
+}
+
+// ─── ARCHIVED SECTION ─────────────────────────────────────────────────────────
 
 class _ArchivedSection extends StatefulWidget {
   final List<TripEntity> trips;
   final String userId;
+  final void Function(String tripId) onDeleted; // ✅ añadido
 
-  const _ArchivedSection({required this.trips, required this.userId});
+  const _ArchivedSection({
+    required this.trips,
+    required this.userId,
+    required this.onDeleted,
+  });
 
   @override
   State<_ArchivedSection> createState() => _ArchivedSectionState();
@@ -195,7 +229,6 @@ class _ArchivedSectionState extends State<_ArchivedSection> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header colapsable
           InkWell(
             onTap: () => setState(() => _expanded = !_expanded),
             borderRadius: BorderRadius.circular(12),
@@ -219,9 +252,11 @@ class _ArchivedSectionState extends State<_ArchivedSection> {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
-                      color: AppColors.textTertiary(context).withOpacity(0.12),
+                      color:
+                      AppColors.textTertiary(context).withOpacity(0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -247,21 +282,24 @@ class _ArchivedSectionState extends State<_ArchivedSection> {
             ),
           ),
 
-          // Lista colapsable
           AnimatedSize(
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeInOut,
             child: _expanded
                 ? Column(
-              children: widget.trips.map((trip) => Padding(
+              children: widget.trips
+                  .map((trip) => Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: _TripCard(
                   trip: trip,
                   userId: widget.userId,
                   onTap: () {},
                   isArchived: true,
+                  onDeleted: () =>
+                      widget.onDeleted(trip.id), // ✅ fix
                 ),
-              )).toList(),
+              ))
+                  .toList(),
             )
                 : const SizedBox.shrink(),
           ),
@@ -293,7 +331,8 @@ class _TripCard extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isOwner = trip.ownerId == userId;
     final now = DateTime.now();
-    final isOngoing = trip.startDate.isBefore(now) && trip.endDate.isAfter(now);
+    final isOngoing =
+        trip.startDate.isBefore(now) && trip.endDate.isAfter(now);
     final isUpcoming = trip.startDate.isAfter(now);
 
     if (!isOwner) {
@@ -308,7 +347,6 @@ class _TripCard extends ConsumerWidget {
     }
 
     return Dismissible(
-      //key: Key(trip.id),
       key: ValueKey(trip.id),
       direction: DismissDirection.horizontal,
 
@@ -325,7 +363,9 @@ class _TripCard extends ConsumerWidget {
           children: [
             Icon(Icons.edit_outlined, color: AppColors.primary),
             const SizedBox(height: 4),
-            Text('Edit', style: AppTextStyles.labelSmall.copyWith(color: AppColors.primary)),
+            Text('Edit',
+                style: AppTextStyles.labelSmall
+                    .copyWith(color: AppColors.primary)),
           ],
         ),
       ),
@@ -343,7 +383,9 @@ class _TripCard extends ConsumerWidget {
           children: [
             Icon(Icons.delete_outline, color: AppColors.error),
             const SizedBox(height: 4),
-            Text('Delete', style: AppTextStyles.labelSmall.copyWith(color: AppColors.error)),
+            Text('Delete',
+                style: AppTextStyles.labelSmall
+                    .copyWith(color: AppColors.error)),
           ],
         ),
       ),
@@ -357,7 +399,8 @@ class _TripCard extends ConsumerWidget {
                 isScrollControlled: true,
                 backgroundColor: AppColors.surface(context),
                 shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                  borderRadius:
+                  BorderRadius.vertical(top: Radius.circular(20)),
                 ),
                 builder: (context) => EditTripBottomSheet(trip: trip),
               );
@@ -375,7 +418,8 @@ class _TripCard extends ConsumerWidget {
             title: Text('Delete trip?', style: AppTextStyles.h4),
             content: Text(
               'This will permanently delete "${trip.name}" and all its data.',
-              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary(context)),
+              style: AppTextStyles.bodyMedium
+                  .copyWith(color: AppColors.textSecondary(context)),
             ),
             actions: [
               TextButton(
@@ -384,37 +428,18 @@ class _TripCard extends ConsumerWidget {
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: Text('Delete', style: TextStyle(color: AppColors.error)),
+                child:
+                Text('Delete', style: TextStyle(color: AppColors.error)),
               ),
             ],
           ),
         );
       },
 
-      /*onDismissed: (direction) async {
-        if (direction == DismissDirection.endToStart && isOwner) {
-          await ref.read(tripControllerProvider.notifier).deleteTrip(trip.id);
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('${trip.name} deleted'),
-                backgroundColor: AppColors.surface(context),
-              ),
-            );
-          }
-        }
-      },*/
-
       onDismissed: (direction) {
         if (direction == DismissDirection.endToStart && isOwner) {
-
-          // 🔥 1. QUITAR DE LA UI INMEDIATAMENTE
           onDeleted?.call();
-
-          // 🔥 2. BACKEND SIN ESPERAR
           ref.read(tripControllerProvider.notifier).deleteTrip(trip.id);
-
-          // 🔥 3. FEEDBACK
           if (context.mounted) {
             showBottomSnackBar(context, '${trip.name} deleted');
           }
@@ -484,25 +509,20 @@ class _TripCardContentState extends State<_TripCardContent>
 
   @override
   Widget build(BuildContext context) {
-    final cardColor = widget.isDark
-        ? AppColors.card(context)
-        : AppColors.cardLight;
+    final cardColor =
+    widget.isDark ? AppColors.card(context) : AppColors.cardLight;
 
     return GestureDetector(
       onTap: widget.onTap,
       child: AnimatedBuilder(
         animation: _pulseAnim,
         builder: (context, child) {
-          // Aura pulsante para ongoing
-          final glowOpacity = widget.isOngoing
-              ? 0.2 + (_pulseAnim.value * 0.35)
-              : 0.0;
-          final glowSpread = widget.isOngoing
-              ? 0.0 + (_pulseAnim.value * 4.0)
-              : 0.0;
-          final glowBlur = widget.isOngoing
-              ? 8.0 + (_pulseAnim.value * 12.0)
-              : 0.0;
+          final glowOpacity =
+          widget.isOngoing ? 0.2 + (_pulseAnim.value * 0.35) : 0.0;
+          final glowSpread =
+          widget.isOngoing ? 0.0 + (_pulseAnim.value * 4.0) : 0.0;
+          final glowBlur =
+          widget.isOngoing ? 8.0 + (_pulseAnim.value * 12.0) : 0.0;
 
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
@@ -513,12 +533,14 @@ class _TripCardContentState extends State<_TripCardContent>
               borderRadius: BorderRadius.circular(20),
               border: widget.isOngoing
                   ? Border.all(
-                color: AppColors.primary.withOpacity(0.5 + _pulseAnim.value * 0.3),
+                color: AppColors.primary
+                    .withOpacity(0.5 + _pulseAnim.value * 0.3),
                 width: 1.5,
               )
                   : widget.isArchived
                   ? Border.all(
-                color: AppColors.borderColor(context).withOpacity(0.4),
+                color:
+                AppColors.borderColor(context).withOpacity(0.4),
                 width: 1,
               )
                   : null,
@@ -529,7 +551,6 @@ class _TripCardContentState extends State<_TripCardContent>
                     blurRadius: 10,
                     offset: const Offset(0, 2),
                   ),
-                // Aura pulsante
                 if (widget.isOngoing)
                   BoxShadow(
                     color: AppColors.primary.withOpacity(glowOpacity),
@@ -548,7 +569,6 @@ class _TripCardContentState extends State<_TripCardContent>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Status + Members
                 Row(
                   children: [
                     _StatusBadge(
@@ -560,10 +580,7 @@ class _TripCardContentState extends State<_TripCardContent>
                     _MemberAvatars(count: widget.trip.members.length),
                   ],
                 ),
-
                 const SizedBox(height: 16),
-
-                // Destination
                 Text(
                   widget.trip.destination,
                   style: AppTextStyles.h3.copyWith(
@@ -582,10 +599,7 @@ class _TripCardContentState extends State<_TripCardContent>
                         : AppColors.textSecondaryLight,
                   ),
                 ),
-
                 const SizedBox(height: 16),
-
-                // Dates
                 Row(
                   children: [
                     Icon(
@@ -713,10 +727,12 @@ class _MemberAvatars extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.primary.withOpacity(0.3 + i * 0.2),
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.card(context), width: 2),
+                border:
+                Border.all(color: AppColors.card(context), width: 2),
               ),
               child: Center(
-                child: Icon(Icons.person, size: 14, color: AppColors.primary),
+                child:
+                Icon(Icons.person, size: 14, color: AppColors.primary),
               ),
             ),
           );
@@ -730,7 +746,8 @@ class _MemberAvatars extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.surface(context),
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.card(context), width: 2),
+                border:
+                Border.all(color: AppColors.card(context), width: 2),
               ),
               child: Center(
                 child: Text(
@@ -795,97 +812,14 @@ class _EmptyTrips extends StatelessWidget {
   }
 }
 
-class _TripsList extends StatefulWidget {
-  final List<TripEntity> trips;
-  final String userId;
-
-  const _TripsList({required this.trips, required this.userId});
-
-  @override
-  State<_TripsList> createState() => _TripsListState();
-}
-
-class _TripsListState extends State<_TripsList> {
-  late List<TripEntity> _trips;
-
-  @override
-  void initState() {
-    super.initState();
-    _trips = List.from(widget.trips);
-  }
-
-  @override
-  void didUpdateWidget(covariant _TripsList oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.trips != widget.trips) {
-      _trips = List.from(widget.trips);
-    }
-  }
-
-  void _removeTrip(String id) {
-    setState(() {
-      _trips.removeWhere((t) => t.id == id);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final now = DateTime.now();
-    final archiveThreshold = now.subtract(const Duration(days: 5));
-
-    final ongoing = _trips.where((t) =>
-    t.startDate.isBefore(now) && t.endDate.isAfter(now)).toList();
-
-    final upcoming = _trips.where((t) =>
-        t.startDate.isAfter(now)).toList()
-      ..sort((a, b) => a.startDate.compareTo(b.startDate));
-
-    final recent = _trips.where((t) =>
-    t.endDate.isBefore(now) &&
-        t.endDate.isAfter(archiveThreshold)).toList()
-      ..sort((a, b) => b.endDate.compareTo(a.endDate));
-
-    final archived = _trips.where((t) =>
-        t.endDate.isBefore(archiveThreshold)).toList()
-      ..sort((a, b) => b.endDate.compareTo(a.endDate));
-
-    final activeTrips = [...ongoing, ...upcoming, ...recent];
-
-    return Column(
-      children: [
-        ...activeTrips.map((trip) => Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: _TripCard(
-            trip: trip,
-            userId: widget.userId,
-            onTap: () => context.go('/trip/${trip.id}'),
-            onDeleted: () => _removeTrip(trip.id), // 🔥 CLAVE
-          ),
-        )),
-
-        if (archived.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          _ArchivedSection(
-            trips: archived,
-            userId: widget.userId,
-          ),
-        ],
-
-        const SizedBox(height: 100),
-      ],
-    );
-  }
-}
+// ─── SNACKBAR CUSTOM ─────────────────────────────────────────────────────────
 
 void showBottomSnackBar(BuildContext context, String message) {
   final overlay = Overlay.of(context);
-
   final overlayEntry = OverlayEntry(
     builder: (context) => _BottomSnackBar(message: message),
   );
-
   overlay.insert(overlayEntry);
-
   Future.delayed(const Duration(seconds: 2), () {
     overlayEntry.remove();
   });
@@ -909,19 +843,15 @@ class _BottomSnackBarState extends State<_BottomSnackBar>
   @override
   void initState() {
     super.initState();
-
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-
     _slide = Tween<Offset>(
       begin: const Offset(0, 1),
       end: const Offset(0, 0),
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
-
     _fade = Tween<double>(begin: 0, end: 1).animate(_controller);
-
     _controller.forward();
   }
 
@@ -944,9 +874,10 @@ class _BottomSnackBarState extends State<_BottomSnackBar>
           child: FadeTransition(
             opacity: _fade,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
-                color: AppColors.error, // 🔴 rojo delete
+                color: AppColors.error,
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
