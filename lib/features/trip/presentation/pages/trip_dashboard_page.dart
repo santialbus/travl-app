@@ -128,6 +128,39 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
     }
   }
 
+  String _getTripProgressText(TripEntity trip) {
+    final now = DateTime.now();
+    final start = trip.startDate;
+    final end = trip.endDate;
+
+    final totalDays = trip.numberOfDays;
+
+    final isOngoing = start.isBefore(now) && end.isAfter(now);
+    final isUpcoming = start.isAfter(now);
+
+    if (isOngoing) {
+      final currentDay = now.difference(start).inDays + 1;
+
+      if (currentDay == totalDays) {
+        return 'Last day';
+      }
+
+      return 'Day $currentDay of $totalDays';
+    }
+
+    if (isUpcoming) {
+      final daysToGo = start.difference(now).inDays + 1;
+
+      if (daysToGo == 1) {
+        return 'Starts tomorrow';
+      }
+
+      return '$daysToGo days to go';
+    }
+
+    return '$totalDays days';
+  }
+
   @override
   Widget build(BuildContext context) {
     final trip = ref.watch(tripStreamProvider(widget.trip.id)).value ?? widget.trip;
@@ -297,7 +330,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              '${trip.numberOfDays} days',
+                              _getTripProgressText(trip),
                               style: AppTextStyles.labelSmall.copyWith(
                                 color: AppColors.textSecondary(context),
                               ),

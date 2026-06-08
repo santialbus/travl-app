@@ -507,6 +507,39 @@ class _TripCardContentState extends State<_TripCardContent>
     super.dispose();
   }
 
+  String _getTripProgressText() {
+    final now = DateTime.now();
+    final start = widget.trip.startDate;
+    final end = widget.trip.endDate;
+
+    final totalDays = widget.trip.numberOfDays;
+
+    final isOngoing = start.isBefore(now) && end.isAfter(now);
+    final isUpcoming = start.isAfter(now);
+
+    if (isOngoing) {
+      final currentDay = now.difference(start).inDays + 1;
+
+      if (currentDay == totalDays) {
+        return 'Last day';
+      }
+
+      return 'Day $currentDay of $totalDays';
+    }
+
+    if (isUpcoming) {
+      final daysToGo = start.difference(now).inDays + 1;
+
+      if (daysToGo == 1) {
+        return 'Starts tomorrow';
+      }
+
+      return '$daysToGo days to go';
+    }
+
+    return '$totalDays days';
+  }
+
   @override
   Widget build(BuildContext context) {
     final cardColor =
@@ -620,7 +653,7 @@ class _TripCardContentState extends State<_TripCardContent>
                     ),
                     const Spacer(),
                     Text(
-                      '${widget.trip.numberOfDays} days',
+                      _getTripProgressText(),
                       style: AppTextStyles.labelSmall.copyWith(
                         color: widget.isArchived
                             ? AppColors.textTertiary(context)
@@ -640,7 +673,7 @@ class _TripCardContentState extends State<_TripCardContent>
 
 // ─── STATUS BADGE ─────────────────────────────────────────────────────────────
 
-class _StatusBadge extends StatelessWidget {
+class _StatusBadge extends StatefulWidget {
   final bool isOngoing;
   final bool isUpcoming;
   final bool isArchived;
@@ -652,20 +685,64 @@ class _StatusBadge extends StatelessWidget {
   });
 
   @override
+  State<_StatusBadge> createState() => _StatusBadgeState();
+}
+
+class _StatusBadgeState extends State<_StatusBadge>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    );
+
+    _pulse = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+
+    if (widget.isOngoing) {
+      _controller.repeat(reverse: true);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _StatusBadge oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.isOngoing && !_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    } else if (!widget.isOngoing && _controller.isAnimating) {
+      _controller.stop();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     Color bgColor;
     Color textColor;
     String label;
 
-    if (isArchived) {
+    if (widget.isArchived) {
       bgColor = AppColors.textTertiary(context).withOpacity(0.1);
       textColor = AppColors.textTertiary(context);
       label = 'Archived';
-    } else if (isOngoing) {
+    } else if (widget.isOngoing) {
       bgColor = AppColors.primary.withOpacity(0.15);
       textColor = AppColors.primary;
       label = 'Ongoing';
-    } else if (isUpcoming) {
+    } else if (widget.isUpcoming) {
       bgColor = AppColors.success.withOpacity(0.15);
       textColor = AppColors.success;
       label = 'Upcoming';
@@ -675,35 +752,59 @@ class _StatusBadge extends StatelessWidget {
       label = 'Past';
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (isOngoing) ...[
-            Container(
-              width: 6,
-              height: 6,
-              decoration: BoxDecoration(
-                color: textColor,
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 6),
-          ],
-          Text(
-            label,
-            style: AppTextStyles.labelSmall.copyWith(color: textColor),
+    return AnimatedBuilder(
+      animation: _pulse,
+      builder: (context, _) {
+        final glow = widget.isOngoing ? (_pulse.value * 6) : 0.0;
+        final opacity =
+        widget.isOngoing ? (0.2 + _pulse.value * 0.3) : 0.0;
+
+        return Container(
+          padding:
+          const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(20),
           ),
-        ],
-      ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (widget.isOngoing)
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      width: 12 + glow,
+                      height: 12 + glow,
+                      decoration: BoxDecoration(
+                        color: textColor.withOpacity(opacity),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: textColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ],
+                ),
+              if (widget.isOngoing) const SizedBox(width: 6),
+              Text(
+                label,
+                style: AppTextStyles.labelSmall
+                    .copyWith(color: textColor),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
+
 
 // ─── MEMBER AVATARS ───────────────────────────────────────────────────────────
 
