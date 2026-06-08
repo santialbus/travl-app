@@ -12,8 +12,9 @@ import '../providers/users_provider.dart';
 
 class ExpensesPage extends ConsumerWidget {
   final String tripId;
+  final bool isReadOnly;
 
-  const ExpensesPage({super.key, required this.tripId});
+  const ExpensesPage({super.key, required this.tripId, this.isReadOnly = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -23,6 +24,7 @@ class ExpensesPage extends ConsumerWidget {
       data: (expenses) => _ExpensesContent(
         tripId: tripId,
         expenses: expenses,
+        isReadOnly: isReadOnly,
       ),
       loading: () => const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -37,10 +39,12 @@ class ExpensesPage extends ConsumerWidget {
 class _ExpensesContent extends ConsumerWidget {
   final String tripId;
   final List<ExpenseEntity> expenses;
+  final bool isReadOnly;
 
   const _ExpensesContent({
     required this.tripId,
     required this.expenses,
+    this.isReadOnly = false,
   });
 
   Map<String, double> _calculateBalances() {
@@ -108,7 +112,7 @@ class _ExpensesContent extends ConsumerWidget {
     return Scaffold(
       body: expenses.isEmpty
           ? _EmptyExpenses(
-        onAdd: () => _showAddExpenseSheet(context, ref),
+        onAdd: isReadOnly ? null : () => _showAddExpenseSheet(context, ref),
       )
           : SingleChildScrollView(
         child: Column(
@@ -136,7 +140,7 @@ class _ExpensesContent extends ConsumerWidget {
         ),
       ),
 
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: isReadOnly ? null : FloatingActionButton(
         onPressed: () => _showAddExpenseSheet(context, ref),
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add, color: Colors.white),
@@ -617,7 +621,7 @@ class _ExpenseRow extends ConsumerWidget {
 // ================= EMPTY =================
 
 class _EmptyExpenses extends StatelessWidget {
-  final VoidCallback onAdd;
+  final VoidCallback? onAdd;
 
   const _EmptyExpenses({required this.onAdd});
 

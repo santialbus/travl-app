@@ -19,15 +19,16 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 
 class TripDashboardPage extends ConsumerWidget {
   final String tripId;
+  final bool isReadOnly;
 
-  const TripDashboardPage({super.key, required this.tripId});
+  const TripDashboardPage({super.key, required this.tripId, this.isReadOnly = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tripAsync = ref.watch(tripStreamProvider(tripId));
 
     return tripAsync.when(
-      data: (trip) => _TripDashboardContent(trip: trip),
+      data: (trip) => _TripDashboardContent(trip: trip, isReadOnly: isReadOnly),
       loading: () => Scaffold(
         ///backgroundColor: AppColors.backgroundDark,
         body: Center(child: CircularProgressIndicator()),
@@ -62,8 +63,9 @@ class TripDashboardPage extends ConsumerWidget {
 
 class _TripDashboardContent extends ConsumerStatefulWidget {
   final TripEntity trip;
+  final bool isReadOnly;
 
-  const _TripDashboardContent({required this.trip});
+  const _TripDashboardContent({required this.trip, this.isReadOnly = false});
 
   @override
   ConsumerState<_TripDashboardContent> createState() =>
@@ -173,20 +175,22 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                   onPressed: () => context.go('/home'),
                 ),
                 actions: [
-                  IconButton(
-                    icon: Icon(
-                      Icons.people_outline,
-                      color: AppColors.textSecondary(context),
+                  if (!widget.isReadOnly) ...[
+                    IconButton(
+                      icon: Icon(
+                        Icons.people_outline,
+                        color: AppColors.textSecondary(context),
+                      ),
+                      onPressed: () => _showMembersSheet(context, widget.trip),
                     ),
-                    onPressed: () => _showMembersSheet(context, widget.trip),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.ios_share_outlined,
-                      color: AppColors.textSecondary(context),
+                    IconButton(
+                      icon: Icon(
+                        Icons.ios_share_outlined,
+                        color: AppColors.textSecondary(context),
+                      ),
+                      onPressed: () => _showInviteSheet(context, widget.trip.inviteCode),
                     ),
-                    onPressed: () => _showInviteSheet(context, widget.trip.inviteCode),
-                  ),
+                  ],
                   const SizedBox(width: 4),
                 ],
               ),
@@ -357,12 +361,13 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                   );
                   return TimelinePage(
                     tripId: trip.id,
-                    userId: userId, // ✅ Pasamos userId
+                    userId: userId,
+                    isReadOnly: widget.isReadOnly,
                   );
                 },
               ),
-              ExpensesPage(tripId: trip.id),
-              ChecklistPage(tripId: trip.id),
+              ExpensesPage(tripId: trip.id, isReadOnly: widget.isReadOnly),
+              ChecklistPage(tripId: trip.id, isReadOnly: widget.isReadOnly),
             ],
           ),
         ),

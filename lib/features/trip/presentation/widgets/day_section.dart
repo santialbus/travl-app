@@ -15,14 +15,16 @@ class DaySection extends ConsumerWidget {
   final DayEntity day;
   final String tripId;
   final String userId;
-  final List<dynamic> allDays; // ✅ Añadir
+  final List<dynamic> allDays;
+  final bool isReadOnly;
 
   const DaySection({
     super.key,
     required this.day,
     required this.tripId,
     required this.userId,
-    required this.allDays, // ✅ Añadir
+    required this.allDays,
+    this.isReadOnly = false,
   });
 
   @override
@@ -40,6 +42,7 @@ class DaySection extends ConsumerWidget {
             tripId: tripId,
             userId: userId,
             allDays: allDays,
+            isReadOnly: isReadOnly,
           ),
           loading: () => const Padding(
             padding: EdgeInsets.symmetric(vertical: 16),
@@ -68,6 +71,7 @@ class _DayActivities extends ConsumerWidget {
   final String tripId;
   final String userId;
   final List<dynamic> allDays;
+  final bool isReadOnly;
 
   const _DayActivities({
     required this.day,
@@ -75,12 +79,13 @@ class _DayActivities extends ConsumerWidget {
     required this.tripId,
     required this.userId,
     required this.allDays,
+    this.isReadOnly = false,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final member = ref.watch(currentMemberProvider(tripId));
-    final canAdd = member?.canAddActivities ?? false;
+    final canAdd = (member?.canAddActivities ?? false) && !isReadOnly;
     return Column(
       children: [
         // ✅ ReorderableListView para drag & drop

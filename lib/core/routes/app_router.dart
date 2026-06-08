@@ -41,8 +41,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RouteConstants.tripDashboard,
         pageBuilder: (context, state) {
           final tripId = state.pathParameters['tripId']!;
+          final isReadOnly = state.uri.queryParameters['readOnly'] == 'true';
           return MaterialPage(
-            child: TripDashboardPage(tripId: tripId),
+            child: TripDashboardPage(tripId: tripId, isReadOnly: isReadOnly),
           );
         },
       ),

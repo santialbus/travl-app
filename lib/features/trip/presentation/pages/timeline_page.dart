@@ -9,11 +9,13 @@ import '../widgets/day_section.dart';
 class TimelinePage extends ConsumerWidget {
   final String tripId;
   final String userId;
+  final bool isReadOnly;
 
   const TimelinePage({
     super.key,
     required this.tripId,
     required this.userId,
+    this.isReadOnly = false,
   });
 
   @override
@@ -56,6 +58,7 @@ class TimelinePage extends ConsumerWidget {
                   tripId: tripId,
                   userId: userId,
                   allDays: days,
+                  isReadOnly: isReadOnly,
                 )),
 
                 const SizedBox(height: 100),

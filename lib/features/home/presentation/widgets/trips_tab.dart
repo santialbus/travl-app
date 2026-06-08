@@ -100,8 +100,8 @@ class TripsTab extends ConsumerWidget {
     final greeting = hour < 12
         ? 'Good morning'
         : hour < 18
-        ? 'Good afternoon'
-        : 'Good evening';
+            ? 'Good afternoon'
+            : 'Good evening';
     return name.isNotEmpty ? '$greeting, $name 👋' : '$greeting 👋';
   }
 
@@ -164,7 +164,7 @@ class _TripsListState extends State<_TripsList> {
 
     final recent = _trips
         .where((t) =>
-    t.endDate.isBefore(now) && t.endDate.isAfter(archiveThreshold))
+            t.endDate.isBefore(now) && t.endDate.isAfter(archiveThreshold))
         .toList()
       ..sort((a, b) => b.endDate.compareTo(a.endDate));
 
@@ -178,14 +178,14 @@ class _TripsListState extends State<_TripsList> {
     return Column(
       children: [
         ...activeTrips.map((trip) => Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: _TripCard(
-            trip: trip,
-            userId: widget.userId,
-            onTap: () => context.go('/trip/${trip.id}'),
-            onDeleted: () => _removeTrip(trip.id),
-          ),
-        )),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: _TripCard(
+                trip: trip,
+                userId: widget.userId,
+                onTap: () => context.go('/trip/${trip.id}'),
+                onDeleted: () => _removeTrip(trip.id),
+              ),
+            )),
 
         if (archived.isNotEmpty) ...[
           const SizedBox(height: 8),
@@ -253,10 +253,10 @@ class _ArchivedSectionState extends State<_ArchivedSection> {
                   const SizedBox(width: 8),
                   Container(
                     padding:
-                    const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
                       color:
-                      AppColors.textTertiary(context).withOpacity(0.12),
+                          AppColors.textTertiary(context).withOpacity(0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -287,20 +287,20 @@ class _ArchivedSectionState extends State<_ArchivedSection> {
             curve: Curves.easeInOut,
             child: _expanded
                 ? Column(
-              children: widget.trips
-                  .map((trip) => Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: _TripCard(
-                  trip: trip,
-                  userId: widget.userId,
-                  onTap: () {},
-                  isArchived: true,
-                  onDeleted: () =>
-                      widget.onDeleted(trip.id), // ✅ fix
-                ),
-              ))
-                  .toList(),
-            )
+                    children: widget.trips
+                        .map((trip) => Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: _TripCard(
+                                trip: trip,
+                                userId: widget.userId,
+                                onTap: () => context.go('/trip/${trip.id}?readOnly=true'),
+                                isArchived: true,
+                                onDeleted: () =>
+                                    widget.onDeleted(trip.id), // ✅ fix
+                              ),
+                            ))
+                        .toList(),
+                  )
                 : const SizedBox.shrink(),
           ),
         ],
@@ -400,7 +400,7 @@ class _TripCard extends ConsumerWidget {
                 backgroundColor: AppColors.surface(context),
                 shape: const RoundedRectangleBorder(
                   borderRadius:
-                  BorderRadius.vertical(top: Radius.circular(20)),
+                      BorderRadius.vertical(top: Radius.circular(20)),
                 ),
                 builder: (context) => EditTripBottomSheet(trip: trip),
               );
@@ -429,7 +429,7 @@ class _TripCard extends ConsumerWidget {
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
                 child:
-                Text('Delete', style: TextStyle(color: AppColors.error)),
+                    Text('Delete', style: TextStyle(color: AppColors.error)),
               ),
             ],
           ),
@@ -510,7 +510,7 @@ class _TripCardContentState extends State<_TripCardContent>
   @override
   Widget build(BuildContext context) {
     final cardColor =
-    widget.isDark ? AppColors.card(context) : AppColors.cardLight;
+        widget.isDark ? AppColors.card(context) : AppColors.cardLight;
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -518,11 +518,11 @@ class _TripCardContentState extends State<_TripCardContent>
         animation: _pulseAnim,
         builder: (context, child) {
           final glowOpacity =
-          widget.isOngoing ? 0.2 + (_pulseAnim.value * 0.35) : 0.0;
+              widget.isOngoing ? 0.2 + (_pulseAnim.value * 0.35) : 0.0;
           final glowSpread =
-          widget.isOngoing ? 0.0 + (_pulseAnim.value * 4.0) : 0.0;
+              widget.isOngoing ? 0.0 + (_pulseAnim.value * 4.0) : 0.0;
           final glowBlur =
-          widget.isOngoing ? 8.0 + (_pulseAnim.value * 12.0) : 0.0;
+              widget.isOngoing ? 8.0 + (_pulseAnim.value * 12.0) : 0.0;
 
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
@@ -533,17 +533,17 @@ class _TripCardContentState extends State<_TripCardContent>
               borderRadius: BorderRadius.circular(20),
               border: widget.isOngoing
                   ? Border.all(
-                color: AppColors.primary
-                    .withOpacity(0.5 + _pulseAnim.value * 0.3),
-                width: 1.5,
-              )
+                      color: AppColors.primary
+                          .withOpacity(0.5 + _pulseAnim.value * 0.3),
+                      width: 1.5,
+                    )
                   : widget.isArchived
-                  ? Border.all(
-                color:
-                AppColors.borderColor(context).withOpacity(0.4),
-                width: 1,
-              )
-                  : null,
+                      ? Border.all(
+                          color:
+                              AppColors.borderColor(context).withOpacity(0.4),
+                          width: 1,
+                        )
+                      : null,
               boxShadow: [
                 if (!widget.isDark && !widget.isArchived)
                   BoxShadow(
@@ -728,11 +728,11 @@ class _MemberAvatars extends StatelessWidget {
                 color: AppColors.primary.withOpacity(0.3 + i * 0.2),
                 shape: BoxShape.circle,
                 border:
-                Border.all(color: AppColors.card(context), width: 2),
+                    Border.all(color: AppColors.card(context), width: 2),
               ),
               child: Center(
                 child:
-                Icon(Icons.person, size: 14, color: AppColors.primary),
+                    Icon(Icons.person, size: 14, color: AppColors.primary),
               ),
             ),
           );
@@ -747,7 +747,7 @@ class _MemberAvatars extends StatelessWidget {
                 color: AppColors.surface(context),
                 shape: BoxShape.circle,
                 border:
-                Border.all(color: AppColors.card(context), width: 2),
+                    Border.all(color: AppColors.card(context), width: 2),
               ),
               child: Center(
                 child: Text(
@@ -875,7 +875,7 @@ class _BottomSnackBarState extends State<_BottomSnackBar>
             opacity: _fade,
             child: Container(
               padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
                 color: AppColors.error,
                 borderRadius: BorderRadius.circular(14),
