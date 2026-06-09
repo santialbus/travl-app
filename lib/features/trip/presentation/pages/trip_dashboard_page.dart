@@ -128,39 +128,6 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
     }
   }
 
-  String _getTripProgressText(TripEntity trip) {
-    final now = DateTime.now();
-    final start = trip.startDate;
-    final end = trip.endDate;
-
-    final totalDays = trip.numberOfDays;
-
-    final isOngoing = start.isBefore(now) && end.isAfter(now);
-    final isUpcoming = start.isAfter(now);
-
-    if (isOngoing) {
-      final currentDay = now.difference(start).inDays + 1;
-
-      if (currentDay == totalDays) {
-        return 'Last day';
-      }
-
-      return 'Day $currentDay of $totalDays';
-    }
-
-    if (isUpcoming) {
-      final daysToGo = start.difference(now).inDays + 1;
-
-      if (daysToGo == 1) {
-        return 'Starts tomorrow';
-      }
-
-      return '$daysToGo days to go';
-    }
-
-    return '$totalDays days';
-  }
-
   @override
   Widget build(BuildContext context) {
     final trip = ref.watch(tripStreamProvider(widget.trip.id)).value ?? widget.trip;
@@ -253,15 +220,8 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             if (isOngoing)
-                              Container(
-                                width: 6,
-                                height: 6,
-                                margin: const EdgeInsets.only(right: 6),
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
+                              _PulsingDot(color: AppColors.primary),
+                            if (isOngoing) const SizedBox(width: 6),
                             Text(
                               isOngoing
                                   ? 'Ongoing'
@@ -330,7 +290,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              _getTripProgressText(trip),
+                              '${trip.numberOfDays} days',
                               style: AppTextStyles.labelSmall.copyWith(
                                 color: AppColors.textSecondary(context),
                               ),
@@ -658,8 +618,8 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
-                  color: AppColors.card(context),
-                  borderRadius: BorderRadius.circular(12),
+                color: AppColors.card(context),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
                 child: Text(
@@ -687,6 +647,68 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─── PULSING DOT ─────────────────────────────────────────────────────────────
+
+class _PulsingDot extends StatefulWidget {
+  final Color color;
+  const _PulsingDot({required this.color});
+
+  @override
+  State<_PulsingDot> createState() => _PulsingDotState();
+}
+
+class _PulsingDotState extends State<_PulsingDot>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    )..repeat(reverse: true);
+    _pulse = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _pulse,
+      builder: (_, __) => Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 12 + (_pulse.value * 6),
+            height: 12 + (_pulse.value * 6),
+            decoration: BoxDecoration(
+              color: widget.color.withOpacity(0.2 + _pulse.value * 0.3),
+              shape: BoxShape.circle,
+            ),
+          ),
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: widget.color,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ],
       ),
     );
   }

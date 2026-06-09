@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -230,7 +231,10 @@ class _ArchivedSectionState extends State<_ArchivedSection> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           InkWell(
-            onTap: () => setState(() => _expanded = !_expanded),
+            onTap: () {
+              HapticFeedback.selectionClick(); // 👈 AQUÍ
+              setState(() => _expanded = !_expanded);
+            },
             borderRadius: BorderRadius.circular(12),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
@@ -392,6 +396,7 @@ class _TripCard extends ConsumerWidget {
 
       confirmDismiss: (direction) async {
         if (direction == DismissDirection.startToEnd) {
+          HapticFeedback.selectionClick();
           Future.delayed(Duration.zero, () {
             if (context.mounted) {
               showModalBottomSheet(
@@ -438,6 +443,7 @@ class _TripCard extends ConsumerWidget {
 
       onDismissed: (direction) {
         if (direction == DismissDirection.endToStart && isOwner) {
+          HapticFeedback.mediumImpact();
           onDeleted?.call();
           ref.read(tripControllerProvider.notifier).deleteTrip(trip.id);
           if (context.mounted) {
@@ -546,7 +552,10 @@ class _TripCardContentState extends State<_TripCardContent>
         widget.isDark ? AppColors.card(context) : AppColors.cardLight;
 
     return GestureDetector(
-      onTap: widget.onTap,
+      onTap: () {
+        HapticFeedback.selectionClick(); // 👈 AQUÍ
+        widget.onTap();
+      },
       child: AnimatedBuilder(
         animation: _pulseAnim,
         builder: (context, child) {

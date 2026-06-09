@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -224,9 +225,12 @@ class _ChecklistRow extends ConsumerWidget {
         child: Icon(Icons.delete_outline, color: AppColors.error),
       ),
       child: InkWell(
-        onTap: () => ref
-            .read(checklistControllerProvider.notifier)
-            .toggleItem(item.id, !item.isDone),
+        onTap: () {
+          HapticFeedback.lightImpact();
+          ref
+              .read(checklistControllerProvider.notifier)
+              .toggleItem(item.id, !item.isDone);
+        },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           child: Row(
@@ -308,7 +312,7 @@ class _EmptyChecklist extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: onAdd,
+              onPressed: onAdd != null ? () => onAdd!() : null,
               icon: const Icon(Icons.add),
               label: const Text('Add Item'),
             ),
