@@ -628,9 +628,33 @@ class _EmptyExpenses extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: ElevatedButton(
-        onPressed: onAdd,
-        child: const Text('Add Expense'),
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('💸', style: TextStyle(fontSize: 64)),
+            const SizedBox(height: 16),
+            Text('No expenses yet', style: AppTextStyles.h4),
+            const SizedBox(height: 8),
+            Text(
+              'Track what everyone spends\nand split costs easily',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary(context),
+              ),
+              textAlign: TextAlign.center,
+            ),
+
+            if (onAdd != null) ...[
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: onAdd,
+                icon: const Icon(Icons.add),
+                label: const Text('Add Expense'),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

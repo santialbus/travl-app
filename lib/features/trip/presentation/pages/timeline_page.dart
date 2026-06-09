@@ -27,10 +27,23 @@ class TimelinePage extends ConsumerWidget {
       data: (days) {
         if (days.isEmpty) {
           return Center(
-            child: Text(
-              'No days yet',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textSecondary(context),
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('🗺️', style: TextStyle(fontSize: 64)),
+                  const SizedBox(height: 16),
+                  Text('No days yet', style: AppTextStyles.h4),
+                  const SizedBox(height: 8),
+                  Text(
+                    'This trip has no days configured yet',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textSecondary(context),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
             ),
           );
@@ -45,7 +58,7 @@ class TimelinePage extends ConsumerWidget {
                 // ✅ Progress bar global
                 activitiesAsync.when(
                   data: (activities) {
-                    if (activities.isEmpty) return const SizedBox.shrink();
+                    if (activities.isEmpty) const SizedBox.shrink();
                     return _TimelineProgressBar(activities: activities);
                   },
                   loading: () => const SizedBox.shrink(),
