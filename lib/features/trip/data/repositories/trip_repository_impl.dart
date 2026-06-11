@@ -72,6 +72,10 @@ class TripRepositoryImpl implements TripRepository {
     await _remoteDataSource.deleteTrip(tripId);
   }
 
+  Future<void> leaveTrip(String tripId, String userId) async {
+    await _remoteDataSource.leaveTrip(tripId, userId);
+  }
+
   @override
   Future<void> updateMemberRole({
     required String tripId,

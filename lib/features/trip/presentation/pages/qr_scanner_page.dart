@@ -1,17 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 
-class QrScannerPage extends StatefulWidget {
-  const QrScannerPage({super.key});
+import '../../../trip/presentation/providers/trip_provider.dart';
+
+class QrScannerPage extends ConsumerStatefulWidget {
+  final String userId;
+
+  const QrScannerPage({
+    super.key,
+    required this.userId,
+  });
 
   @override
-  State<QrScannerPage> createState() => _QrScannerPageState();
+  ConsumerState<QrScannerPage> createState() => _QrScannerPageState();
 }
 
-class _QrScannerPageState extends State<QrScannerPage> {
+class _QrScannerPageState extends ConsumerState<QrScannerPage> {
   final MobileScannerController controller = MobileScannerController();
 
   bool _isScanning = false;
@@ -20,14 +27,18 @@ class _QrScannerPageState extends State<QrScannerPage> {
 
   String? _extractInviteCode(String raw) {
     if (raw.startsWith('TRVL-')) return raw;
+
     final uri = Uri.tryParse(raw);
     if (uri != null) {
       for (final segment in uri.pathSegments) {
         if (segment.startsWith('TRVL-')) return segment;
       }
       final queryCode = uri.queryParameters['code'];
-      if (queryCode != null && queryCode.startsWith('TRVL-')) return queryCode;
+      if (queryCode != null && queryCode.startsWith('TRVL-')) {
+        return queryCode;
+      }
     }
+
     final match = RegExp(r'TRVL-[A-Za-z0-9]+').firstMatch(raw);
     return match?.group(0);
   }
@@ -36,6 +47,39 @@ class _QrScannerPageState extends State<QrScannerPage> {
   void dispose() {
     controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleScan(String code) async {
+    setState(() => _isDetected = true);
+    HapticFeedback.heavyImpact();
+
+    final trip = await ref
+        .read(tripControllerProvider.notifier)
+        .joinTripByCode(code, widget.userId);
+
+    if (!mounted) return;
+
+    if (trip != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Joined trip: ${trip.id}')),
+      );
+
+      // 🔥 navegación directa sin pop
+      context.go('/trip/${trip.id}');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Invalid invite code'),
+          backgroundColor: Colors.red,
+        ),
+      );
+
+      // permitir reintento
+      setState(() {
+        _isScanning = false;
+        _isDetected = false;
+      });
+    }
   }
 
   @override
@@ -47,7 +91,6 @@ class _QrScannerPageState extends State<QrScannerPage> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-
           // CAMERA
           MobileScanner(
             controller: controller,
@@ -66,16 +109,12 @@ class _QrScannerPageState extends State<QrScannerPage> {
               }
 
               _isScanning = true;
-              setState(() => _isDetected = true);
-              HapticFeedback.heavyImpact();
 
-              Future.delayed(const Duration(milliseconds: 500), () {
-                if (mounted) Navigator.pop(context, code);
-              });
+              _handleScan(code);
             },
           ),
 
-          // MÁSCARA oscura alrededor del frame
+          // MÁSCARA
           Positioned.fill(
             child: Column(
               children: [
@@ -85,7 +124,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
                   child: Row(
                     children: [
                       Expanded(child: Container(color: Colors.black.withOpacity(0.6))),
-                      SizedBox(width: size),
+                      const SizedBox(width: size),
                       Expanded(child: Container(color: Colors.black.withOpacity(0.6))),
                     ],
                   ),
@@ -95,7 +134,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
             ),
           ),
 
-          // FRAME con animación
+          // FRAME
           Center(
             child: SizedBox(
               width: size,
@@ -104,7 +143,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
             ),
           ),
 
-          // INSTRUCCIÓN debajo del frame
+          // TEXTO
           Align(
             alignment: const Alignment(0, 0.35),
             child: Column(
@@ -138,7 +177,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
             left: 20,
             child: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => context.pop(),
             ),
           ),
 
@@ -165,6 +204,7 @@ class _QrScannerPageState extends State<QrScannerPage> {
 
 class _ScannerFrame extends StatefulWidget {
   final bool isDetected;
+
   const _ScannerFrame({required this.isDetected});
 
   @override
@@ -194,7 +234,6 @@ class _ScannerFrameState extends State<_ScannerFrame>
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // BORDER + GLOW
         AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           decoration: BoxDecoration(
@@ -204,16 +243,17 @@ class _ScannerFrameState extends State<_ScannerFrame>
             ),
             borderRadius: BorderRadius.circular(20),
             boxShadow: widget.isDetected
-                ? [BoxShadow(
-              color: Colors.green.withOpacity(0.6),
-              blurRadius: 20,
-              spreadRadius: 2,
-            )]
+                ? [
+              BoxShadow(
+                color: Colors.green.withOpacity(0.6),
+                blurRadius: 20,
+                spreadRadius: 2,
+              )
+            ]
                 : [],
           ),
         ),
 
-        // SCAN LINE — blanco cuando busca, verde cuando detecta
         AnimatedBuilder(
           animation: _controller,
           builder: (context, _) {

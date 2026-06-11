@@ -36,6 +36,7 @@ abstract class TripRepository {
 
   // Delete trip
   Future<void> deleteTrip(String tripId);
+  Future<void> leaveTrip(String tripId, String userId);
 
   Future<void> updateMemberRole({
     required String tripId,

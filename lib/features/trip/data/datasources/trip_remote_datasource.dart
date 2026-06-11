@@ -283,6 +283,48 @@ class TripRemoteDataSource {
     }
   }
 
+
+  Future<void> leaveTrip(String tripId, String userId) async {
+    try {
+      final tripDoc = await _firestore
+          .collection(FirebaseConstants.tripsCollection)
+          .doc(tripId)
+          .get();
+
+      if (!tripDoc.exists) throw Exception('Trip not found');
+
+      final data = tripDoc.data()!;
+      final members = List<Map<String, dynamic>>.from(
+        (data[FirebaseConstants.tripMembersField] as List).map(
+              (m) => Map<String, dynamic>.from(m),
+        ),
+      );
+
+      // Remove user from members
+      members.removeWhere((m) => m['userId'] == userId);
+
+      final batch = _firestore.batch();
+
+      // Update trip members
+      batch.update(
+        _firestore.collection(FirebaseConstants.tripsCollection).doc(tripId),
+        {FirebaseConstants.tripMembersField: members},
+      );
+
+      // Remove trip from user's tripsJoined
+      batch.update(
+        _firestore.collection(FirebaseConstants.usersCollection).doc(userId),
+        {
+          FirebaseConstants.userTripsJoinedField:
+          FieldValue.arrayRemove([tripId]),
+        },
+      );
+
+      await batch.commit();
+    } catch (e) {
+      throw Exception('Failed to leave trip: \$e');
+    }
+  }
   Future<void> updateMemberRole({
     required String tripId,
     required String userId,

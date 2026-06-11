@@ -50,10 +50,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RouteConstants.qrScanner,
-        pageBuilder: (context, state) => const MaterialPage(
-          child: QrScannerPage(),
-          fullscreenDialog: true,
-        ),
+        pageBuilder: (context, state) {
+          final userId = state.extra as String;
+
+          return MaterialPage(
+            fullscreenDialog: true,
+            child: QrScannerPage(
+              userId: userId,
+            ),
+          );
+        },
       ),
     ],
   );

@@ -110,6 +110,16 @@ class TripController extends StateNotifier<TripState> {
     }
   }
 
+  Future<void> leaveTrip(String tripId, String userId) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _repository.leaveTrip(tripId, userId);
+      state = TripState();
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+    }
+  }
+
   Future<bool> updateTrip({
     required String tripId,
     required String name,
