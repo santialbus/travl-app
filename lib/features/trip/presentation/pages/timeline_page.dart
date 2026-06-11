@@ -58,7 +58,7 @@ class TimelinePage extends ConsumerWidget {
                 // ✅ Progress bar global
                 activitiesAsync.when(
                   data: (activities) {
-                    if (activities.isEmpty) const SizedBox.shrink();
+                    if (activities.isEmpty) return const SizedBox.shrink();
                     return _TimelineProgressBar(activities: activities);
                   },
                   loading: () => const SizedBox.shrink(),
@@ -139,6 +139,33 @@ class _TimelineProgressBar extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _EmptyTimeline extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('🗓️', style: TextStyle(fontSize: 64)),
+            const SizedBox(height: 16),
+            Text('No activities yet', style: AppTextStyles.h4),
+            const SizedBox(height: 8),
+            Text(
+              'Swipe right on a day to add\nyour first activity',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary(context),
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }

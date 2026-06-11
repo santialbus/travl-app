@@ -571,81 +571,90 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
   void _showInviteSheet(BuildContext context, String inviteCode) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: AppColors.surface(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: AppColors.textTertiary(context),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            Text('Invite Friends', style: AppTextStyles.h3),
-
-            const SizedBox(height: 24),
-
-            // QR
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: QrImageView(
-                data: inviteCode,
-                version: QrVersions.auto,
-                size: 160,
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Invite code
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              decoration: BoxDecoration(
-                color: AppColors.card(context),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: Text(
-                  inviteCode,
-                  style: AppTextStyles.h4.copyWith(
-                    color: AppColors.primary,
-                    letterSpacing: 3,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.textTertiary(context),
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
-            ),
-
-            const SizedBox(height: 16),
-
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: ElevatedButton.icon(
-                onPressed: () => Share.share(
-                  'Join my trip on Travl! 🌍\nUse code: $inviteCode',
+              const SizedBox(height: 24),
+              Text('Invite Friends', style: AppTextStyles.h3),
+              const SizedBox(height: 24),
+              // QR
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                icon: const Icon(Icons.share),
-                label: const Text('Share Invite Code'),
+                child: QrImageView(
+                  data: inviteCode,
+                  version: QrVersions.auto,
+                  size: 160,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 20),
+              // Invite code
+              GestureDetector(
+                onTap: () {
+                  Clipboard.setData(ClipboardData(text: inviteCode));
+                  HapticFeedback.selectionClick();
+                  showTopSnackBar(context, 'Code copied');
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.card(context),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Center(
+                    child: Text(
+                      inviteCode,
+                      style: AppTextStyles.h4.copyWith(
+                        color: AppColors.primary,
+                        letterSpacing: 3,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    Share.share('Join my trip on Travl! 🌍\nUse code: $inviteCode');
+                  },
+                  icon: const Icon(Icons.share),
+                  label: const Text('Share Invite Code'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

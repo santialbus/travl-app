@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -140,15 +141,42 @@ class _JoinTripDialogState extends ConsumerState<JoinTripDialog> {
             ),
             const SizedBox(height: 12),
             TextButton.icon(
-              onPressed: () {
+              onPressed: () async {
+                final rootContext = context;
+                // Guardar ref ANTES de cerrar el dialog
+                final controller = ref.read(tripControllerProvider.notifier);
+
                 Navigator.of(context).pop();
-                // TODO: Open QR scanner
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('QR Scanner coming soon')),
-                );
+                await Future.delayed(const Duration(milliseconds: 150));
+
+                if (!rootContext.mounted) return;
+
+                final result = await rootContext.push('/qr-scanner');
+
+                if (!rootContext.mounted) return;
+
+                if (result != null && result is String) {
+                  final code = InviteCodeGenerator.format(result);
+                  HapticFeedback.selectionClick();
+
+                  final trip = await controller.joinTripByCode(code, widget.userId);
+
+                  if (!rootContext.mounted) return;
+
+                  if (trip != null) {
+                    rootContext.go('/trip/${trip.id}');
+                  } else {
+                    ScaffoldMessenger.of(rootContext).showSnackBar(
+                      SnackBar(
+                        content: const Text('Failed to join trip'),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                  }
+                }
               },
               icon: const Icon(Icons.qr_code_scanner),
-              label: const Text('Scan QR Code'),
+              label: const Text('Scan QR'),
             ),
           ],
         ),

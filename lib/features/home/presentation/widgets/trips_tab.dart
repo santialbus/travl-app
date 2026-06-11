@@ -339,17 +339,6 @@ class _TripCard extends ConsumerWidget {
         trip.startDate.isBefore(now) && trip.endDate.isAfter(now);
     final isUpcoming = trip.startDate.isAfter(now);
 
-    if (!isOwner) {
-      return _TripCardContent(
-        trip: trip,
-        isDark: isDark,
-        isOngoing: isOngoing,
-        isUpcoming: isUpcoming,
-        isArchived: isArchived,
-        onTap: onTap,
-      );
-    }
-
     return Dismissible(
       key: ValueKey(trip.id),
       direction: DismissDirection.horizontal,
@@ -414,8 +403,6 @@ class _TripCard extends ConsumerWidget {
           return false;
         }
 
-        if (!isOwner) return false;
-
         return await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
@@ -442,10 +429,12 @@ class _TripCard extends ConsumerWidget {
       },
 
       onDismissed: (direction) {
-        if (direction == DismissDirection.endToStart && isOwner) {
+        if (direction == DismissDirection.endToStart) {
           HapticFeedback.mediumImpact();
           onDeleted?.call();
-          ref.read(tripControllerProvider.notifier).deleteTrip(trip.id);
+          if (isOwner) {
+            ref.read(tripControllerProvider.notifier).deleteTrip(trip.id);
+          }
           if (context.mounted) {
             showBottomSnackBar(context, '${trip.name} deleted');
           }
