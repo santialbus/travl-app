@@ -9,6 +9,8 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_utils.dart';
 import '../../../../core/widgets/offline_indicator.dart';
 import '../providers/permissions_provider.dart';
+import '../providers/users_provider.dart';
+import '../../../../core/widgets/pulsing_dot.dart';
 import '../providers/trip_provider.dart';
 import '../../domain/entities/trip_entity.dart';
 import 'timeline_page.dart';
@@ -220,7 +222,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             if (isOngoing)
-                              _PulsingDot(color: AppColors.primary),
+                              PulsingDot(color: AppColors.primary),
                             if (isOngoing) const SizedBox(width: 6),
                             Text(
                               isOngoing
@@ -373,6 +375,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
 
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: AppColors.surface(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -385,145 +388,161 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
           final currentMember = ref.watch(currentMemberProvider(trip.id));
           final isHost = currentMember?.isHost ?? false;
 
-          return Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Handle
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: AppColors.textTertiary(context),
-                      borderRadius: BorderRadius.circular(2),
+          return SafeArea(
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: 24,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Handle
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppColors.textTertiary(context),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                Text(
-                  'Members (${tripData.members.length})',
-                  style: AppTextStyles.h3,
-                ),
+                  Text(
+                    'Members (${tripData.members.length})',
+                    style: AppTextStyles.h3,
+                  ),
 
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                ...tripData.members.map((member) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Row(
-                    children: [
-                      // Avatar
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: AppColors.card(context),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.person,
-                          color: AppColors.textSecondary(context),
-                          size: 22,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-
-                      // Nombre/ID
-                      Expanded(
-                        child: Text(
-                          member.userId,
-                          style: AppTextStyles.bodyMedium,
-                        ),
-                      ),
-
-                      // Badge rol
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: member.isHost
-                              ? AppColors.primary.withOpacity(0.15)
-                              : member.isCoHost
-                              ? AppColors.primary.withOpacity(0.1)
-                              : AppColors.card(context),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          member.isHost
-                              ? '👑 Host'
-                              : member.isCoHost
-                              ? '🤝 Co-host'
-                              : 'Member',
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: member.isHost || member.isCoHost
-                                ? AppColors.primary
-                                : AppColors.textSecondary(context),
+                  ...tripData.members.map((member) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Row(
+                      children: [
+                        // Avatar
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: AppColors.card(context),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            Icons.person,
+                            color: AppColors.textSecondary(context),
+                            size: 22,
                           ),
                         ),
-                      ),
+                        const SizedBox(width: 12),
 
-                      // Toggle co-host
-                      if (isHost && !member.isHost) ...[
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () {
-                            _toggleCoHost(rootContext, tripData, member);
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: member.isCoHost
-                                  ? AppColors.primary.withOpacity(0.15)
-                                  : AppColors.card(context),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: member.isCoHost
-                                    ? AppColors.primary
-                                    : AppColors.borderColor(context),
-                              ),
-                            ),
-                            child: Text(
-                              member.isCoHost
-                                  ? '✓ Co-host'
-                                  : 'Make co-host',
-                              style: AppTextStyles.labelSmall.copyWith(
-                                color: member.isCoHost
-                                    ? AppColors.primary
-                                    : AppColors.textTertiary(context),
-                                fontSize: 10,
-                              ),
+                        // Nombre real
+                        Expanded(
+                          child: Consumer(
+                            builder: (context, ref, _) {
+                              final nameAsync = ref.watch(userNameProvider(member.userId));
+                              final name = nameAsync.maybeWhen(
+                                data: (n) => n,
+                                orElse: () => '...',
+                              );
+                              return Text(
+                                name,
+                                style: AppTextStyles.bodyMedium,
+                              );
+                            },
+                          ),
+                        ),
+
+                        // Badge rol
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: member.isHost
+                                ? AppColors.primary.withOpacity(0.15)
+                                : member.isCoHost
+                                ? AppColors.primary.withOpacity(0.1)
+                                : AppColors.card(context),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            member.isHost
+                                ? '👑 Host'
+                                : member.isCoHost
+                                ? '🤝 Co-host'
+                                : 'Member',
+                            style: AppTextStyles.labelSmall.copyWith(
+                              color: member.isHost || member.isCoHost
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary(context),
                             ),
                           ),
                         ),
+
+                        // Toggle co-host
+                        if (isHost && !member.isHost) ...[
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () {
+                              _toggleCoHost(rootContext, tripData, member);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: member.isCoHost
+                                    ? AppColors.primary.withOpacity(0.15)
+                                    : AppColors.card(context),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: member.isCoHost
+                                      ? AppColors.primary
+                                      : AppColors.borderColor(context),
+                                ),
+                              ),
+                              child: Text(
+                                member.isCoHost
+                                    ? '✓ Co-host'
+                                    : 'Make co-host',
+                                style: AppTextStyles.labelSmall.copyWith(
+                                  color: member.isCoHost
+                                      ? AppColors.primary
+                                      : AppColors.textTertiary(context),
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
-                  ),
-                )),
+                    ),
+                  )),
 
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _showInviteSheet(context, tripData.inviteCode);
-                    },
-                    icon: const Icon(Icons.person_add_outlined),
-                    label: const Text('Invite Someone'),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showInviteSheet(context, tripData.inviteCode);
+                      },
+                      icon: const Icon(Icons.person_add_outlined),
+                      label: const Text('Invite Someone'),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           );
         },
@@ -571,153 +590,82 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
   void _showInviteSheet(BuildContext context, String inviteCode) {
     showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
       backgroundColor: AppColors.surface(context),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.textTertiary(context),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text('Invite Friends', style: AppTextStyles.h3),
-              const SizedBox(height: 24),
-              // QR
-              Container(
-                padding: const EdgeInsets.all(20),
+      builder: (context) => Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: QrImageView(
-                  data: inviteCode,
-                  version: QrVersions.auto,
-                  size: 160,
+                  color: AppColors.textTertiary(context),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(height: 20),
-              // Invite code
-              GestureDetector(
-                onTap: () {
-                  Clipboard.setData(ClipboardData(text: inviteCode));
-                  HapticFeedback.selectionClick();
-                  showTopSnackBar(context, 'Code copied');
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.card(context),
-                    borderRadius: BorderRadius.circular(12),
+            ),
+
+            const SizedBox(height: 24),
+
+            Text('Invite Friends', style: AppTextStyles.h3),
+
+            const SizedBox(height: 24),
+
+            // QR
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: QrImageView(
+                data: inviteCode,
+                version: QrVersions.auto,
+                size: 160,
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Invite code
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              decoration: BoxDecoration(
+                color: AppColors.card(context),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  inviteCode,
+                  style: AppTextStyles.h4.copyWith(
+                    color: AppColors.primary,
+                    letterSpacing: 3,
                   ),
-                  child: Center(
-                    child: Text(
-                      inviteCode,
-                      style: AppTextStyles.h4.copyWith(
-                        color: AppColors.primary,
-                        letterSpacing: 3,
-                      ),
-                    ),
-                  ),
                 ),
               ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    HapticFeedback.lightImpact();
-                    Share.share('Join my trip on Travl! 🌍\nUse code: $inviteCode');
-                  },
-                  icon: const Icon(Icons.share),
-                  label: const Text('Share Invite Code'),
+            ),
+
+            const SizedBox(height: 16),
+
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton.icon(
+                onPressed: () => Share.share(
+                  'Join my trip on Travl! 🌍\nUse code: $inviteCode',
                 ),
+                icon: const Icon(Icons.share),
+                label: const Text('Share Invite Code'),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ),
-    );
-  }
-}
-
-// ─── PULSING DOT ─────────────────────────────────────────────────────────────
-
-class _PulsingDot extends StatefulWidget {
-  final Color color;
-  const _PulsingDot({required this.color});
-
-  @override
-  State<_PulsingDot> createState() => _PulsingDotState();
-}
-
-class _PulsingDotState extends State<_PulsingDot>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _pulse;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1600),
-    )..repeat(reverse: true);
-    _pulse = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _pulse,
-      builder: (_, __) => Stack(
-        alignment: Alignment.center,
-        children: [
-          Container(
-            width: 12 + (_pulse.value * 6),
-            height: 12 + (_pulse.value * 6),
-            decoration: BoxDecoration(
-              color: widget.color.withOpacity(0.2 + _pulse.value * 0.3),
-              shape: BoxShape.circle,
-            ),
-          ),
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: widget.color,
-              shape: BoxShape.circle,
-            ),
-          ),
-        ],
       ),
     );
   }
