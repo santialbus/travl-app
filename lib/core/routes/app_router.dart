@@ -5,6 +5,7 @@ import '../../features/auth/presentation/pages/auth_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/splash/presentation/splash_page.dart';
 import '../../features/trip/presentation/pages/create_trip_page.dart';
+import '../../features/trip/presentation/pages/qr_scanner_page.dart';
 import '../../features/trip/presentation/pages/trip_dashboard_page.dart';
 import '../constants/route_constants.dart';
 
@@ -41,8 +42,22 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: RouteConstants.tripDashboard,
         pageBuilder: (context, state) {
           final tripId = state.pathParameters['tripId']!;
+          final isReadOnly = state.uri.queryParameters['readOnly'] == 'true';
           return MaterialPage(
-            child: TripDashboardPage(tripId: tripId),
+            child: TripDashboardPage(tripId: tripId, isReadOnly: isReadOnly),
+          );
+        },
+      ),
+      GoRoute(
+        path: RouteConstants.qrScanner,
+        pageBuilder: (context, state) {
+          final userId = state.extra as String;
+
+          return MaterialPage(
+            fullscreenDialog: true,
+            child: QrScannerPage(
+              userId: userId,
+            ),
           );
         },
       ),

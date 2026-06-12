@@ -63,6 +63,11 @@ class ActivityController extends StateNotifier<ActivityState> {
     double? latitude,
     double? longitude,
     required String createdBy,
+    // ✅ Nuevos
+    String? flightNumber,
+    String? trainNumber,
+    String? transportCompany,
+    String? bookingReference,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
@@ -77,6 +82,44 @@ class ActivityController extends StateNotifier<ActivityState> {
         latitude: latitude,
         longitude: longitude,
         createdBy: createdBy,
+        flightNumber: flightNumber,
+        trainNumber: trainNumber,
+        transportCompany: transportCompany,
+        bookingReference: bookingReference,
+      );
+      state = ActivityState();
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> updateActivity({
+    required String activityId,
+    required String title,
+    required ActivityType type,
+    String? description,
+    DateTime? time,
+    String? locationName,
+    String? flightNumber,
+    String? trainNumber,
+    String? transportCompany,
+    String? bookingReference,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _dataSource.updateActivity(
+        activityId: activityId,
+        title: title,
+        type: type,
+        description: description,
+        time: time,
+        locationName: locationName,
+        flightNumber: flightNumber,
+        trainNumber: trainNumber,
+        transportCompany: transportCompany,
+        bookingReference: bookingReference,
       );
       state = ActivityState();
       return true;
@@ -108,29 +151,26 @@ class ActivityController extends StateNotifier<ActivityState> {
     }
   }
 
-  Future<bool> updateActivity({
-    required String activityId,
-    required String title,
-    required ActivityType type,
-    String? description,
-    DateTime? time,
-    String? locationName,
-  }) async {
-    state = state.copyWith(isLoading: true, error: null);
+  Future<void> reorderActivitiesInDay(
+      String dayId,
+      List<String> activityIds,
+      ) async {
     try {
-      await _dataSource.updateActivity(
-        activityId: activityId,
-        title: title,
-        type: type,
-        description: description,
-        time: time,
-        locationName: locationName,
-      );
-      state = ActivityState();
-      return true;
+      await _dataSource.reorderActivitiesInDay(dayId, activityIds);
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-      return false;
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  Future<void> moveActivityToDay(
+      String activityId,
+      String newDayId,
+      int newOrderIndex,
+      ) async {
+    try {
+      await _dataSource.moveActivityToDay(activityId, newDayId, newOrderIndex);
+    } catch (e) {
+      state = state.copyWith(error: e.toString());
     }
   }
 }

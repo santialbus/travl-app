@@ -282,4 +282,87 @@ class TripRemoteDataSource {
       throw Exception('Failed to delete trip: $e');
     }
   }
+
+
+  Future<void> leaveTrip(String tripId, String userId) async {
+    try {
+      final tripDoc = await _firestore
+          .collection(FirebaseConstants.tripsCollection)
+          .doc(tripId)
+          .get();
+
+      if (!tripDoc.exists) throw Exception('Trip not found');
+
+      final data = tripDoc.data()!;
+      final members = List<Map<String, dynamic>>.from(
+        (data[FirebaseConstants.tripMembersField] as List).map(
+              (m) => Map<String, dynamic>.from(m),
+        ),
+      );
+
+      // Remove user from members
+      members.removeWhere((m) => m['userId'] == userId);
+
+      final batch = _firestore.batch();
+
+      // Update trip members
+      batch.update(
+        _firestore.collection(FirebaseConstants.tripsCollection).doc(tripId),
+        {FirebaseConstants.tripMembersField: members},
+      );
+
+      // Remove trip from user's tripsJoined
+      batch.update(
+        _firestore.collection(FirebaseConstants.usersCollection).doc(userId),
+        {
+          FirebaseConstants.userTripsJoinedField:
+          FieldValue.arrayRemove([tripId]),
+        },
+      );
+
+      await batch.commit();
+    } catch (e) {
+      throw Exception('Failed to leave trip: \$e');
+    }
+  }
+  Future<void> updateMemberRole({
+    required String tripId,
+    required String userId,
+    required String newRole, // 'cohost' | 'member'
+  }) async {
+    try {
+      final tripDoc = await _firestore
+          .collection(FirebaseConstants.tripsCollection)
+          .doc(tripId)
+          .get();
+
+      if (!tripDoc.exists) throw Exception('Trip not found');
+
+      final data = tripDoc.data()!;
+      final members = (data[FirebaseConstants.tripMembersField] as List)
+          .map((m) => MemberModel.fromMap(m as Map<String, dynamic>))
+          .toList();
+
+      final updatedMembers = members.map((member) {
+        if (member.userId == userId) {
+          return MemberModel(
+            userId: member.userId,
+            role: newRole,
+            joinedAt: member.joinedAt,
+          );
+        }
+        return member;
+      }).toList();
+
+      await _firestore
+          .collection(FirebaseConstants.tripsCollection)
+          .doc(tripId)
+          .update({
+        FirebaseConstants.tripMembersField:
+        updatedMembers.map((m) => m.toMap()).toList(),
+      });
+    } catch (e) {
+      throw Exception('Failed to update member role: $e');
+    }
+  }
 }

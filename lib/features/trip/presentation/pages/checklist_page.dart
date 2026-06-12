@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -7,8 +8,9 @@ import '../providers/checklist_provider.dart';
 
 class ChecklistPage extends ConsumerWidget {
   final String tripId;
+  final bool isReadOnly;
 
-  const ChecklistPage({super.key, required this.tripId});
+  const ChecklistPage({super.key, required this.tripId, this.isReadOnly = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -18,6 +20,7 @@ class ChecklistPage extends ConsumerWidget {
       data: (items) => _ChecklistContent(
         tripId: tripId,
         items: items,
+        isReadOnly: isReadOnly,
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('Error: $e')),
@@ -28,10 +31,12 @@ class ChecklistPage extends ConsumerWidget {
 class _ChecklistContent extends StatelessWidget {
   final String tripId;
   final List<ChecklistItemEntity> items;
+  final bool isReadOnly;
 
   const _ChecklistContent({
     required this.tripId,
     required this.items,
+    this.isReadOnly = false,
   });
 
   int get _doneCount => items.where((i) => i.isDone).length;
@@ -41,7 +46,7 @@ class _ChecklistContent extends StatelessWidget {
     return Scaffold(
       body: items.isEmpty
           ? _EmptyChecklist(
-        onAdd: () => _showAddSheet(context),
+        onAdd: isReadOnly ? null : () => _showAddSheet(context),
       )
           : SingleChildScrollView(
         child: Column(
@@ -68,7 +73,7 @@ class _ChecklistContent extends StatelessWidget {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: isReadOnly ? null : FloatingActionButton(
         onPressed: () => _showAddSheet(context),
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add, color: Colors.white),
@@ -220,9 +225,12 @@ class _ChecklistRow extends ConsumerWidget {
         child: Icon(Icons.delete_outline, color: AppColors.error),
       ),
       child: InkWell(
-        onTap: () => ref
-            .read(checklistControllerProvider.notifier)
-            .toggleItem(item.id, !item.isDone),
+        onTap: () {
+          HapticFeedback.lightImpact();
+          ref
+              .read(checklistControllerProvider.notifier)
+              .toggleItem(item.id, !item.isDone);
+        },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           child: Row(
@@ -279,7 +287,7 @@ class _ChecklistRow extends ConsumerWidget {
 
 // Empty state
 class _EmptyChecklist extends StatelessWidget {
-  final VoidCallback onAdd;
+  final VoidCallback? onAdd;
 
   const _EmptyChecklist({required this.onAdd});
 
@@ -304,7 +312,7 @@ class _EmptyChecklist extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: onAdd,
+              onPressed: onAdd != null ? () => onAdd!() : null,
               icon: const Icon(Icons.add),
               label: const Text('Add Item'),
             ),

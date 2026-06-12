@@ -82,146 +82,208 @@ class _AuthPageState extends ConsumerState<AuthPage> {
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
+    final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 60),
-
-              // Logo/Title
-              Text(
-                '✈️',
-                style: const TextStyle(fontSize: 64),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Travl',
-                style: AppTextStyles.h1,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Plan your adventures together',
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textSecondary(context),
-                ),
-                textAlign: TextAlign.center,
-              ),
-
-              const SizedBox(height: 60),
-
-              // Email/Password Form
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    if (_isSignUp)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: TextFormField(
-                          controller: _nameController,
-                          decoration: const InputDecoration(
-                            labelText: 'Name',
-                            prefixIcon: Icon(Icons.person_outline),
-                          ),
-                          validator: (value) => Validators.required(value, 'Name'),
-                        ),
-                      ),
-
-                    TextFormField(
-                      controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email_outlined),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                      validator: Validators.email,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    TextFormField(
-                      controller: _passwordController,
-                      decoration: const InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: Icon(Icons.lock_outline),
-                      ),
-                      obscureText: true,
-                      validator: (value) => Validators.required(value, 'Password'),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Email Auth Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: authState.isLoading ? null : _handleEmailAuth,
-                        child: authState.isLoading
-                            ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                            : Text(_isSignUp ? 'Sign Up' : 'Sign In'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Toggle Sign In/Sign Up
-              TextButton(
-                onPressed: () {
-                  setState(() {
-                    _isSignUp = !_isSignUp;
-                  });
-                },
-                child: Text(
-                  _isSignUp
-                      ? 'Already have an account? Sign In'
-                      : 'Don\'t have an account? Sign Up',
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // Divider
-              Row(
-                children: [
-                  const Expanded(child: Divider()),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      'OR',
-                      style: AppTextStyles.labelSmall,
-                    ),
-                  ),
-                  const Expanded(child: Divider()),
-                ],
-              ),
-
-              const SizedBox(height: 32),
-
-              // Google Sign In Button
-              AuthButton(
-                onPressed: authState.isLoading ? null : _handleGoogleSignIn,
-                icon: '🔍',
-                label: 'Continue with Google',
-                backgroundColor: Colors.white,
-                textColor: Colors.black87,
-              ),
+      backgroundColor: const Color(0xFF060D1A),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment(0, -0.1),
+            radius: 1.3,
+            colors: [
+              Color(0xFF0D2137),
+              Color(0xFF060D1A),
             ],
           ),
         ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 40),
+
+                // Logo
+                Center(
+                  child: Image.asset(
+                    'assets/logo/logotravl.png',
+                    width: size.width * 0.42,
+                    height: size.width * 0.42,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                Text(
+                  'Travl',
+                  style: AppTextStyles.h1.copyWith(color: Colors.white),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Plan your adventures together',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: Colors.white.withOpacity(0.5),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 48),
+
+                // Email/Password Form
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      if (_isSignUp)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: TextFormField(
+                            controller: _nameController,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: _inputDecoration(
+                              label: 'Name',
+                              icon: Icons.person_outline,
+                            ),
+                            validator: (value) => Validators.required(value, 'Name'),
+                          ),
+                        ),
+
+                      TextFormField(
+                        controller: _emailController,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: _inputDecoration(
+                          label: 'Email',
+                          icon: Icons.email_outlined,
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                        validator: Validators.email,
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      TextFormField(
+                        controller: _passwordController,
+                        style: const TextStyle(color: Colors.white),
+                        decoration: _inputDecoration(
+                          label: 'Password',
+                          icon: Icons.lock_outline,
+                        ),
+                        obscureText: true,
+                        validator: (value) => Validators.required(value, 'Password'),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Email Auth Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: authState.isLoading ? null : _handleEmailAuth,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                          ),
+                          child: authState.isLoading
+                              ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation(Colors.white),
+                            ),
+                          )
+                              : Text(_isSignUp ? 'Sign Up' : 'Sign In'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // Toggle Sign In/Sign Up
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _isSignUp = !_isSignUp;
+                    });
+                  },
+                  child: Text(
+                    _isSignUp
+                        ? 'Already have an account? Sign In'
+                        : "Don't have an account? Sign Up",
+                    style: TextStyle(color: Colors.white.withOpacity(0.7)),
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+
+                // Divider
+                Row(
+                  children: [
+                    Expanded(
+                      child: Divider(color: Colors.white.withOpacity(0.15)),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        'OR',
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: Colors.white.withOpacity(0.4),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(color: Colors.white.withOpacity(0.15)),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 32),
+
+                // Google Sign In Button
+                AuthButton(
+                  onPressed: authState.isLoading ? null : _handleGoogleSignIn,
+                  label: 'Continue with Google',
+                  backgroundColor: Colors.white,
+                  textColor: Colors.black87,
+                  useGoogleLogo: true,
+                ),
+
+                const SizedBox(height: 24),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecoration({required String label, required IconData icon}) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+      prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.5)),
+      filled: true,
+      fillColor: Colors.white.withOpacity(0.05),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
       ),
     );
   }

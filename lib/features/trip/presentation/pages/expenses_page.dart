@@ -12,8 +12,9 @@ import '../providers/users_provider.dart';
 
 class ExpensesPage extends ConsumerWidget {
   final String tripId;
+  final bool isReadOnly;
 
-  const ExpensesPage({super.key, required this.tripId});
+  const ExpensesPage({super.key, required this.tripId, this.isReadOnly = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -23,6 +24,7 @@ class ExpensesPage extends ConsumerWidget {
       data: (expenses) => _ExpensesContent(
         tripId: tripId,
         expenses: expenses,
+        isReadOnly: isReadOnly,
       ),
       loading: () => const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -37,10 +39,12 @@ class ExpensesPage extends ConsumerWidget {
 class _ExpensesContent extends ConsumerWidget {
   final String tripId;
   final List<ExpenseEntity> expenses;
+  final bool isReadOnly;
 
   const _ExpensesContent({
     required this.tripId,
     required this.expenses,
+    this.isReadOnly = false,
   });
 
   Map<String, double> _calculateBalances() {
@@ -108,7 +112,7 @@ class _ExpensesContent extends ConsumerWidget {
     return Scaffold(
       body: expenses.isEmpty
           ? _EmptyExpenses(
-        onAdd: () => _showAddExpenseSheet(context, ref),
+        onAdd: isReadOnly ? null : () => _showAddExpenseSheet(context, ref),
       )
           : SingleChildScrollView(
         child: Column(
@@ -136,7 +140,7 @@ class _ExpensesContent extends ConsumerWidget {
         ),
       ),
 
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: isReadOnly ? null : FloatingActionButton(
         onPressed: () => _showAddExpenseSheet(context, ref),
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add, color: Colors.white),
@@ -617,16 +621,40 @@ class _ExpenseRow extends ConsumerWidget {
 // ================= EMPTY =================
 
 class _EmptyExpenses extends StatelessWidget {
-  final VoidCallback onAdd;
+  final VoidCallback? onAdd;
 
   const _EmptyExpenses({required this.onAdd});
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: ElevatedButton(
-        onPressed: onAdd,
-        child: const Text('Add Expense'),
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('💸', style: TextStyle(fontSize: 64)),
+            const SizedBox(height: 16),
+            Text('No expenses yet', style: AppTextStyles.h4),
+            const SizedBox(height: 8),
+            Text(
+              'Track what everyone spends\nand split costs easily',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary(context),
+              ),
+              textAlign: TextAlign.center,
+            ),
+
+            if (onAdd != null) ...[
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: onAdd,
+                icon: const Icon(Icons.add),
+                label: const Text('Add Expense'),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

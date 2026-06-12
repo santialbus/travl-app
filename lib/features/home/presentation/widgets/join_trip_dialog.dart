@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -142,13 +143,14 @@ class _JoinTripDialogState extends ConsumerState<JoinTripDialog> {
             TextButton.icon(
               onPressed: () {
                 Navigator.of(context).pop();
-                // TODO: Open QR scanner
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('QR Scanner coming soon')),
+
+                context.push(
+                  '/qr-scanner',
+                  extra: widget.userId, // 🔥 importante
                 );
               },
               icon: const Icon(Icons.qr_code_scanner),
-              label: const Text('Scan QR Code'),
+              label: const Text('Scan QR'),
             ),
           ],
         ),

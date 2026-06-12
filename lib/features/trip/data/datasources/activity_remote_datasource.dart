@@ -42,7 +42,6 @@ class ActivityRemoteDataSource {
     });
   }
 
-  // Create activity
   Future<ActivityModel> createActivity({
     required String tripId,
     required String dayId,
@@ -54,11 +53,15 @@ class ActivityRemoteDataSource {
     double? latitude,
     double? longitude,
     required String createdBy,
+    // ✅ Nuevos campos
+    String? flightNumber,
+    String? trainNumber,
+    String? transportCompany,
+    String? bookingReference,
   }) async {
     try {
       final activityId = _uuid.v4();
 
-      // Get current count of activities for this day to set orderIndex
       final existingActivities = await _firestore
           .collection(FirebaseConstants.activitiesCollection)
           .where('dayId', isEqualTo: dayId)
@@ -66,10 +69,11 @@ class ActivityRemoteDataSource {
 
       final orderIndex = existingActivities.docs.length;
 
-      // Generate maps URL if location is provided
       String? mapsUrl;
       if (latitude != null && longitude != null) {
         mapsUrl = 'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
+      } else if (locationName != null && locationName.isNotEmpty) {
+        mapsUrl = 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(locationName)}';
       }
 
       final activity = ActivityModel(
@@ -88,6 +92,10 @@ class ActivityRemoteDataSource {
         orderIndex: orderIndex,
         createdBy: createdBy,
         createdAt: DateTime.now(),
+        flightNumber: flightNumber,
+        trainNumber: trainNumber,
+        transportCompany: transportCompany,
+        bookingReference: bookingReference,
       );
 
       await _firestore
@@ -108,12 +116,16 @@ class ActivityRemoteDataSource {
     String? description,
     DateTime? time,
     String? locationName,
+    // ✅ Nuevos campos
+    String? flightNumber,
+    String? trainNumber,
+    String? transportCompany,
+    String? bookingReference,
   }) async {
     try {
       String? mapsUrl;
       if (locationName != null && locationName.isNotEmpty) {
-        mapsUrl =
-        'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(locationName)}';
+        mapsUrl = 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(locationName)}';
       }
 
       await _firestore
@@ -126,6 +138,10 @@ class ActivityRemoteDataSource {
         'time': time != null ? Timestamp.fromDate(time) : null,
         'locationName': locationName,
         'mapsUrl': mapsUrl,
+        'flightNumber': flightNumber,
+        'trainNumber': trainNumber,
+        'transportCompany': transportCompany,
+        'bookingReference': bookingReference,
       });
     } catch (e) {
       throw Exception('Failed to update activity: $e');
@@ -172,6 +188,46 @@ class ActivityRemoteDataSource {
       await batch.commit();
     } catch (e) {
       throw Exception('Failed to reorder activities: $e');
+    }
+  }
+
+  // Reordenar actividades dentro de un día
+  Future<void> reorderActivitiesInDay(
+      String dayId,
+      List<String> activityIds,
+      ) async {
+    try {
+      final batch = _firestore.batch();
+
+      for (int i = 0; i < activityIds.length; i++) {
+        final ref = _firestore
+            .collection(FirebaseConstants.activitiesCollection)
+            .doc(activityIds[i]);
+        batch.update(ref, {'orderIndex': i});
+      }
+
+      await batch.commit();
+    } catch (e) {
+      throw Exception('Failed to reorder activities: $e');
+    }
+  }
+
+// Mover actividad a otro día
+  Future<void> moveActivityToDay(
+      String activityId,
+      String newDayId,
+      int newOrderIndex,
+      ) async {
+    try {
+      await _firestore
+          .collection(FirebaseConstants.activitiesCollection)
+          .doc(activityId)
+          .update({
+        'dayId': newDayId,
+        'orderIndex': newOrderIndex,
+      });
+    } catch (e) {
+      throw Exception('Failed to move activity: $e');
     }
   }
 }

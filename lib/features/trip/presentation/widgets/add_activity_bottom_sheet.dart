@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_utils.dart';
+import '../../../../core/utils/offline_utils.dart';
 import '../../domain/entities/activity_entity.dart';
 import '../providers/activities_provider.dart';
 
@@ -11,6 +12,7 @@ class AddActivityBottomSheet extends ConsumerStatefulWidget {
   final String dayId;
   final String userId;
   final ActivityEntity? activityToEdit;
+  final bool isOffline; // ✅
 
   const AddActivityBottomSheet({
     super.key,
@@ -18,6 +20,7 @@ class AddActivityBottomSheet extends ConsumerStatefulWidget {
     required this.dayId,
     required this.userId,
     this.activityToEdit,
+    this.isOffline = false,
   });
 
   @override
@@ -31,6 +34,11 @@ class _AddActivityBottomSheetState
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _locationController = TextEditingController();
+
+  final _flightNumberController = TextEditingController();
+  final _trainNumberController = TextEditingController();
+  final _transportCompanyController = TextEditingController();
+  final _bookingReferenceController = TextEditingController();
 
   ActivityType _selectedType = ActivityType.place;
   DateTime? _selectedTime;
@@ -48,6 +56,10 @@ class _AddActivityBottomSheetState
       _locationController.text = activity.locationName ?? '';
       _selectedType = activity.type;
       _selectedTime = activity.time;
+      _flightNumberController.text = activity.flightNumber ?? '';
+      _trainNumberController.text = activity.trainNumber ?? '';
+      _transportCompanyController.text = activity.transportCompany ?? '';
+      _bookingReferenceController.text = activity.bookingReference ?? '';
     }
   }
 
@@ -56,6 +68,10 @@ class _AddActivityBottomSheetState
     _titleController.dispose();
     _descriptionController.dispose();
     _locationController.dispose();
+    _flightNumberController.dispose();
+    _trainNumberController.dispose();
+    _transportCompanyController.dispose();
+    _bookingReferenceController.dispose();
     super.dispose();
   }
 
@@ -114,6 +130,18 @@ class _AddActivityBottomSheetState
         locationName: _locationController.text.trim().isNotEmpty
             ? _locationController.text.trim()
             : null,
+        flightNumber: _flightNumberController.text.trim().isNotEmpty
+            ? _flightNumberController.text.trim()
+            : null,
+        trainNumber: _trainNumberController.text.trim().isNotEmpty
+            ? _trainNumberController.text.trim()
+            : null,
+        transportCompany: _transportCompanyController.text.trim().isNotEmpty
+            ? _transportCompanyController.text.trim()
+            : null,
+        bookingReference: _bookingReferenceController.text.trim().isNotEmpty
+            ? _bookingReferenceController.text.trim()
+            : null,
       );
     } else {
       success = await ref
@@ -131,12 +159,32 @@ class _AddActivityBottomSheetState
             ? _locationController.text.trim()
             : null,
         createdBy: widget.userId,
+        flightNumber: _flightNumberController.text.trim().isNotEmpty
+            ? _flightNumberController.text.trim()
+            : null,
+        trainNumber: _trainNumberController.text.trim().isNotEmpty
+            ? _trainNumberController.text.trim()
+            : null,
+        transportCompany: _transportCompanyController.text.trim().isNotEmpty
+            ? _transportCompanyController.text.trim()
+            : null,
+        bookingReference: _bookingReferenceController.text.trim().isNotEmpty
+            ? _bookingReferenceController.text.trim()
+            : null,
       );
     }
 
     if (!mounted) return;
 
     if (success) {
+      if (!mounted) return;
+
+      if (widget.isOffline) {
+        Future.microtask(() {
+          OfflineUtils.showSyncPendingMessage(context);
+        });
+      }
+
       Navigator.of(context).pop();
     } else {
       final error = ref.read(activityControllerProvider).error;
@@ -197,6 +245,40 @@ class _AddActivityBottomSheetState
                     ),
                   ],
                 ),
+
+                const SizedBox(height: 24),
+
+                // Justo después del Header en el build:
+                if (widget.isOffline)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.warning.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: AppColors.warning.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.wifi_off,
+                          size: 16,
+                          color: AppColors.warning,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'You\'re offline. Changes will sync when connected.',
+                            style: AppTextStyles.labelSmall.copyWith(
+                              color: AppColors.warning,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
                 const SizedBox(height: 24),
 
@@ -352,6 +434,7 @@ class _AddActivityBottomSheetState
                   textCapitalization: TextCapitalization.sentences,
                 ),
 
+                _buildTypeSpecificFields(),
                 const SizedBox(height: 24),
 
                 // Submit
@@ -377,4 +460,97 @@ class _AddActivityBottomSheetState
       ),
     );
   }
+
+  Widget _buildTypeSpecificFields() {
+    switch (_selectedType) {
+      case ActivityType.flight:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 16),
+            Text(
+              'FLIGHT DETAILS',
+              style: AppTextStyles.labelSmall.copyWith(
+                color: AppColors.textTertiary(context),
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _flightNumberController,
+              decoration: const InputDecoration(
+                labelText: 'Flight Number',
+                hintText: 'e.g., IB3456',
+                prefixIcon: Icon(Icons.flight),
+              ),
+              textCapitalization: TextCapitalization.characters,
+            ),
+          ],
+        );
+
+      case ActivityType.transport:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 16),
+            Text(
+              'TRANSPORT DETAILS',
+              style: AppTextStyles.labelSmall.copyWith(
+                color: AppColors.textTertiary(context),
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _transportCompanyController,
+              decoration: const InputDecoration(
+                labelText: 'Company',
+                hintText: 'e.g., Renfe, Blablacar',
+                prefixIcon: Icon(Icons.train),
+              ),
+              textCapitalization: TextCapitalization.words,
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _trainNumberController,
+              decoration: const InputDecoration(
+                labelText: 'Train / Bus Number',
+                hintText: 'e.g., AVE 02145',
+                prefixIcon: Icon(Icons.confirmation_number),
+              ),
+              textCapitalization: TextCapitalization.characters,
+            ),
+          ],
+        );
+
+      case ActivityType.hotel:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 16),
+            Text(
+              'BOOKING DETAILS',
+              style: AppTextStyles.labelSmall.copyWith(
+                color: AppColors.textTertiary(context),
+                letterSpacing: 1.2,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              controller: _bookingReferenceController,
+              decoration: const InputDecoration(
+                labelText: 'Booking Reference',
+                hintText: 'e.g., #ABC123456',
+                prefixIcon: Icon(Icons.tag),
+              ),
+              textCapitalization: TextCapitalization.characters,
+            ),
+          ],
+        );
+
+      default:
+        return const SizedBox.shrink();
+    }
+  }
 }
+
