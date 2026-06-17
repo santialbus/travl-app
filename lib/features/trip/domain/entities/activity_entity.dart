@@ -62,6 +62,8 @@ enum ActivityType {
 
   const ActivityType(this.value, this.emoji);
 
+  String get translationKey => 'activity_type_$value';
+
   static ActivityType fromString(String value) {
     return ActivityType.values.firstWhere(
           (type) => type.value == value,

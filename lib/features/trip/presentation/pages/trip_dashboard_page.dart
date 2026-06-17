@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_utils.dart';
@@ -49,11 +50,11 @@ class TripDashboardPage extends ConsumerWidget {
             children: [
               const Icon(Icons.error_outline, size: 64, color: AppColors.error),
               const SizedBox(height: 16),
-              Text('Failed to load trip', style: AppTextStyles.h4),
+              Text(context.tr('failed_to_load_trip'), style: AppTextStyles.h4),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () => context.go('/home'),
-                child: const Text('Go Back'),
+                child: Text(context.tr('go_back')),
               ),
             ],
           ),
@@ -114,7 +115,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
     final action = member.isCoHost ? 'removed as co-host' : 'made co-host';
 
     // 👉 feedback inmediato
-    showTopSnackBar(rootContext, 'Updating role...');
+    showTopSnackBar(rootContext, context.tr('updating_role'));
 
     try {
       await ref.read(tripControllerProvider.notifier).updateMemberRole(
@@ -123,10 +124,11 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
         newRole: newRole,
       );
 
-      // 👉 feedback final
-      showTopSnackBar(rootContext, 'Member $action');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.tr('member_role_updated'))),
+      );
     } catch (e) {
-      showTopSnackBar(rootContext, 'Error updating role');
+      showTopSnackBar(rootContext, context.tr('error_updating_role'));
     }
   }
 
@@ -226,10 +228,10 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                             if (isOngoing) const SizedBox(width: 6),
                             Text(
                               isOngoing
-                                  ? 'Ongoing'
+                                  ? context.tr('ongoing')
                                   : isUpcoming
-                                  ? 'Upcoming'
-                                  : 'Past trip',
+                                  ? context.tr('upcoming')
+                                  : context.tr('past_trip'),
                               style: AppTextStyles.labelSmall.copyWith(
                                 color: isOngoing
                                     ? AppColors.primary
@@ -292,7 +294,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
-                              '${trip.numberOfDays} days',
+                              '${trip.numberOfDays} ${context.tr('days')}',
                               style: AppTextStyles.labelSmall.copyWith(
                                 color: AppColors.textSecondary(context),
                               ),
@@ -307,7 +309,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '${trip.members.length} members',
+                            '${trip.members.length} ${context.tr('members')}',
                             style: AppTextStyles.bodySmall,
                           ),
                         ],
@@ -332,10 +334,10 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                     unselectedLabelColor: AppColors.textTertiary(context),
                     labelStyle: AppTextStyles.labelLarge,
                     unselectedLabelStyle: AppTextStyles.labelMedium,
-                    tabs: const [
-                      Tab(text: 'Timeline'),
-                      Tab(text: 'Expenses'),
-                      Tab(text: 'Checklist'),
+                    tabs: [
+                      Tab(text: context.tr('timeline')),
+                      Tab(text: context.tr('expenses')),
+                      Tab(text: context.tr('checklist')),
                     ],
                   ),
                   backgroundColor: AppColors.background(context),
@@ -415,7 +417,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                   const SizedBox(height: 24),
 
                   Text(
-                    'Members (${tripData.members.length})',
+                    '${context.tr('members_count')} (${tripData.members.length})',
                     style: AppTextStyles.h3,
                   ),
 
@@ -474,10 +476,10 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                           ),
                           child: Text(
                             member.isHost
-                                ? '👑 Host'
+                                ? '👑 ${context.tr('host')}'
                                 : member.isCoHost
-                                ? '🤝 Co-host'
-                                : 'Member',
+                                ? '🤝 ${context.tr('co_host')}'
+                                : context.tr('member'),
                             style: AppTextStyles.labelSmall.copyWith(
                               color: member.isHost || member.isCoHost
                                   ? AppColors.primary
@@ -511,8 +513,8 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                               ),
                               child: Text(
                                 member.isCoHost
-                                    ? '✓ Co-host'
-                                    : 'Make co-host',
+                                    ? '✓ ${context.tr('co_host')}'
+                                    : context.tr('make_co_host'),
                                 style: AppTextStyles.labelSmall.copyWith(
                                   color: member.isCoHost
                                       ? AppColors.primary
@@ -538,7 +540,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                         _showInviteSheet(context, tripData.inviteCode);
                       },
                       icon: const Icon(Icons.person_add_outlined),
-                      label: const Text('Invite Someone'),
+                      label: Text(context.tr('invite_someone')),
                     ),
                   ),
                 ],
@@ -612,7 +614,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
 
             const SizedBox(height: 24),
 
-            Text('Invite Friends', style: AppTextStyles.h3),
+            Text(context.tr('invite_friends'), style: AppTextStyles.h3),
 
             const SizedBox(height: 24),
 
@@ -658,10 +660,13 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
               height: 52,
               child: ElevatedButton.icon(
                 onPressed: () => Share.share(
-                  'Join my trip on Travl! 🌍\nUse code: $inviteCode',
+                  context.tr(
+                    'share_trip_message',
+                    params: {'code': inviteCode},
+                  ),
                 ),
                 icon: const Icon(Icons.share),
-                label: const Text('Share Invite Code'),
+                label: Text(context.tr('share_invite_code')),
               ),
             ),
           ],

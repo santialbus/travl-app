@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../providers/trip_provider.dart';
@@ -34,10 +35,10 @@ class TimelinePage extends ConsumerWidget {
                 children: [
                   const Text('🗺️', style: TextStyle(fontSize: 64)),
                   const SizedBox(height: 16),
-                  Text('No days yet', style: AppTextStyles.h4),
+                  Text(context.tr('no_days_yet'), style: AppTextStyles.h4),
                   const SizedBox(height: 8),
                   Text(
-                    'This trip has no days configured yet',
+                    context.tr('no_days_description'),
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: AppColors.textSecondary(context),
                     ),
@@ -82,7 +83,10 @@ class TimelinePage extends ConsumerWidget {
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(
-        child: Text('Error: $e', style: AppTextStyles.bodySmall),
+        child: Text(
+          context.tr('generic_error', params: {'error': e.toString()}),
+          style: AppTextStyles.bodySmall,
+        )
       ),
     );
   }
@@ -109,7 +113,15 @@ class _TimelineProgressBar extends StatelessWidget {
           Row(
             children: [
               Text(
-                allDone ? 'All done! 🎉' : '$done of $total done',
+                allDone
+                    ? context.tr('all_done')
+                    : context.tr(
+                  'progress_done',
+                  params: {
+                    'done': done.toString(),
+                    'total': total.toString(),
+                  },
+                ),
                 style: AppTextStyles.labelSmall.copyWith(
                   color: allDone
                       ? AppColors.success
@@ -155,10 +167,10 @@ class _EmptyTimeline extends StatelessWidget {
           children: [
             const Text('🗓️', style: TextStyle(fontSize: 64)),
             const SizedBox(height: 16),
-            Text('No activities yet', style: AppTextStyles.h4),
+            Text(context.tr('no_activities_yet'), style: AppTextStyles.h4),
             const SizedBox(height: 8),
             Text(
-              'Swipe right on a day to add\nyour first activity',
+              context.tr('add_first_activity_hint'),
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.textSecondary(context),
               ),

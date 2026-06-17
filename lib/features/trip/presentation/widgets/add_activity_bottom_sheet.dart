@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_utils.dart';
@@ -190,7 +191,7 @@ class _AddActivityBottomSheetState
       final error = ref.read(activityControllerProvider).error;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error ?? 'Something went wrong'),
+          content: Text(error ?? context.tr('something_wrong')),
           backgroundColor: AppColors.error,
         ),
       );
@@ -233,7 +234,9 @@ class _AddActivityBottomSheetState
                   children: [
                     Expanded(
                       child: Text(
-                        _isEditing ? 'Edit Activity' : 'Add Activity',
+                        _isEditing
+                            ? context.tr('edit_activity')
+                            : context.tr('add_activity'),
                         style: AppTextStyles.h3,
                       ),
                     ),
@@ -270,7 +273,7 @@ class _AddActivityBottomSheetState
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'You\'re offline. Changes will sync when connected.',
+                            context.tr('offline_sync_message'),
                             style: AppTextStyles.labelSmall.copyWith(
                               color: AppColors.warning,
                             ),
@@ -284,7 +287,7 @@ class _AddActivityBottomSheetState
 
                 // Type selector
                 Text(
-                  'TYPE',
+                  context.tr('type_label').toUpperCase(),
                   style: AppTextStyles.labelSmall.copyWith(
                     color: AppColors.textTertiary(context),
                     letterSpacing: 1.2,
@@ -332,7 +335,7 @@ class _AddActivityBottomSheetState
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  type.value,
+                                  context.tr(type.translationKey),
                                   style: AppTextStyles.labelSmall.copyWith(
                                     color: isSelected
                                         ? AppColors.primary
@@ -357,13 +360,13 @@ class _AddActivityBottomSheetState
                 // Title
                 TextFormField(
                   controller: _titleController,
-                  decoration: const InputDecoration(
-                    labelText: 'Title *',
-                    hintText: 'e.g., Lunch at Sushi Restaurant',
+                  decoration: InputDecoration(
+                    labelText: context.tr('title_required_label'),
+                    hintText: context.tr('activity_title_hint'),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Title is required';
+                      return context.tr('title_required');
                     }
                     return null;
                   },
@@ -375,9 +378,9 @@ class _AddActivityBottomSheetState
                 // Location
                 TextFormField(
                   controller: _locationController,
-                  decoration: const InputDecoration(
-                    labelText: 'Location (optional)',
-                    hintText: 'e.g., Shibuya, Tokyo',
+                  decoration: InputDecoration(
+                    labelText: context.tr('location_optional'),
+                    hintText: context.tr('location_hint'),
                     prefixIcon: Icon(Icons.location_on),
                   ),
                   textCapitalization: TextCapitalization.words,
@@ -402,7 +405,7 @@ class _AddActivityBottomSheetState
                           child: Text(
                             _selectedTime != null
                                 ? AppDateUtils.formatTime(_selectedTime!)
-                                : 'Time (optional)',
+                                : context.tr('time_optional'),
                             style: AppTextStyles.bodyMedium.copyWith(
                               color: _selectedTime != null
                                   ? AppColors.textPrimary(context)
@@ -426,9 +429,9 @@ class _AddActivityBottomSheetState
                 // Notes
                 TextFormField(
                   controller: _descriptionController,
-                  decoration: const InputDecoration(
-                    labelText: 'Notes (optional)',
-                    hintText: 'Add any additional notes...',
+                  decoration: InputDecoration(
+                    labelText: context.tr('notes_optional'),
+                    hintText: context.tr('notes_hint'),
                   ),
                   maxLines: 3,
                   textCapitalization: TextCapitalization.sentences,
@@ -449,7 +452,9 @@ class _AddActivityBottomSheetState
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                         : Text(
-                      _isEditing ? 'Save Changes' : 'Add Activity',
+                        _isEditing
+                            ? context.tr('save_changes')
+                            : context.tr('add_activity'),
                     ),
                   ),
                 ),
@@ -469,7 +474,7 @@ class _AddActivityBottomSheetState
           children: [
             const SizedBox(height: 16),
             Text(
-              'FLIGHT DETAILS',
+              context.tr('flight_details'),
               style: AppTextStyles.labelSmall.copyWith(
                 color: AppColors.textTertiary(context),
                 letterSpacing: 1.2,
@@ -478,8 +483,8 @@ class _AddActivityBottomSheetState
             const SizedBox(height: 12),
             TextFormField(
               controller: _flightNumberController,
-              decoration: const InputDecoration(
-                labelText: 'Flight Number',
+              decoration: InputDecoration(
+                labelText: context.tr('flight_number'),
                 hintText: 'e.g., IB3456',
                 prefixIcon: Icon(Icons.flight),
               ),
@@ -494,7 +499,7 @@ class _AddActivityBottomSheetState
           children: [
             const SizedBox(height: 16),
             Text(
-              'TRANSPORT DETAILS',
+              context.tr('transport_details'),
               style: AppTextStyles.labelSmall.copyWith(
                 color: AppColors.textTertiary(context),
                 letterSpacing: 1.2,
@@ -503,8 +508,8 @@ class _AddActivityBottomSheetState
             const SizedBox(height: 12),
             TextFormField(
               controller: _transportCompanyController,
-              decoration: const InputDecoration(
-                labelText: 'Company',
+              decoration: InputDecoration(
+                labelText: context.tr('company'),
                 hintText: 'e.g., Renfe, Blablacar',
                 prefixIcon: Icon(Icons.train),
               ),
@@ -513,8 +518,8 @@ class _AddActivityBottomSheetState
             const SizedBox(height: 12),
             TextFormField(
               controller: _trainNumberController,
-              decoration: const InputDecoration(
-                labelText: 'Train / Bus Number',
+              decoration: InputDecoration(
+                labelText: context.tr('train_number'),
                 hintText: 'e.g., AVE 02145',
                 prefixIcon: Icon(Icons.confirmation_number),
               ),
@@ -529,7 +534,7 @@ class _AddActivityBottomSheetState
           children: [
             const SizedBox(height: 16),
             Text(
-              'BOOKING DETAILS',
+              context.tr('booking_details'),
               style: AppTextStyles.labelSmall.copyWith(
                 color: AppColors.textTertiary(context),
                 letterSpacing: 1.2,
@@ -538,8 +543,8 @@ class _AddActivityBottomSheetState
             const SizedBox(height: 12),
             TextFormField(
               controller: _bookingReferenceController,
-              decoration: const InputDecoration(
-                labelText: 'Booking Reference',
+              decoration: InputDecoration(
+                labelText: context.tr('booking_reference'),
                 hintText: 'e.g., #ABC123456',
                 prefixIcon: Icon(Icons.tag),
               ),

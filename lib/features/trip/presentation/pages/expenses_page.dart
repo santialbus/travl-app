@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -30,7 +31,9 @@ class ExpensesPage extends ConsumerWidget {
         body: Center(child: CircularProgressIndicator()),
       ),
       error: (e, _) => Scaffold(
-        body: Center(child: Text('Error: $e')),
+        body: Center(child: Text(
+          context.tr('generic_error', params: {'error': e.toString()}),
+        )),
       ),
     );
   }
@@ -221,7 +224,7 @@ class _SummarySection extends ConsumerWidget {
         children: [
           // Total
           Text(
-            'Total spent',
+            context.tr('total_spent'),
             style: AppTextStyles.labelSmall.copyWith(
               color: AppColors.textTertiary(context),
               letterSpacing: 1.2,
@@ -241,7 +244,7 @@ class _SummarySection extends ConsumerWidget {
           // Balances por persona
           if (balances.isNotEmpty) ...[
             Text(
-              'BALANCES',
+              context.tr('balances').toUpperCase(),
               style: AppTextStyles.labelSmall.copyWith(
                 color: AppColors.textTertiary(context),
                 letterSpacing: 1.2,
@@ -281,7 +284,9 @@ class _SummarySection extends ConsumerWidget {
                         children: [
                           Text(name, style: AppTextStyles.bodyMedium),
                           Text(
-                            positive ? 'gets back' : 'owes',
+                              positive
+                                  ? context.tr('gets_back')
+                                  : context.tr('owes'),
                             style: AppTextStyles.labelSmall.copyWith(
                               color: AppColors.textTertiary(context),
                             ),
@@ -310,7 +315,7 @@ class _SummarySection extends ConsumerWidget {
           // Quién debe a quién
           if (debts.isNotEmpty) ...[
             Text(
-              'SETTLEMENTS',
+              context.tr('settlements').toUpperCase(),
               style: AppTextStyles.labelSmall.copyWith(
                 color: AppColors.textTertiary(context),
                 letterSpacing: 1.2,
@@ -401,7 +406,7 @@ class _SummarySection extends ConsumerWidget {
                               ),
                             ),
                             TextSpan(
-                              text: ' owes ',
+                              text: ' ${context.tr('owes')} ',
                               style: TextStyle(color: AppColors.textTertiary(context)),
                             ),
                             TextSpan(
@@ -451,7 +456,7 @@ class _SummarySection extends ConsumerWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'All settled up! 🎉',
+                    context.tr('all_settled'),
                     style: AppTextStyles.bodySmall.copyWith(
                       color: AppColors.success,
                     ),
@@ -530,18 +535,18 @@ class _ExpenseRow extends ConsumerWidget {
           context: context,
           builder: (context) => AlertDialog(
             backgroundColor: AppColors.surface(context),
-            title: Text('Delete expense?', style: AppTextStyles.h4),
+            title: Text(context.tr('delete_expense'), style: AppTextStyles.h4),
             content: Text(expense.title,
                 style: AppTextStyles.bodyMedium
                     .copyWith(color: AppColors.textSecondary(context))),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
+                child: Text(context.tr('cancel')),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
-                child: Text('Delete',
+                child: Text(context.tr('delete'),
                     style: TextStyle(color: AppColors.error)),
               ),
             ],
@@ -586,7 +591,13 @@ class _ExpenseRow extends ConsumerWidget {
                   Text(expense.title, style: AppTextStyles.bodyMedium),
                   const SizedBox(height: 3),
                   Text(
-                    'Paid by $paidByName · ${expense.participants.length} ${expense.participants.length == 1 ? 'person' : 'people'}',
+                      context.tr(
+                        'paid_by_with_count',
+                        params: {
+                          'name': paidByName,
+                          'count': expense.participants.length.toString(),
+                        },
+                      ),
                     style: AppTextStyles.labelSmall
                         .copyWith(color: AppColors.textTertiary(context)),
                   ),
@@ -635,10 +646,10 @@ class _EmptyExpenses extends StatelessWidget {
           children: [
             const Text('💸', style: TextStyle(fontSize: 64)),
             const SizedBox(height: 16),
-            Text('No expenses yet', style: AppTextStyles.h4),
+            Text(context.tr('no_expenses_yet'), style: AppTextStyles.h4),
             const SizedBox(height: 8),
             Text(
-              'Track what everyone spends\nand split costs easily',
+              context.tr('expenses_description'),
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.textSecondary(context),
               ),
@@ -650,7 +661,7 @@ class _EmptyExpenses extends StatelessWidget {
               ElevatedButton.icon(
                 onPressed: onAdd,
                 icon: const Icon(Icons.add),
-                label: const Text('Add Expense'),
+                label: Text(context.tr('add_expense')),
               ),
             ],
           ],
@@ -782,7 +793,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
               Row(
                 children: [
                   Expanded(
-                    child: Text('Add Expense', style: AppTextStyles.h3),
+                    child: Text(context.tr('add_expense'), style: AppTextStyles.h3),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
@@ -797,7 +808,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
 
               // Category
               Text(
-                'CATEGORY',
+                context.tr('category').toUpperCase(),
                 style: AppTextStyles.labelSmall.copyWith(
                   color: AppColors.textTertiary(context),
                   letterSpacing: 1.2,
@@ -853,12 +864,12 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
               // Title
               TextFormField(
                 controller: _titleController,
-                decoration: const InputDecoration(
-                  labelText: 'Title',
-                  hintText: 'e.g., Dinner at restaurant',
+                decoration: InputDecoration(
+                  labelText: context.tr('title'),
+                  hintText: context.tr(context.tr('title_required')),
                 ),
                 validator: (v) =>
-                v == null || v.isEmpty ? 'Title is required' : null,
+                v == null || v.isEmpty ? context.tr('title_required') : null,
                 textCapitalization: TextCapitalization.sentences,
               ),
 
@@ -866,7 +877,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
 
               // Currency selector
               Text(
-                'CURRENCY',
+                  context.tr('currency').toUpperCase(),
                 style: AppTextStyles.labelSmall.copyWith(
                   color: AppColors.textTertiary(context),
                   letterSpacing: 1.2,
@@ -930,17 +941,17 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
               TextFormField(
                 controller: _amountController,
                 decoration: InputDecoration(
-                  labelText: 'Amount',
-                  hintText: '0.00',
+                  labelText: context.tr('amount'),
+                  hintText: context.tr('amount_hint'),
                   prefixText: '$symbol  ',
                 ),
                 keyboardType:
                 const TextInputType.numberWithOptions(decimal: true),
                 onChanged: (_) => setState(() {}), // Actualizar split preview
                 validator: (v) {
-                  if (v == null || v.isEmpty) return 'Required';
-                  if (double.tryParse(v) == null) return 'Invalid amount';
-                  if (double.parse(v) <= 0) return 'Must be greater than 0';
+                  if (v == null || v.isEmpty) return context.tr('required');
+                  if (double.tryParse(v) == null) return context.tr('invalid_amount');
+                  if (double.parse(v) <= 0) return context.tr('amount_greater_than_zero');
                   return null;
                 },
               ),
@@ -952,7 +963,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                 children: [
                   Expanded(
                     child: Text(
-                      'SPLIT WITH',
+                      context.tr('split_with').toUpperCase(),
                       style: AppTextStyles.labelSmall.copyWith(
                         color: AppColors.textTertiary(context),
                         letterSpacing: 1.2,
@@ -1014,7 +1025,10 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                         // Name
                         Expanded(
                           child: Text(
-                            isCurrentUser ? '$name (you)' : name,
+                            isCurrentUser ? context.tr(
+                              'you_label',
+                              params: {'name': name},
+                            ) : name,
                             style: AppTextStyles.bodyMedium,
                           ),
                         ),
@@ -1079,7 +1093,13 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Each person pays $symbol ${_splitAmount.toStringAsFixed(2)}',
+                        context.tr(
+                          'each_person_pays',
+                          params: {
+                            'amount': _splitAmount.toStringAsFixed(2),
+                            'currency': symbol,
+                          },
+                        ),
                         style: AppTextStyles.bodySmall,
                       ),
                     ],
@@ -1099,7 +1119,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                      : const Text('Add Expense'),
+                      : Text(context.tr('add_expense')),
                 ),
               ),
             ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_utils.dart';
@@ -106,8 +107,8 @@ class _EditTripBottomSheetState extends ConsumerState<EditTripBottomSheet> {
 
     if (_startDate == null || _endDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select both dates'),
+        SnackBar(
+          content: Text(context.tr('select_start_end_dates')),
           backgroundColor: AppColors.error,
         ),
       );
@@ -128,7 +129,7 @@ class _EditTripBottomSheetState extends ConsumerState<EditTripBottomSheet> {
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Trip updated!'),
+          content: Text(context.tr('trip_updated')),
           backgroundColor: AppColors.success,
         ),
       );
@@ -136,7 +137,7 @@ class _EditTripBottomSheetState extends ConsumerState<EditTripBottomSheet> {
       final error = ref.read(tripControllerProvider).error;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error ?? 'Failed to update trip'),
+          content: Text(error ?? context.tr('failed_update_trip')),
           backgroundColor: AppColors.error,
         ),
       );
@@ -177,7 +178,7 @@ class _EditTripBottomSheetState extends ConsumerState<EditTripBottomSheet> {
               Row(
                 children: [
                   Expanded(
-                    child: Text('Edit Trip', style: AppTextStyles.h3),
+                    child: Text(context.tr('edit_trip'), style: AppTextStyles.h3),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
@@ -193,8 +194,8 @@ class _EditTripBottomSheetState extends ConsumerState<EditTripBottomSheet> {
               // Trip Name
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Trip Name',
+                decoration: InputDecoration(
+                  labelText: context.tr('trip_name'),
                   prefixIcon: Icon(Icons.luggage),
                 ),
                 validator: Validators.tripName,
@@ -206,8 +207,8 @@ class _EditTripBottomSheetState extends ConsumerState<EditTripBottomSheet> {
               // Destination
               TextFormField(
                 controller: _destinationController,
-                decoration: const InputDecoration(
-                  labelText: 'Destination',
+                decoration: InputDecoration(
+                  labelText: context.tr('destination'),
                   prefixIcon: Icon(Icons.location_on),
                 ),
                 validator: Validators.destination,
@@ -217,7 +218,7 @@ class _EditTripBottomSheetState extends ConsumerState<EditTripBottomSheet> {
               const SizedBox(height: 20),
 
               // Dates
-              Text('Dates', style: AppTextStyles.labelLarge),
+              Text(context.tr('dates'), style: AppTextStyles.labelLarge),
               const SizedBox(height: 12),
 
               // Start Date
@@ -238,14 +239,14 @@ class _EditTripBottomSheetState extends ConsumerState<EditTripBottomSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Start Date',
+                              context.tr('start_date'),
                               style: AppTextStyles.labelSmall,
                             ),
                             const SizedBox(height: 4),
                             Text(
                               _startDate != null
                                   ? AppDateUtils.formatDate(_startDate!)
-                                  : 'Select date',
+                                  : context.tr('select_date'),
                               style: AppTextStyles.bodyMedium.copyWith(
                                 color: _startDate != null
                                     ? AppColors.textPrimary(context)
@@ -281,14 +282,14 @@ class _EditTripBottomSheetState extends ConsumerState<EditTripBottomSheet> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'End Date',
+                              context.tr('end_date'),
                               style: AppTextStyles.labelSmall,
                             ),
                             const SizedBox(height: 4),
                             Text(
                               _endDate != null
                                   ? AppDateUtils.formatDate(_endDate!)
-                                  : 'Select date',
+                                  : context.tr('select_date'),
                               style: AppTextStyles.bodyMedium.copyWith(
                                 color: _endDate != null
                                     ? AppColors.textPrimary(context)
@@ -317,7 +318,7 @@ class _EditTripBottomSheetState extends ConsumerState<EditTripBottomSheet> {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                      : const Text('Save Changes'),
+                      : Text(context.tr('save_changes')),
                 ),
               ),
             ],

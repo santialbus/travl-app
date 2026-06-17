@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
+import '../../../../core/localization/app_strings.dart';
 import '../../../trip/presentation/providers/trip_provider.dart';
 
 class QrScannerPage extends ConsumerStatefulWidget {
@@ -61,15 +62,22 @@ class _QrScannerPageState extends ConsumerState<QrScannerPage> {
 
     if (trip != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Joined trip: ${trip.id}')),
+        SnackBar(
+          content: Text(
+            context.tr(
+              'joined_trip',
+              params: {'id': trip.id},
+            ),
+          ),
+        ),
       );
 
       // 🔥 navegación directa sin pop
       context.go('/trip/${trip.id}');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid invite code'),
+        SnackBar(
+          content: Text(context.tr('invalid_invite_code')),
           backgroundColor: Colors.red,
         ),
       );
@@ -150,7 +158,9 @@ class _QrScannerPageState extends ConsumerState<QrScannerPage> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  _isDetected ? '✓ Code detected!' : 'Point at the trip QR code',
+                  _isDetected
+                      ? context.tr('code_detected')
+                      : context.tr('point_at_qr'),
                   style: TextStyle(
                     color: _isDetected ? Colors.green : Colors.white,
                     fontSize: 15,
@@ -160,7 +170,7 @@ class _QrScannerPageState extends ConsumerState<QrScannerPage> {
                 if (!_isDetected) ...[
                   const SizedBox(height: 6),
                   Text(
-                    'The code looks like TRVL-XXXXXX',
+                    context.tr('code_format_hint'),
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.5),
                       fontSize: 12,

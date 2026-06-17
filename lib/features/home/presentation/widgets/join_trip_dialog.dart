@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/invite_code_generator.dart';
@@ -33,12 +34,12 @@ class _JoinTripDialogState extends ConsumerState<JoinTripDialog> {
     final code = _codeController.text.trim();
 
     if (code.isEmpty) {
-      _showError('Please enter an invite code');
+      _showError(context.tr('enter_invite_code_error_join_trip'));
       return;
     }
 
     if (!InviteCodeGenerator.isValid(code)) {
-      _showError('Invalid invite code format');
+      _showError(context.tr('invalid_invite_code_join_trip'));
       return;
     }
 
@@ -58,7 +59,7 @@ class _JoinTripDialogState extends ConsumerState<JoinTripDialog> {
       context.go('/trip/${trip.id}');
     } else {
       final error = ref.read(tripControllerProvider).error;
-      _showError(error ?? 'Failed to join trip');
+      _showError(error ?? context.tr('failed_join_trip'));
     }
   }
 
@@ -87,7 +88,7 @@ class _JoinTripDialogState extends ConsumerState<JoinTripDialog> {
               children: [
                 Expanded(
                   child: Text(
-                    'Join Trip',
+                    context.tr('join_trip_join_trip'),
                     style: AppTextStyles.h3,
                   ),
                 ),
@@ -101,7 +102,7 @@ class _JoinTripDialogState extends ConsumerState<JoinTripDialog> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Enter the invite code',
+              context.tr('enter_invite_code_join_trip'),
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.textSecondary(context),
               ),
@@ -109,8 +110,8 @@ class _JoinTripDialogState extends ConsumerState<JoinTripDialog> {
             const SizedBox(height: 16),
             TextField(
               controller: _codeController,
-              decoration: const InputDecoration(
-                hintText: 'TRVL-XXXXXX',
+              decoration: InputDecoration(
+                hintText: context.tr('invite_code_hint_join_trip'),
                 prefixIcon: Icon(Icons.tag),
               ),
               textCapitalization: TextCapitalization.characters,
@@ -136,7 +137,7 @@ class _JoinTripDialogState extends ConsumerState<JoinTripDialog> {
                   width: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-                    : const Text('Join Trip'),
+                    : Text(context.tr('join_trip_join_trip')),
               ),
             ),
             const SizedBox(height: 12),
@@ -150,7 +151,7 @@ class _JoinTripDialogState extends ConsumerState<JoinTripDialog> {
                 );
               },
               icon: const Icon(Icons.qr_code_scanner),
-              label: const Text('Scan QR'),
+              label: Text(context.tr('scan_qr_join_trip')),
             ),
           ],
         ),

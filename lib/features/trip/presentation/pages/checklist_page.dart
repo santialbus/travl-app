@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../domain/entities/checklist_item_entity.dart';
@@ -23,7 +24,9 @@ class ChecklistPage extends ConsumerWidget {
         isReadOnly: isReadOnly,
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => Center(child: Text(
+        context.tr('generic_error', params: {'error': e.toString()}),
+      )),
     );
   }
 }
@@ -117,7 +120,13 @@ class _ProgressHeader extends StatelessWidget {
           Row(
             children: [
               Text(
-                isComplete ? 'All done! 🎉' : '$done of $total done',
+                isComplete ? context.tr('all_done_check') : context.tr(
+                  'progress_done_check',
+                  params: {
+                    'done': done.toString(),
+                    'total': total.toString(),
+                  },
+                ),
                 style: AppTextStyles.labelSmall.copyWith(
                   color: isComplete
                       ? AppColors.success
@@ -178,7 +187,7 @@ class _ChecklistSection extends ConsumerWidget {
           child: Row(
             children: [
               Text(
-                '${type.emoji}  ${type.value.toUpperCase()}',
+                '${type.emoji}  ${context.tr('checklist_type_${type.name}').toUpperCase()}',
                 style: AppTextStyles.labelSmall.copyWith(
                   color: AppColors.textTertiary(context),
                   letterSpacing: 1.2,
@@ -187,7 +196,13 @@ class _ChecklistSection extends ConsumerWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                '· $done/${items.length}',
+                context.tr(
+                  'progress_fraction',
+                  params: {
+                    'done': done.toString(),
+                    'total': items.length.toString(),
+                  },
+                ),
                 style: AppTextStyles.labelSmall.copyWith(
                   color: AppColors.textTertiary(context),
                   fontSize: 11,
@@ -301,10 +316,10 @@ class _EmptyChecklist extends StatelessWidget {
           children: [
             const Text('📋', style: TextStyle(fontSize: 64)),
             const SizedBox(height: 16),
-            Text('No items yet', style: AppTextStyles.h4),
+            Text(context.tr('no_items_yet'), style: AppTextStyles.h4),
             const SizedBox(height: 8),
             Text(
-              'Add things to pack or tasks\nto complete before your trip',
+              context.tr('checklist_empty_description'),
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.textSecondary(context),
               ),
@@ -314,7 +329,7 @@ class _EmptyChecklist extends StatelessWidget {
             ElevatedButton.icon(
               onPressed: onAdd != null ? () => onAdd!() : null,
               icon: const Icon(Icons.add),
-              label: const Text('Add Item'),
+              label: Text(context.tr('add_item_check')),
             ),
           ],
         ),
@@ -391,7 +406,7 @@ class _AddChecklistItemSheetState
             Row(
               children: [
                 Expanded(
-                  child: Text('Add Item', style: AppTextStyles.h3),
+                  child: Text(context.tr('add_item'), style: AppTextStyles.h3),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),
@@ -406,7 +421,7 @@ class _AddChecklistItemSheetState
 
             // Type selector — igual que Timeline
             Text(
-              'WHEN',
+                context.tr('when').toUpperCase(),
               style: AppTextStyles.labelSmall.copyWith(
                 color: AppColors.textTertiary(context),
                 letterSpacing: 1.2,
@@ -466,9 +481,9 @@ class _AddChecklistItemSheetState
             // Input
             TextField(
               controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Item',
-                hintText: 'e.g., Pack sunscreen',
+              decoration: InputDecoration(
+                labelText: context.tr('item'),
+                hintText: context.tr('item_hint'),
               ),
               textCapitalization: TextCapitalization.sentences,
               autofocus: true,
@@ -488,7 +503,7 @@ class _AddChecklistItemSheetState
                   width: 20,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-                    : const Text('Add Item'),
+                    : Text(context.tr('add_item')),
               ),
             ),
           ],

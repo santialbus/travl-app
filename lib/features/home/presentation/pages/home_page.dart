@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -132,7 +133,7 @@ class _BottomNav extends StatelessWidget {
               _NavItem(
                 icon: Icons.luggage_outlined,
                 activeIcon: Icons.luggage,
-                label: 'Trips',
+                label: context.tr('trips_tab'),
                 isActive: currentIndex == 0,
                 activeColor: activeColor,
                 inactiveColor: inactiveColor,
@@ -141,7 +142,7 @@ class _BottomNav extends StatelessWidget {
               _NavItem(
                 icon: Icons.map_outlined,
                 activeIcon: Icons.map,
-                label: 'Map',
+                label: context.tr('map_tab'),
                 isActive: currentIndex == 1,
                 activeColor: activeColor,
                 inactiveColor: inactiveColor,
@@ -150,7 +151,7 @@ class _BottomNav extends StatelessWidget {
               _NavItem(
                 icon: Icons.person_outline,
                 activeIcon: Icons.person,
-                label: 'Profile',
+                label: context.tr('profile_tab'),
                 isActive: currentIndex == 2,
                 activeColor: activeColor,
                 inactiveColor: inactiveColor,
@@ -243,7 +244,7 @@ class _CreateOrJoinSheet extends ConsumerWidget {
 
           const SizedBox(height: 24),
 
-          Text('What do you want to do?', style: AppTextStyles.h3),
+          Text(context.tr('what_do_you_want_to_do'), style: AppTextStyles.h3),
 
           const SizedBox(height: 24),
 
@@ -280,10 +281,10 @@ class _CreateOrJoinSheet extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Create Trip', style: AppTextStyles.h4),
+                        Text(context.tr('create_trip'), style: AppTextStyles.h4),
                         const SizedBox(height: 4),
                         Text(
-                          'Start planning a new adventure',
+                          context.tr('start_planning_adventure'),
                           style: AppTextStyles.bodySmall,
                         ),
                       ],
@@ -344,10 +345,10 @@ class _CreateOrJoinSheet extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Join Trip', style: AppTextStyles.h4),
+                        Text(context.tr('join_trip'), style: AppTextStyles.h4),
                         const SizedBox(height: 4),
                         Text(
-                          'Enter an invite code or scan QR',
+                          context.tr('enter_code_or_scan'),
                           style: AppTextStyles.bodySmall,
                         ),
                       ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../../../core/localization/app_strings.dart';
 import '../../../../core/services/maps_launcher_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -28,7 +29,7 @@ class ActivityCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final color = AppColors.getActivityColor(activity.type.value);
+    final color = AppColors.getActivityColor(context.tr(activity.type.translationKey));
 
     return Dismissible(
       key: Key(activity.id),
@@ -46,7 +47,7 @@ class ActivityCard extends ConsumerWidget {
             Icon(Icons.edit_outlined, color: AppColors.primary, size: 20),
             const SizedBox(height: 4),
             Text(
-              'Edit',
+              context.tr('edit'),
               style: AppTextStyles.labelSmall.copyWith(
                 color: AppColors.primary,
                 fontSize: 11,
@@ -67,7 +68,7 @@ class ActivityCard extends ConsumerWidget {
             Icon(Icons.delete_outline, color: AppColors.error, size: 20),
             const SizedBox(height: 4),
             Text(
-              'Delete',
+              context.tr('delete'),
               style: AppTextStyles.labelSmall.copyWith(
                 color: AppColors.error,
                 fontSize: 11,
@@ -88,7 +89,7 @@ class ActivityCard extends ConsumerWidget {
             context: context,
             builder: (context) => AlertDialog(
               backgroundColor: AppColors.surface(context),
-              title: Text('Delete activity?', style: AppTextStyles.h4),
+              title: Text(context.tr('delete_activity_q'), style: AppTextStyles.h4),
               content: Text(
                 activity.title,
                 style: AppTextStyles.bodyMedium.copyWith(
@@ -98,12 +99,12 @@ class ActivityCard extends ConsumerWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancel'),
+                  child: Text(context.tr('cancel')),
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(context, true),
                   child: Text(
-                    'Delete',
+                    context.tr('delete'),
                     style: TextStyle(color: AppColors.error),
                   ),
                 ),
@@ -331,7 +332,7 @@ class ActivityCard extends ConsumerWidget {
   // ─── DETAIL MODAL (long press) ────────────────────────────────────────────
 
   void _showDetailModal(BuildContext context, WidgetRef ref) {
-    final color = AppColors.getActivityColor(activity.type.value);
+    final color = AppColors.getActivityColor(context.tr(activity.type.translationKey));
 
     showModalBottomSheet(
       context: context,
@@ -390,7 +391,7 @@ class ActivityCard extends ConsumerWidget {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          activity.type.value.toUpperCase(),
+                          context.tr(activity.type.translationKey).toUpperCase(),
                           style: AppTextStyles.labelSmall.copyWith(
                             color: color,
                             letterSpacing: 1,
@@ -416,7 +417,7 @@ class ActivityCard extends ConsumerWidget {
               _DetailRow(
                 context: context,
                 icon: Icons.access_time,
-                label: 'Time',
+                label:context.tr('activity_time'),
                 value: AppDateUtils.formatTime(activity.time!),
               ),
 
@@ -424,7 +425,7 @@ class ActivityCard extends ConsumerWidget {
               _DetailRow(
                 context: context,
                 icon: Icons.location_on_outlined,
-                label: 'Location',
+                label: context.tr('activity_location'),
                 value: activity.locationName!,
                 onTap: activity.mapsUrl != null
                     ? () {
@@ -438,7 +439,7 @@ class ActivityCard extends ConsumerWidget {
               _DetailRow(
                 context: context,
                 icon: Icons.flight,
-                label: 'Flight',
+                label: context.tr('activity_flight'),
                 value: activity.flightNumber!,
                 onTap: () {
                   Navigator.pop(context);
@@ -450,7 +451,7 @@ class ActivityCard extends ConsumerWidget {
               _DetailRow(
                 context: context,
                 icon: Icons.train,
-                label: 'Train',
+                label: context.tr('activity_train'),
                 value: '${activity.transportCompany != null ? '${activity.transportCompany} · ' : ''}${activity.trainNumber}',
                 onTap: () {
                   Navigator.pop(context);
@@ -462,7 +463,7 @@ class ActivityCard extends ConsumerWidget {
               _DetailRow(
                 context: context,
                 icon: Icons.confirmation_number_outlined,
-                label: 'Reference',
+                label: context.tr('activity_reference'),
                 value: activity.bookingReference!,
               ),
 
@@ -470,7 +471,7 @@ class ActivityCard extends ConsumerWidget {
               _DetailRow(
                 context: context,
                 icon: Icons.notes,
-                label: 'Notes',
+                label: context.tr('activity_notes'),
                 value: activity.description!,
                 multiline: true,
               ),
@@ -487,7 +488,7 @@ class ActivityCard extends ConsumerWidget {
                       _showEditSheet(context, ref);
                     },
                     icon: const Icon(Icons.edit_outlined, size: 16),
-                    label: const Text('Edit'),
+                    label: Text(context.tr('edit')),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       side: BorderSide(color: AppColors.borderColor(context)),
@@ -511,7 +512,7 @@ class ActivityCard extends ConsumerWidget {
                           : Icons.check,
                       size: 16,
                     ),
-                    label: Text(activity.isCompleted ? 'Reopen' : 'Complete'),
+                    label: Text(activity.isCompleted ? context.tr('reopen') : context.tr('complete')),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       backgroundColor: activity.isCompleted
@@ -586,12 +587,12 @@ class ActivityCard extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 24),
-            Text('Track Flight ${activity.flightNumber}', style: AppTextStyles.h3),
+            Text('${context.tr('track_flight')} ${activity.flightNumber}', style: AppTextStyles.h3),
             const SizedBox(height: 20),
             _TrackerOption(
               emoji: '📡',
               name: 'FlightRadar24',
-              description: 'Real-time flight tracking',
+              description: context.tr('flight_tracker_real_time'),
               onTap: () {
                 Navigator.pop(context);
                 _openUrl('https://www.flightradar24.com/${activity.flightNumber}');
@@ -601,7 +602,7 @@ class ActivityCard extends ConsumerWidget {
             _TrackerOption(
               emoji: '✈️',
               name: 'FlightAware',
-              description: 'Flight status & tracking',
+              description: context.tr('flight_tracker_status'),
               onTap: () {
                 Navigator.pop(context);
                 _openUrl('https://www.flightaware.com/live/flight/${activity.flightNumber}');
@@ -611,7 +612,7 @@ class ActivityCard extends ConsumerWidget {
             _TrackerOption(
               emoji: '🔍',
               name: 'Google Flights',
-              description: 'Check flight status',
+              description: context.tr('flight_tracker_google'),
               onTap: () {
                 Navigator.pop(context);
                 _openUrl('https://www.google.com/travel/flights?q=${activity.flightNumber}');

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/route_constants.dart';
@@ -126,7 +127,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Plan your adventures together',
+                  context.tr('plan_adventures_together'),
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: Colors.white.withOpacity(0.5),
                   ),
@@ -147,10 +148,10 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                             controller: _nameController,
                             style: const TextStyle(color: Colors.white),
                             decoration: _inputDecoration(
-                              label: 'Name',
+                              label: context.tr('name'),
                               icon: Icons.person_outline,
                             ),
-                            validator: (value) => Validators.required(value, 'Name'),
+                            validator: (value) => Validators.required(value, context.tr('name')),
                           ),
                         ),
 
@@ -158,7 +159,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                         controller: _emailController,
                         style: const TextStyle(color: Colors.white),
                         decoration: _inputDecoration(
-                          label: 'Email',
+                          label: context.tr('email'),
                           icon: Icons.email_outlined,
                         ),
                         keyboardType: TextInputType.emailAddress,
@@ -171,7 +172,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                         controller: _passwordController,
                         style: const TextStyle(color: Colors.white),
                         decoration: _inputDecoration(
-                          label: 'Password',
+                          label: context.tr('password'),
                           icon: Icons.lock_outline,
                         ),
                         obscureText: true,
@@ -199,7 +200,11 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                               valueColor: AlwaysStoppedAnimation(Colors.white),
                             ),
                           )
-                              : Text(_isSignUp ? 'Sign Up' : 'Sign In'),
+                              : Text(
+                            _isSignUp
+                                ? context.tr('sign_up')
+                                : context.tr('sign_in'),
+                          ),
                         ),
                       ),
                     ],
@@ -217,8 +222,8 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                   },
                   child: Text(
                     _isSignUp
-                        ? 'Already have an account? Sign In'
-                        : "Don't have an account? Sign Up",
+                        ? context.tr('already_have_account')
+                        : context.tr('no_account_sign_up'),
                     style: TextStyle(color: Colors.white.withOpacity(0.7)),
                   ),
                 ),
@@ -234,7 +239,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
-                        'OR',
+                        context.tr('or'),
                         style: AppTextStyles.labelSmall.copyWith(
                           color: Colors.white.withOpacity(0.4),
                         ),
@@ -251,7 +256,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                 // Google Sign In Button
                 AuthButton(
                   onPressed: authState.isLoading ? null : _handleGoogleSignIn,
-                  label: 'Continue with Google',
+                  label: context.tr('continue_with_google'),
                   backgroundColor: Colors.white,
                   textColor: Colors.black87,
                   useGoogleLogo: true,

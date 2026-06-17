@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_utils.dart';
@@ -71,7 +72,7 @@ class TripCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      '${trip.numberOfDays} days',
+                      '${trip.numberOfDays} ${context.tr('trip_days')}',
                       style: AppTextStyles.labelSmall.copyWith(
                         color: AppColors.primary,
                       ),
@@ -117,7 +118,9 @@ class TripCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '${trip.members.length} ${trip.members.length == 1 ? 'member' : 'members'}',
+                    '${trip.members.length} ${trip.members.length == 1
+                        ? context.tr('trip_member')
+                        : context.tr('trip_members')}',
                     style: AppTextStyles.bodySmall,
                   ),
                   const Spacer(),

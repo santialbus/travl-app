@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/services/geocoding_service.dart';
@@ -29,10 +30,10 @@ class MapTab extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('My Map 🗺️', style: AppTextStyles.h2),
+                  Text(context.tr('map_title'), style: AppTextStyles.h2),
                   const SizedBox(height: 4),
                   Text(
-                    'All your destinations',
+                    context.tr('map_subtitle'),
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: AppColors.textSecondary(context),
                     ),
@@ -47,7 +48,7 @@ class MapTab extends ConsumerWidget {
                 data: (trips) => _GeocodedMap(trips: trips),
                 loading: () =>
                 const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('Error: $e')),
+                error: (e, _) => Center(child: Text('${context.tr('error_prefix')} $e')),
               ),
             ),
 
@@ -130,13 +131,13 @@ class _GeocodedMap extends ConsumerWidget {
 
     // Si ninguno ha cargado aún
     if (tripMarkers.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircularProgressIndicator(),
             SizedBox(height: 16),
-            Text('Loading destinations...'),
+            Text(context.tr('loading_destinations')),
           ],
         ),
       );
@@ -279,12 +280,12 @@ class _EmptyMap extends StatelessWidget {
             const Text('🗺️', style: TextStyle(fontSize: 48)),
             const SizedBox(height: 16),
             Text(
-              'No destinations yet',
+              context.tr('no_destinations'),
               style: AppTextStyles.h4,
             ),
             const SizedBox(height: 8),
             Text(
-              'Create a trip to see your\ndestinations on the map',
+              context.tr('no_destinations_description'),
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.textSecondary(context),
               ),

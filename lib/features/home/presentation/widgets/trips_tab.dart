@@ -8,6 +8,7 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/route_constants.dart';
 import '../../../../core/widgets/offline_indicator.dart';
 import '../../../../core/widgets/pulsing_dot.dart';
+import '../../../../core/localization/app_strings.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../trip/presentation/providers/trip_provider.dart';
 import '../../../trip/domain/entities/trip_entity.dart';
@@ -60,7 +61,7 @@ class TripsTab extends ConsumerWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _getGreeting(userName),
+                      _getGreeting(userName, ref),
                       style: AppTextStyles.bodyMedium.copyWith(
                         color: AppColors.textSecondary(context),
                       ),
@@ -97,13 +98,14 @@ class TripsTab extends ConsumerWidget {
     );
   }
 
-  String _getGreeting(String name) {
+  String _getGreeting(String name, WidgetRef ref) {
     final hour = DateTime.now().hour;
-    final greeting = hour < 12
-        ? 'Good morning'
+    final key = hour < 12
+        ? 'good_morning'
         : hour < 18
-        ? 'Good afternoon'
-        : 'Good evening';
+            ? 'good_afternoon'
+            : 'good_evening';
+    final greeting = ref.tr(key);
     return name.isNotEmpty ? '$greeting, $name 👋' : '$greeting 👋';
   }
 
@@ -166,7 +168,7 @@ class _TripsListState extends State<_TripsList> {
 
     final recent = _trips
         .where((t) =>
-    t.endDate.isBefore(now) && t.endDate.isAfter(archiveThreshold))
+            t.endDate.isBefore(now) && t.endDate.isAfter(archiveThreshold))
         .toList()
       ..sort((a, b) => b.endDate.compareTo(a.endDate));
 
@@ -180,14 +182,14 @@ class _TripsListState extends State<_TripsList> {
     return Column(
       children: [
         ...activeTrips.map((trip) => Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: _TripCard(
-            trip: trip,
-            userId: widget.userId,
-            onTap: () => context.go('/trip/${trip.id}'),
-            onDeleted: () => _removeTrip(trip.id),
-          ),
-        )),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: _TripCard(
+                trip: trip,
+                userId: widget.userId,
+                onTap: () => context.go('/trip/${trip.id}'),
+                onDeleted: () => _removeTrip(trip.id),
+              ),
+            )),
 
         if (archived.isNotEmpty) ...[
           const SizedBox(height: 8),
@@ -206,7 +208,7 @@ class _TripsListState extends State<_TripsList> {
 
 // ─── ARCHIVED SECTION ─────────────────────────────────────────────────────────
 
-class _ArchivedSection extends StatefulWidget {
+class _ArchivedSection extends ConsumerStatefulWidget {
   final List<TripEntity> trips;
   final String userId;
   final void Function(String tripId) onDeleted; // ✅ añadido
@@ -218,10 +220,10 @@ class _ArchivedSection extends StatefulWidget {
   });
 
   @override
-  State<_ArchivedSection> createState() => _ArchivedSectionState();
+  ConsumerState<_ArchivedSection> createState() => _ArchivedSectionState();
 }
 
-class _ArchivedSectionState extends State<_ArchivedSection> {
+class _ArchivedSectionState extends ConsumerState<_ArchivedSection> {
   bool _expanded = false;
 
   @override
@@ -245,7 +247,7 @@ class _ArchivedSectionState extends State<_ArchivedSection> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Archived',
+                    ref.tr('archived'),
                     style: AppTextStyles.labelSmall.copyWith(
                       color: AppColors.textTertiary(context),
                       letterSpacing: 1.2,
@@ -255,10 +257,10 @@ class _ArchivedSectionState extends State<_ArchivedSection> {
                   const SizedBox(width: 8),
                   Container(
                     padding:
-                    const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
                       color:
-                      AppColors.textTertiary(context).withOpacity(0.12),
+                          AppColors.textTertiary(context).withOpacity(0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -289,20 +291,20 @@ class _ArchivedSectionState extends State<_ArchivedSection> {
             curve: Curves.easeInOut,
             child: _expanded
                 ? Column(
-              children: widget.trips
-                  .map((trip) => Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: _TripCard(
-                  trip: trip,
-                  userId: widget.userId,
-                  onTap: () => context.go('/trip/${trip.id}?readOnly=true'),
-                  isArchived: true,
-                  onDeleted: () =>
-                      widget.onDeleted(trip.id),
-                ),
-              ))
-                  .toList(),
-            )
+                    children: widget.trips
+                        .map((trip) => Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: _TripCard(
+                                trip: trip,
+                                userId: widget.userId,
+                                onTap: () => context.go('/trip/${trip.id}?readOnly=true'),
+                                isArchived: true,
+                                onDeleted: () =>
+                                    widget.onDeleted(trip.id),
+                              ),
+                            ))
+                        .toList(),
+                  )
                 : const SizedBox.shrink(),
           ),
         ],
@@ -354,7 +356,7 @@ class _TripCard extends ConsumerWidget {
           children: [
             Icon(Icons.edit_outlined, color: AppColors.primary),
             const SizedBox(height: 4),
-            Text('Edit',
+            Text(ref.tr('edit'),
                 style: AppTextStyles.labelSmall
                     .copyWith(color: AppColors.primary)),
           ],
@@ -374,7 +376,7 @@ class _TripCard extends ConsumerWidget {
           children: [
             Icon(isOwner ? Icons.delete_outline : Icons.exit_to_app, color: AppColors.error),
             const SizedBox(height: 4),
-            Text(isOwner ? 'Delete' : 'Leave',
+            Text(isOwner ? ref.tr('delete') : ref.tr('leave'),
                 style: AppTextStyles.labelSmall
                     .copyWith(color: AppColors.error)),
           ],
@@ -393,7 +395,7 @@ class _TripCard extends ConsumerWidget {
                 backgroundColor: AppColors.surface(context),
                 shape: const RoundedRectangleBorder(
                   borderRadius:
-                  BorderRadius.vertical(top: Radius.circular(20)),
+                      BorderRadius.vertical(top: Radius.circular(20)),
                 ),
                 builder: (context) => EditTripBottomSheet(trip: trip),
               );
@@ -407,20 +409,20 @@ class _TripCard extends ConsumerWidget {
             context: context,
             builder: (context) => AlertDialog(
               backgroundColor: AppColors.surface(context),
-              title: Text('Delete trip?', style: AppTextStyles.h4),
+              title: Text(ref.tr('delete_trip_q'), style: AppTextStyles.h4),
               content: Text(
-                'This will permanently delete "${trip.name}" and all its data.',
+                ref.tr('delete_trip_desc', params: {'name': trip.name}),
                 style: AppTextStyles.bodyMedium
                     .copyWith(color: AppColors.textSecondary(context)),
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancel'),
+                  child: Text(ref.tr('cancel')),
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(context, true),
-                  child: Text('Delete', style: TextStyle(color: AppColors.error)),
+                  child: Text(ref.tr('delete'), style: TextStyle(color: AppColors.error)),
                 ),
               ],
             ),
@@ -430,20 +432,20 @@ class _TripCard extends ConsumerWidget {
             context: context,
             builder: (context) => AlertDialog(
               backgroundColor: AppColors.surface(context),
-              title: Text('Leave trip?', style: AppTextStyles.h4),
+              title: Text(ref.tr('leave_trip_q'), style: AppTextStyles.h4),
               content: Text(
-                'You will be removed from "${trip.name}".',
+                ref.tr('leave_trip_desc', params: {'name': trip.name}),
                 style: AppTextStyles.bodyMedium
                     .copyWith(color: AppColors.textSecondary(context)),
               ),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancel'),
+                  child: Text(ref.tr('cancel')),
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(context, true),
-                  child: Text('Leave', style: TextStyle(color: AppColors.error)),
+                  child: Text(ref.tr('leave'), style: TextStyle(color: AppColors.error)),
                 ),
               ],
             ),
@@ -457,10 +459,10 @@ class _TripCard extends ConsumerWidget {
           onDeleted?.call();
           if (isOwner) {
             ref.read(tripControllerProvider.notifier).deleteTrip(trip.id);
-            if (context.mounted) showBottomSnackBar(context, '${trip.name} deleted');
+            if (context.mounted) showBottomSnackBar(context, ref.tr('trip_deleted', params: {'name': trip.name}));
           } else {
             ref.read(tripControllerProvider.notifier).leaveTrip(trip.id, userId);
-            if (context.mounted) showBottomSnackBar(context, 'Left ${trip.name}');
+            if (context.mounted) showBottomSnackBar(context, ref.tr('left_trip', params: {'name': trip.name}));
           }
         }
       },
@@ -529,7 +531,7 @@ class _TripCardContentState extends State<_TripCardContent>
   @override
   Widget build(BuildContext context) {
     final cardColor =
-    widget.isDark ? AppColors.card(context) : AppColors.cardLight;
+        widget.isDark ? AppColors.card(context) : AppColors.cardLight;
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -537,11 +539,11 @@ class _TripCardContentState extends State<_TripCardContent>
         animation: _pulseAnim,
         builder: (context, child) {
           final glowOpacity =
-          widget.isOngoing ? 0.2 + (_pulseAnim.value * 0.35) : 0.0;
+              widget.isOngoing ? 0.2 + (_pulseAnim.value * 0.35) : 0.0;
           final glowSpread =
-          widget.isOngoing ? 0.0 + (_pulseAnim.value * 4.0) : 0.0;
+              widget.isOngoing ? 0.0 + (_pulseAnim.value * 4.0) : 0.0;
           final glowBlur =
-          widget.isOngoing ? 8.0 + (_pulseAnim.value * 12.0) : 0.0;
+              widget.isOngoing ? 8.0 + (_pulseAnim.value * 12.0) : 0.0;
 
           return Container(
             margin: const EdgeInsets.only(bottom: 12),
@@ -552,17 +554,17 @@ class _TripCardContentState extends State<_TripCardContent>
               borderRadius: BorderRadius.circular(20),
               border: widget.isOngoing
                   ? Border.all(
-                color: AppColors.primary
-                    .withOpacity(0.5 + _pulseAnim.value * 0.3),
-                width: 1.5,
-              )
+                      color: AppColors.primary
+                          .withOpacity(0.5 + _pulseAnim.value * 0.3),
+                      width: 1.5,
+                    )
                   : widget.isArchived
-                  ? Border.all(
-                color:
-                AppColors.borderColor(context).withOpacity(0.4),
-                width: 1,
-              )
-                  : null,
+                      ? Border.all(
+                          color:
+                              AppColors.borderColor(context).withOpacity(0.4),
+                          width: 1,
+                        )
+                      : null,
               boxShadow: [
                 if (!widget.isDark && !widget.isArchived)
                   BoxShadow(
@@ -659,7 +661,7 @@ class _TripCardContentState extends State<_TripCardContent>
 
 // ─── STATUS BADGE ─────────────────────────────────────────────────────────────
 
-class _StatusBadge extends StatelessWidget {
+class _StatusBadge extends ConsumerWidget {
   final bool isOngoing;
   final bool isUpcoming;
   final bool isArchived;
@@ -671,7 +673,7 @@ class _StatusBadge extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     Color bgColor;
     Color textColor;
     String label;
@@ -679,19 +681,19 @@ class _StatusBadge extends StatelessWidget {
     if (isArchived) {
       bgColor = AppColors.textTertiary(context).withOpacity(0.1);
       textColor = AppColors.textTertiary(context);
-      label = 'Archived';
+      label = ref.tr('archived');
     } else if (isOngoing) {
       bgColor = AppColors.primary.withOpacity(0.15);
       textColor = AppColors.primary;
-      label = 'Ongoing';
+      label = ref.tr('ongoing');
     } else if (isUpcoming) {
       bgColor = AppColors.success.withOpacity(0.15);
       textColor = AppColors.success;
-      label = 'Upcoming';
+      label = ref.tr('upcoming');
     } else {
       bgColor = AppColors.textTertiary(context).withOpacity(0.15);
       textColor = AppColors.textTertiary(context);
-      label = 'Past';
+      label = ref.tr('past');
     }
 
     return Container(
@@ -740,11 +742,11 @@ class _MemberAvatars extends StatelessWidget {
                 color: AppColors.primary.withOpacity(0.3 + i * 0.2),
                 shape: BoxShape.circle,
                 border:
-                Border.all(color: AppColors.card(context), width: 2),
+                    Border.all(color: AppColors.card(context), width: 2),
               ),
               child: Center(
                 child:
-                Icon(Icons.person, size: 14, color: AppColors.primary),
+                    Icon(Icons.person, size: 14, color: AppColors.primary),
               ),
             ),
           );
@@ -759,7 +761,7 @@ class _MemberAvatars extends StatelessWidget {
                 color: AppColors.surface(context),
                 shape: BoxShape.circle,
                 border:
-                Border.all(color: AppColors.card(context), width: 2),
+                    Border.all(color: AppColors.card(context), width: 2),
               ),
               child: Center(
                 child: Text(
@@ -776,14 +778,14 @@ class _MemberAvatars extends StatelessWidget {
 
 // ─── EMPTY STATE ──────────────────────────────────────────────────────────────
 
-class _EmptyTrips extends StatelessWidget {
+class _EmptyTrips extends ConsumerWidget {
   final VoidCallback onCreateTrip;
   final VoidCallback onJoinTrip;
 
   const _EmptyTrips({required this.onCreateTrip, required this.onJoinTrip});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -792,10 +794,10 @@ class _EmptyTrips extends StatelessWidget {
           children: [
             const Text('✈️', style: TextStyle(fontSize: 72)),
             const SizedBox(height: 24),
-            Text('No trips yet', style: AppTextStyles.h3),
+            Text(ref.tr('no_trips_yet'), style: AppTextStyles.h3),
             const SizedBox(height: 8),
             Text(
-              'Create your first trip or join\nan existing one with a code',
+              ref.tr('create_trip_or_join'),
               style: AppTextStyles.bodyMedium.copyWith(
                 color: AppColors.textSecondary(context),
               ),
@@ -808,14 +810,14 @@ class _EmptyTrips extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: onCreateTrip,
                 icon: const Icon(Icons.add),
-                label: const Text('Create Trip'),
+                label: Text(ref.tr('create_trip')),
               ),
             ),
             const SizedBox(height: 12),
             TextButton.icon(
               onPressed: onJoinTrip,
               icon: const Icon(Icons.group_add),
-              label: const Text('Join with code'),
+              label: Text(ref.tr('join_with_code')),
             ),
           ],
         ),
@@ -887,7 +889,7 @@ class _BottomSnackBarState extends State<_BottomSnackBar>
             opacity: _fade,
             child: Container(
               padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
                 color: AppColors.error,
                 borderRadius: BorderRadius.circular(14),
