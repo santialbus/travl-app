@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Supported app languages. 'system' follows the device locale,
 /// falling back to English if the device language isn't supported.
-enum AppLanguage { system, en, es }
+enum AppLanguage { system, en, es, de, fr, ja}
 
 final appLanguageProvider =
     StateNotifierProvider<AppLanguageNotifier, AppLanguage>((ref) {
@@ -60,6 +60,12 @@ extension AppLanguageX on AppLanguage {
         return 'English';
       case AppLanguage.es:
         return 'Español';
+        case AppLanguage.de:
+        return 'Deutsch';
+      case AppLanguage.fr:
+        return 'Français';
+      case AppLanguage.ja:
+        return '日本語';
     }
   }
 }

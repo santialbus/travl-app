@@ -20,6 +20,9 @@ class ProfileTab extends ConsumerWidget {
       AppLanguage.system => ref.tr('language_system'),
       AppLanguage.en => ref.tr('language_english'),
       AppLanguage.es => ref.tr('language_spanish'),
+      AppLanguage.de => '🇩🇪  ${ref.tr('language_german')}',
+      AppLanguage.fr => '🇫🇷  ${ref.tr('language_french')}',
+      AppLanguage.ja => '🇯🇵  ${ref.tr('language_japanese')}',
     };
 
     return authAsync.when(
@@ -170,6 +173,9 @@ class ProfileTab extends ConsumerWidget {
                       AppLanguage.system => '${ref.tr('language_system')} (${_deviceLocaleName()})',
                       AppLanguage.en => '🇬🇧  ${ref.tr('language_english')}',
                       AppLanguage.es => '🇪🇸  ${ref.tr('language_spanish')}',
+                      AppLanguage.de => '🇩🇪  ${ref.tr('language_german')}',
+                      AppLanguage.fr => '🇫🇷  ${ref.tr('language_french')}',
+                      AppLanguage.ja => '🇯🇵  ${ref.tr('language_japanese')}',
                     };
 
                     return InkWell(
