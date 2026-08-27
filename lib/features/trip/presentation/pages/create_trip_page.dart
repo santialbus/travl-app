@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/validators.dart';
@@ -92,8 +93,8 @@ class _CreateTripPageState extends ConsumerState<CreateTripPage> {
 
     if (_startDate == null || _endDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select both start and end dates'),
+        SnackBar(
+          content: Text(context.tr('select_start_end_dates')),
           backgroundColor: AppColors.error,
         ),
       );
@@ -119,7 +120,7 @@ class _CreateTripPageState extends ConsumerState<CreateTripPage> {
       final error = ref.read(tripControllerProvider).error;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(error ?? 'Failed to create trip'),
+          content: Text(error ?? context.tr('failed_create_trip')),
           backgroundColor: AppColors.error,
         ),
       );
@@ -132,7 +133,7 @@ class _CreateTripPageState extends ConsumerState<CreateTripPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Trip'),
+        title: Text(context.tr('create_trip')),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -144,9 +145,9 @@ class _CreateTripPageState extends ConsumerState<CreateTripPage> {
               // Trip Name
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Trip Name',
-                  hintText: 'e.g., Summer in Tokyo',
+                decoration: InputDecoration(
+                  labelText: context.tr('trip_name'),
+                  hintText: context.tr('trip_name_hint'),
                   prefixIcon: Icon(Icons.luggage),
                 ),
                 validator: Validators.tripName,
@@ -158,9 +159,9 @@ class _CreateTripPageState extends ConsumerState<CreateTripPage> {
               // Destination
               TextFormField(
                 controller: _destinationController,
-                decoration: const InputDecoration(
-                  labelText: 'Destination',
-                  hintText: 'e.g., Tokyo, Japan',
+                decoration: InputDecoration(
+                  labelText: context.tr('destination'),
+                  hintText: context.tr('destination_hint'),
                   prefixIcon: Icon(Icons.location_on),
                 ),
                 validator: Validators.destination,
@@ -171,7 +172,7 @@ class _CreateTripPageState extends ConsumerState<CreateTripPage> {
 
               // Dates Section
               Text(
-                'Dates',
+                context.tr('dates'),
                 style: AppTextStyles.labelLarge,
               ),
               const SizedBox(height: 16),
@@ -194,14 +195,14 @@ class _CreateTripPageState extends ConsumerState<CreateTripPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Start Date',
+                              context.tr('start_date'),
                               style: AppTextStyles.labelSmall,
                             ),
                             const SizedBox(height: 4),
                             Text(
                               _startDate != null
                                   ? AppDateUtils.formatDate(_startDate!)
-                                  : 'Select date',
+                                  : context.tr('select_date'),
                               style: AppTextStyles.bodyMedium.copyWith(
                                 color: _startDate != null
                                     ? AppColors.textPrimary(context)
@@ -237,14 +238,14 @@ class _CreateTripPageState extends ConsumerState<CreateTripPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'End Date',
+                              context.tr('end_date'),
                               style: AppTextStyles.labelSmall,
                             ),
                             const SizedBox(height: 4),
                             Text(
                               _endDate != null
                                   ? AppDateUtils.formatDate(_endDate!)
-                                  : 'Select date',
+                                  : context.tr('select_date'),
                               style: AppTextStyles.bodyMedium.copyWith(
                                 color: _endDate != null
                                     ? AppColors.textPrimary(context)
@@ -273,7 +274,7 @@ class _CreateTripPageState extends ConsumerState<CreateTripPage> {
                     width: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                      : const Text('Create Trip'),
+                      : Text(context.tr('create_trip')),
                 ),
               ),
             ],

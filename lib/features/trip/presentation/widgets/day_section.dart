@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/localization/app_strings.dart';
 import '../../../../core/providers/connectivity_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -56,7 +57,7 @@ class DaySection extends ConsumerWidget {
           ),
           error: (e, _) => Padding(
             padding: const EdgeInsets.all(16),
-            child: Text('Error: $e', style: AppTextStyles.bodySmall),
+            child: Text('${context.tr('error_generic')}: ${e.toString()}', style: AppTextStyles.bodySmall),
           ),
         ),
         const SizedBox(height: 8),
@@ -191,7 +192,7 @@ class _DraggableActivityRow extends ConsumerWidget {
                   child: Padding(
                     padding: const EdgeInsets.only(left: 8, right: 4),
                     child: Tooltip(
-                      message: 'Drag to reorder · Hold to move to another day',
+                      message: context.tr('drag_reorder_move'),
                       child: Icon(
                         Icons.drag_handle,
                         size: 20,
@@ -286,7 +287,7 @@ class _MoveToDaySheet extends StatelessWidget {
 
           const SizedBox(height: 24),
 
-          Text('Move to day', style: AppTextStyles.h3),
+          Text(context.tr('move_to_day'), style: AppTextStyles.h3),
           const SizedBox(height: 4),
           Text(
             activity.title,
@@ -300,7 +301,7 @@ class _MoveToDaySheet extends StatelessWidget {
           if (otherDays.isEmpty)
             Center(
               child: Text(
-                'No other days available',
+                context.tr('no_other_days'),
                 style: AppTextStyles.bodyMedium.copyWith(
                   color: AppColors.textSecondary(context),
                 ),
@@ -388,7 +389,13 @@ class _DaySeparator extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            '${day.title.toUpperCase()} · $dateStr',
+            context.tr(
+              'day_header',
+              params: {
+                'title': day.title.toUpperCase(),
+                'date': dateStr,
+              },
+            ),
             style: AppTextStyles.labelSmall.copyWith(
               color: AppColors.textTertiary(context),
               letterSpacing: 1.2,
@@ -423,7 +430,7 @@ class _AddActivityRow extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Text(
-              'Add activity',
+                context.tr('add_activity'),
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.textTertiary(context),
               ),

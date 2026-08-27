@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:map_launcher/map_launcher.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../localization/app_strings.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import 'maps_preference_service.dart';
@@ -180,10 +180,10 @@ class _MapPickerSheet extends StatelessWidget {
 
           const SizedBox(height: 24),
 
-          Text('Open with', style: AppTextStyles.h3),
+          Text(context.tr('open_with'), style: AppTextStyles.h3),
           const SizedBox(height: 8),
           Text(
-            'Choose your preferred maps app',
+            context.tr('choose_maps_app'),
             style: AppTextStyles.bodySmall.copyWith(
               color: AppColors.textSecondary(context),
             ),
@@ -232,7 +232,7 @@ class _MapPickerSheet extends StatelessWidget {
               Navigator.pop(context);
             },
             child: Text(
-              'Always ask',
+              context.tr('always_ask'),
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.textTertiary(context),
               ),

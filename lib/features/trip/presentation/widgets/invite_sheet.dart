@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/app_strings.dart';
+
 class InviteSheet extends StatelessWidget {
   const InviteSheet({super.key});
 
@@ -10,12 +12,12 @@ class InviteSheet extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('Invite Members', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          Text(context.tr('invite_members'), style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
-          const Text('Share this code with your friends:'),
+          Text(context.tr('share_code_with_friends')),
           const SelectableText('ABC-123', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
-          ElevatedButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+          ElevatedButton(onPressed: () => Navigator.pop(context), child: Text(context.tr('close'))),
         ],
       ),
     );
