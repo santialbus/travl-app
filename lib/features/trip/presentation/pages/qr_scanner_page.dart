@@ -126,18 +126,26 @@ class _QrScannerPageState extends ConsumerState<QrScannerPage> {
           Positioned.fill(
             child: Column(
               children: [
-                Expanded(child: Container(color: Colors.black.withOpacity(0.6))),
+                Expanded(
+                    child:
+                        Container(color: Colors.black.withValues(alpha: 0.6))),
                 SizedBox(
                   height: size,
                   child: Row(
                     children: [
-                      Expanded(child: Container(color: Colors.black.withOpacity(0.6))),
+                      Expanded(
+                          child: Container(
+                              color: Colors.black.withValues(alpha: 0.6))),
                       const SizedBox(width: size),
-                      Expanded(child: Container(color: Colors.black.withOpacity(0.6))),
+                      Expanded(
+                          child: Container(
+                              color: Colors.black.withValues(alpha: 0.6))),
                     ],
                   ),
                 ),
-                Expanded(child: Container(color: Colors.black.withOpacity(0.6))),
+                Expanded(
+                    child:
+                        Container(color: Colors.black.withValues(alpha: 0.6))),
               ],
             ),
           ),
@@ -172,7 +180,7 @@ class _QrScannerPageState extends ConsumerState<QrScannerPage> {
                   Text(
                     context.tr('code_format_hint'),
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.5),
                       fontSize: 12,
                     ),
                   ),
@@ -254,16 +262,15 @@ class _ScannerFrameState extends State<_ScannerFrame>
             borderRadius: BorderRadius.circular(20),
             boxShadow: widget.isDetected
                 ? [
-              BoxShadow(
-                color: Colors.green.withOpacity(0.6),
-                blurRadius: 20,
-                spreadRadius: 2,
-              )
-            ]
+                    BoxShadow(
+                      color: Colors.green.withValues(alpha: 0.6),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                    )
+                  ]
                 : [],
           ),
         ),
-
         AnimatedBuilder(
           animation: _controller,
           builder: (context, _) {
@@ -274,7 +281,7 @@ class _ScannerFrameState extends State<_ScannerFrame>
                 width: double.infinity,
                 color: widget.isDetected
                     ? Colors.green
-                    : Colors.white.withOpacity(0.7),
+                    : Colors.white.withValues(alpha: 0.7),
               ),
             );
           },

@@ -68,11 +68,11 @@ class _HomeContentState extends ConsumerState<_HomeContent> {
       // ✅ FAB esquina inferior derecha
       floatingActionButton: _currentIndex != 2
           ? FloatingActionButton(
-        onPressed: () => _showCreateOrJoin(context),
-        backgroundColor: AppColors.primary,
-        elevation: 4,
-        child: const Icon(Icons.add, color: Colors.white, size: 28),
-      )
+              onPressed: () => _showCreateOrJoin(context),
+              backgroundColor: AppColors.primary,
+              elevation: 4,
+              child: const Icon(Icons.add, color: Colors.white, size: 28),
+            )
           : null,
       bottomNavigationBar: _BottomNav(
         currentIndex: _currentIndex,
@@ -110,9 +110,8 @@ class _BottomNav extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = AppColors.surface(context);
     final activeColor = AppColors.primary;
-    final inactiveColor = isDark
-        ? AppColors.textTertiary(context)
-        : AppColors.textTertiaryLight;
+    final inactiveColor =
+        isDark ? AppColors.textTertiary(context) : AppColors.textTertiaryLight;
 
     return Container(
       decoration: BoxDecoration(
@@ -204,8 +203,7 @@ class _NavItem extends StatelessWidget {
               label,
               style: TextStyle(
                 fontSize: 11,
-                fontWeight:
-                isActive ? FontWeight.w600 : FontWeight.normal,
+                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
                 color: isActive ? activeColor : inactiveColor,
               ),
             ),
@@ -259,10 +257,10 @@ class _CreateOrJoinSheet extends ConsumerWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
+                color: AppColors.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: AppColors.primary.withOpacity(0.3),
+                  color: AppColors.primary.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(
@@ -281,7 +279,8 @@ class _CreateOrJoinSheet extends ConsumerWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(context.tr('create_trip'), style: AppTextStyles.h4),
+                        Text(context.tr('create_trip'),
+                            style: AppTextStyles.h4),
                         const SizedBox(height: 4),
                         Text(
                           context.tr('start_planning_adventure'),
@@ -319,7 +318,9 @@ class _CreateOrJoinSheet extends ConsumerWidget {
                 color: cardColor,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: isDark ? AppColors.borderColor(context) : AppColors.borderLight,
+                  color: isDark
+                      ? AppColors.borderColor(context)
+                      : AppColors.borderLight,
                 ),
               ),
               child: Row(

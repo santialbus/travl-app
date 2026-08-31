@@ -57,7 +57,8 @@ class DaySection extends ConsumerWidget {
           ),
           error: (e, _) => Padding(
             padding: const EdgeInsets.all(16),
-            child: Text('${context.tr('error_generic')}: ${e.toString()}', style: AppTextStyles.bodySmall),
+            child: Text('${context.tr('error_generic')}: ${e.toString()}',
+                style: AppTextStyles.bodySmall),
           ),
         ),
         const SizedBox(height: 8),
@@ -196,7 +197,8 @@ class _DraggableActivityRow extends ConsumerWidget {
                       child: Icon(
                         Icons.drag_handle,
                         size: 20,
-                        color: AppColors.textTertiary(context).withOpacity(0.5),
+                        color: AppColors.textTertiary(context)
+                            .withValues(alpha: 0.5),
                       ),
                     ),
                   ),
@@ -326,7 +328,7 @@ class _MoveToDaySheet extends StatelessWidget {
                         width: 36,
                         height: 36,
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color: AppColors.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Center(
@@ -430,7 +432,7 @@ class _AddActivityRow extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Text(
-                context.tr('add_activity'),
+              context.tr('add_activity'),
               style: AppTextStyles.bodySmall.copyWith(
                 color: AppColors.textTertiary(context),
               ),

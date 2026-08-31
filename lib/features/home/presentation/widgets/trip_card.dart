@@ -68,7 +68,7 @@ class TripCard extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.2),
+                      color: AppColors.primary.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
@@ -99,7 +99,8 @@ class TripCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      AppDateUtils.formatDateRange(trip.startDate, trip.endDate),
+                      AppDateUtils.formatDateRange(
+                          trip.startDate, trip.endDate),
                       style: AppTextStyles.bodySmall,
                     ),
                   ],
@@ -118,9 +119,7 @@ class TripCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '${trip.members.length} ${trip.members.length == 1
-                        ? context.tr('trip_member')
-                        : context.tr('trip_members')}',
+                    '${trip.members.length} ${trip.members.length == 1 ? context.tr('trip_member') : context.tr('trip_members')}',
                     style: AppTextStyles.bodySmall,
                   ),
                   const Spacer(),

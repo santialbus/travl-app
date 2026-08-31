@@ -15,7 +15,8 @@ class ExpensesPage extends ConsumerWidget {
   final String tripId;
   final bool isReadOnly;
 
-  const ExpensesPage({super.key, required this.tripId, this.isReadOnly = false});
+  const ExpensesPage(
+      {super.key, required this.tripId, this.isReadOnly = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -31,7 +32,8 @@ class ExpensesPage extends ConsumerWidget {
         body: Center(child: CircularProgressIndicator()),
       ),
       error: (e, _) => Scaffold(
-        body: Center(child: Text(
+        body: Center(
+            child: Text(
           context.tr('generic_error', params: {'error': e.toString()}),
         )),
       ),
@@ -62,8 +64,7 @@ class _ExpensesContent extends ConsumerWidget {
           (balances[expense.paidBy] ?? 0) + expense.amount;
 
       for (final participant in expense.participants) {
-        balances[participant] =
-            (balances[participant] ?? 0) - splitAmount;
+        balances[participant] = (balances[participant] ?? 0) - splitAmount;
       }
     }
 
@@ -74,9 +75,8 @@ class _ExpensesContent extends ConsumerWidget {
     final grouped = <String, List<ExpenseEntity>>{};
 
     for (final expense in expenses) {
-      final dateKey = DateFormat('MMM dd')
-          .format(expense.createdAt)
-          .toUpperCase();
+      final dateKey =
+          DateFormat('MMM dd').format(expense.createdAt).toUpperCase();
 
       grouped.putIfAbsent(dateKey, () => []).add(expense);
     }
@@ -115,39 +115,38 @@ class _ExpensesContent extends ConsumerWidget {
     return Scaffold(
       body: expenses.isEmpty
           ? _EmptyExpenses(
-        onAdd: isReadOnly ? null : () => _showAddExpenseSheet(context, ref),
-      )
+              onAdd:
+                  isReadOnly ? null : () => _showAddExpenseSheet(context, ref),
+            )
           : SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _SummarySection(
-              total: total,
-              balances: balances,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SummarySection(
+                    total: total,
+                    balances: balances,
+                  ),
+                  const SizedBox(height: 8),
+                  ...grouped.entries.map((entry) {
+                    return _ExpenseDateGroup(
+                      date: entry.key,
+                      expenses: entry.value,
+                      onDelete: (id) => ref
+                          .read(expenseControllerProvider.notifier)
+                          .deleteExpense(id),
+                    );
+                  }),
+                  const SizedBox(height: 100),
+                ],
+              ),
             ),
-
-            const SizedBox(height: 8),
-
-            ...grouped.entries.map((entry) {
-              return _ExpenseDateGroup(
-                date: entry.key,
-                expenses: entry.value,
-                onDelete: (id) => ref
-                    .read(expenseControllerProvider.notifier)
-                    .deleteExpense(id),
-              );
-            }),
-
-            const SizedBox(height: 100),
-          ],
-        ),
-      ),
-
-      floatingActionButton: isReadOnly ? null : FloatingActionButton(
-        onPressed: () => _showAddExpenseSheet(context, ref),
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+      floatingActionButton: isReadOnly
+          ? null
+          : FloatingActionButton(
+              onPressed: () => _showAddExpenseSheet(context, ref),
+              backgroundColor: AppColors.primary,
+              child: const Icon(Icons.add, color: Colors.white),
+            ),
     );
   }
 }
@@ -191,9 +190,8 @@ class _SummarySection extends ConsumerWidget {
       final debtor = debtorList[i];
       final creditor = creditorList[j];
 
-      final amount = debtor.value < creditor.value
-          ? debtor.value
-          : creditor.value;
+      final amount =
+          debtor.value < creditor.value ? debtor.value : creditor.value;
 
       if (amount > 0.01) {
         debts.add({
@@ -284,9 +282,9 @@ class _SummarySection extends ConsumerWidget {
                         children: [
                           Text(name, style: AppTextStyles.bodyMedium),
                           Text(
-                              positive
-                                  ? context.tr('gets_back')
-                                  : context.tr('owes'),
+                            positive
+                                ? context.tr('gets_back')
+                                : context.tr('owes'),
                             style: AppTextStyles.labelSmall.copyWith(
                               color: AppColors.textTertiary(context),
                             ),
@@ -344,14 +342,12 @@ class _SummarySection extends ConsumerWidget {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: AppColors.error.withOpacity(0.15),
+                        color: AppColors.error.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
                         child: Text(
-                          fromName.isNotEmpty
-                              ? fromName[0].toUpperCase()
-                              : '?',
+                          fromName.isNotEmpty ? fromName[0].toUpperCase() : '?',
                           style: AppTextStyles.labelMedium.copyWith(
                             color: AppColors.error,
                           ),
@@ -375,14 +371,12 @@ class _SummarySection extends ConsumerWidget {
                       width: 32,
                       height: 32,
                       decoration: BoxDecoration(
-                        color: AppColors.success.withOpacity(0.15),
+                        color: AppColors.success.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
                         child: Text(
-                          toName.isNotEmpty
-                              ? toName[0].toUpperCase()
-                              : '?',
+                          toName.isNotEmpty ? toName[0].toUpperCase() : '?',
                           style: AppTextStyles.labelMedium.copyWith(
                             color: AppColors.success,
                           ),
@@ -407,7 +401,8 @@ class _SummarySection extends ConsumerWidget {
                             ),
                             TextSpan(
                               text: ' ${context.tr('owes')} ',
-                              style: TextStyle(color: AppColors.textTertiary(context)),
+                              style: TextStyle(
+                                  color: AppColors.textTertiary(context)),
                             ),
                             TextSpan(
                               text: toName,
@@ -432,7 +427,6 @@ class _SummarySection extends ConsumerWidget {
                 ),
               );
             }),
-
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Divider(color: AppColors.divider),
@@ -444,7 +438,7 @@ class _SummarySection extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.success.withOpacity(0.1),
+                color: AppColors.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -500,9 +494,9 @@ class _ExpenseDateGroup extends StatelessWidget {
           ),
         ),
         ...expenses.map((e) => _ExpenseRow(
-          expense: e,
-          onDelete: () => onDelete(e.id),
-        )),
+              expense: e,
+              onDelete: () => onDelete(e.id),
+            )),
       ],
     );
   }
@@ -557,7 +551,7 @@ class _ExpenseRow extends ConsumerWidget {
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
-        color: AppColors.error.withOpacity(0.15),
+        color: AppColors.error.withValues(alpha: 0.15),
         child: Icon(Icons.delete_outline, color: AppColors.error),
       ),
       child: Padding(
@@ -591,13 +585,13 @@ class _ExpenseRow extends ConsumerWidget {
                   Text(expense.title, style: AppTextStyles.bodyMedium),
                   const SizedBox(height: 3),
                   Text(
-                      context.tr(
-                        'paid_by_with_count',
-                        params: {
-                          'name': paidByName,
-                          'count': expense.participants.length.toString(),
-                        },
-                      ),
+                    context.tr(
+                      'paid_by_with_count',
+                      params: {
+                        'name': paidByName,
+                        'count': expense.participants.length.toString(),
+                      },
+                    ),
                     style: AppTextStyles.labelSmall
                         .copyWith(color: AppColors.textTertiary(context)),
                   ),
@@ -655,7 +649,6 @@ class _EmptyExpenses extends StatelessWidget {
               ),
               textAlign: TextAlign.center,
             ),
-
             if (onAdd != null) ...[
               const SizedBox(height: 24),
               ElevatedButton.icon(
@@ -742,17 +735,16 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final success = await ref
-        .read(expenseControllerProvider.notifier)
-        .createExpense(
-      tripId: widget.tripId,
-      title: _titleController.text.trim(),
-      amount: double.parse(_amountController.text),
-      currency: _currency,
-      paidBy: widget.userId,
-      participants: _selectedParticipants,
-      category: _category,
-    );
+    final success =
+        await ref.read(expenseControllerProvider.notifier).createExpense(
+              tripId: widget.tripId,
+              title: _titleController.text.trim(),
+              amount: double.parse(_amountController.text),
+              currency: _currency,
+              paidBy: widget.userId,
+              participants: _selectedParticipants,
+              category: _category,
+            );
 
     if (!mounted) return;
     if (success) Navigator.of(context).pop();
@@ -793,7 +785,8 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
               Row(
                 children: [
                   Expanded(
-                    child: Text(context.tr('add_expense'), style: AppTextStyles.h3),
+                    child: Text(context.tr('add_expense'),
+                        style: AppTextStyles.h3),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
@@ -830,7 +823,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                       ),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.primary.withOpacity(0.15)
+                            ? AppColors.primary.withValues(alpha: 0.15)
                             : AppColors.card(context),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
@@ -868,8 +861,9 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                   labelText: context.tr('title'),
                   hintText: context.tr(context.tr('title_required')),
                 ),
-                validator: (v) =>
-                v == null || v.isEmpty ? context.tr('title_required') : null,
+                validator: (v) => v == null || v.isEmpty
+                    ? context.tr('title_required')
+                    : null,
                 textCapitalization: TextCapitalization.sentences,
               ),
 
@@ -877,7 +871,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
 
               // Currency selector
               Text(
-                  context.tr('currency').toUpperCase(),
+                context.tr('currency').toUpperCase(),
                 style: AppTextStyles.labelSmall.copyWith(
                   color: AppColors.textTertiary(context),
                   letterSpacing: 1.2,
@@ -897,7 +891,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? AppColors.primary.withOpacity(0.15)
+                                ? AppColors.primary.withValues(alpha: 0.15)
                                 : AppColors.card(context),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
@@ -946,12 +940,14 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                   prefixText: '$symbol  ',
                 ),
                 keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+                    const TextInputType.numberWithOptions(decimal: true),
                 onChanged: (_) => setState(() {}), // Actualizar split preview
                 validator: (v) {
                   if (v == null || v.isEmpty) return context.tr('required');
-                  if (double.tryParse(v) == null) return context.tr('invalid_amount');
-                  if (double.parse(v) <= 0) return context.tr('amount_greater_than_zero');
+                  if (double.tryParse(v) == null)
+                    return context.tr('invalid_amount');
+                  if (double.parse(v) <= 0)
+                    return context.tr('amount_greater_than_zero');
                   return null;
                 },
               ),
@@ -1004,7 +1000,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                           height: 36,
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? AppColors.primary.withOpacity(0.15)
+                                ? AppColors.primary.withValues(alpha: 0.15)
                                 : AppColors.card(context),
                             shape: BoxShape.circle,
                           ),
@@ -1025,10 +1021,12 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                         // Name
                         Expanded(
                           child: Text(
-                            isCurrentUser ? context.tr(
-                              'you_label',
-                              params: {'name': name},
-                            ) : name,
+                            isCurrentUser
+                                ? context.tr(
+                                    'you_label',
+                                    params: {'name': name},
+                                  )
+                                : name,
                             style: AppTextStyles.bodyMedium,
                           ),
                         ),
@@ -1053,19 +1051,20 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                             border: Border.all(
                               color: isSelected
                                   ? AppColors.primary
-                                  : AppColors.textTertiary(context).withOpacity(0.4),
+                                  : AppColors.textTertiary(context)
+                                      .withValues(alpha: 0.4),
                               width: 1.5,
                             ),
                             color: isSelected
-                                ? AppColors.primary.withOpacity(0.2)
+                                ? AppColors.primary.withValues(alpha: 0.2)
                                 : Colors.transparent,
                           ),
                           child: isSelected
                               ? Icon(
-                            Icons.check,
-                            size: 13,
-                            color: AppColors.primary,
-                          )
+                                  Icons.check,
+                                  size: 13,
+                                  color: AppColors.primary,
+                                )
                               : null,
                         ),
                       ],
@@ -1115,10 +1114,10 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                   onPressed: state.isLoading ? null : _submit,
                   child: state.isLoading
                       ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
                       : Text(context.tr('add_expense')),
                 ),
               ),

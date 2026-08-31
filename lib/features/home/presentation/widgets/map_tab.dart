@@ -46,9 +46,9 @@ class MapTab extends ConsumerWidget {
             Expanded(
               child: tripsAsync.when(
                 data: (trips) => _GeocodedMap(trips: trips),
-                loading: () =>
-                const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('${context.tr('error_prefix')} $e')),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) =>
+                    Center(child: Text('${context.tr('error_prefix')} $e')),
               ),
             ),
 
@@ -108,26 +108,29 @@ class _GeocodedMap extends ConsumerWidget {
     }
 
     // Construir marcadores
-    final tripMarkers = trips.map((trip) {
-      if (trip.destination.isEmpty) return null;
+    final tripMarkers = trips
+        .map((trip) {
+          if (trip.destination.isEmpty) return null;
 
-      final geocodingAsync = ref.watch(geocodingProvider(trip.destination));
+          final geocodingAsync = ref.watch(geocodingProvider(trip.destination));
 
-      return geocodingAsync.when(
-        data: (result) {
-          if (result == null) return null;
+          return geocodingAsync.when(
+            data: (result) {
+              if (result == null) return null;
 
-          return Marker(
-            point: LatLng(result.latitude, result.longitude),
-            width: 160,
-            height: 60,
-            child: _TripMarker(trip: trip),
+              return Marker(
+                point: LatLng(result.latitude, result.longitude),
+                width: 160,
+                height: 60,
+                child: _TripMarker(trip: trip),
+              );
+            },
+            loading: () => null,
+            error: (_, __) => null,
           );
-        },
-        loading: () => null,
-        error: (_, __) => null,
-      );
-    }).whereType<Marker>().toList();
+        })
+        .whereType<Marker>()
+        .toList();
 
     // Si ninguno ha cargado aún
     if (tripMarkers.isEmpty) {
@@ -146,15 +149,11 @@ class _GeocodedMap extends ConsumerWidget {
     // Calcular centro
     final center = tripMarkers.isNotEmpty
         ? LatLng(
-      tripMarkers
-          .map((m) => m.point.latitude)
-          .reduce((a, b) => a + b) /
-          tripMarkers.length,
-      tripMarkers
-          .map((m) => m.point.longitude)
-          .reduce((a, b) => a + b) /
-          tripMarkers.length,
-    )
+            tripMarkers.map((m) => m.point.latitude).reduce((a, b) => a + b) /
+                tripMarkers.length,
+            tripMarkers.map((m) => m.point.longitude).reduce((a, b) => a + b) /
+                tripMarkers.length,
+          )
         : const LatLng(20, 0);
 
     return ClipRRect(
@@ -168,8 +167,7 @@ class _GeocodedMap extends ConsumerWidget {
           ),
           children: [
             TileLayer(
-              urlTemplate:
-              'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.travl.app',
             ),
             MarkerLayer(markers: tripMarkers),
@@ -201,7 +199,7 @@ class _TripMarker extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 4,
                 offset: const Offset(0, 2),
               ),
@@ -253,13 +251,13 @@ class _TripChip extends StatelessWidget {
           Text(
             trip.destination,
             style: AppTextStyles.labelLarge,
-            maxLines: 1,                    // ✅ Añadir
+            maxLines: 1, // ✅ Añadir
             overflow: TextOverflow.ellipsis, // ✅ Añadir
           ),
           Text(
             trip.name,
             style: AppTextStyles.bodySmall,
-            maxLines: 1,                    // ✅ Añadir
+            maxLines: 1, // ✅ Añadir
             overflow: TextOverflow.ellipsis, // ✅ Añadir
           ),
         ],

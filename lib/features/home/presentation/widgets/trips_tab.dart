@@ -70,13 +70,13 @@ class TripsTab extends ConsumerWidget {
                 ),
               ),
             ),
-
             tripsAsync.when(
               data: (trips) {
                 if (trips.isEmpty) {
                   return SliverFillRemaining(
                     child: _EmptyTrips(
-                      onCreateTrip: () => context.push(RouteConstants.createTrip),
+                      onCreateTrip: () =>
+                          context.push(RouteConstants.createTrip),
                       onJoinTrip: () => _showJoinDialog(context, ref),
                     ),
                   );
@@ -161,9 +161,7 @@ class _TripsListState extends State<_TripsList> {
         .where((t) => t.startDate.isBefore(now) && t.endDate.isAfter(now))
         .toList();
 
-    final upcoming = _trips
-        .where((t) => t.startDate.isAfter(now))
-        .toList()
+    final upcoming = _trips.where((t) => t.startDate.isAfter(now)).toList()
       ..sort((a, b) => a.startDate.compareTo(b.startDate));
 
     final recent = _trips
@@ -190,7 +188,6 @@ class _TripsListState extends State<_TripsList> {
                 onDeleted: () => _removeTrip(trip.id),
               ),
             )),
-
         if (archived.isNotEmpty) ...[
           const SizedBox(height: 8),
           _ArchivedSection(
@@ -199,7 +196,6 @@ class _TripsListState extends State<_TripsList> {
             onDeleted: _removeTrip, // ✅ fix
           ),
         ],
-
         const SizedBox(height: 100),
       ],
     );
@@ -259,8 +255,8 @@ class _ArchivedSectionState extends ConsumerState<_ArchivedSection> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
                     decoration: BoxDecoration(
-                      color:
-                          AppColors.textTertiary(context).withOpacity(0.12),
+                      color: AppColors.textTertiary(context)
+                          .withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
@@ -285,7 +281,6 @@ class _ArchivedSectionState extends ConsumerState<_ArchivedSection> {
               ),
             ),
           ),
-
           AnimatedSize(
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeInOut,
@@ -297,10 +292,10 @@ class _ArchivedSectionState extends ConsumerState<_ArchivedSection> {
                               child: _TripCard(
                                 trip: trip,
                                 userId: widget.userId,
-                                onTap: () => context.go('/trip/${trip.id}?readOnly=true'),
+                                onTap: () => context
+                                    .go('/trip/${trip.id}?readOnly=true'),
                                 isArchived: true,
-                                onDeleted: () =>
-                                    widget.onDeleted(trip.id),
+                                onDeleted: () => widget.onDeleted(trip.id),
                               ),
                             ))
                         .toList(),
@@ -335,20 +330,18 @@ class _TripCard extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isOwner = trip.ownerId == userId;
     final now = DateTime.now();
-    final isOngoing =
-        trip.startDate.isBefore(now) && trip.endDate.isAfter(now);
+    final isOngoing = trip.startDate.isBefore(now) && trip.endDate.isAfter(now);
     final isUpcoming = trip.startDate.isAfter(now);
 
     return Dismissible(
       key: ValueKey(trip.id),
       direction: DismissDirection.horizontal,
-
       background: Container(
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.only(left: 20),
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.15),
+          color: AppColors.primary.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
@@ -362,27 +355,26 @@ class _TripCard extends ConsumerWidget {
           ],
         ),
       ),
-
       secondaryBackground: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
-          color: AppColors.error.withOpacity(0.15),
+          color: AppColors.error.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(isOwner ? Icons.delete_outline : Icons.exit_to_app, color: AppColors.error),
+            Icon(isOwner ? Icons.delete_outline : Icons.exit_to_app,
+                color: AppColors.error),
             const SizedBox(height: 4),
             Text(isOwner ? ref.tr('delete') : ref.tr('leave'),
-                style: AppTextStyles.labelSmall
-                    .copyWith(color: AppColors.error)),
+                style:
+                    AppTextStyles.labelSmall.copyWith(color: AppColors.error)),
           ],
         ),
       ),
-
       confirmDismiss: (direction) async {
         if (direction == DismissDirection.startToEnd) {
           if (!isOwner) return false;
@@ -394,8 +386,7 @@ class _TripCard extends ConsumerWidget {
                 isScrollControlled: true,
                 backgroundColor: AppColors.surface(context),
                 shape: const RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.vertical(top: Radius.circular(20)),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                 ),
                 builder: (context) => EditTripBottomSheet(trip: trip),
               );
@@ -422,7 +413,8 @@ class _TripCard extends ConsumerWidget {
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(context, true),
-                  child: Text(ref.tr('delete'), style: TextStyle(color: AppColors.error)),
+                  child: Text(ref.tr('delete'),
+                      style: TextStyle(color: AppColors.error)),
                 ),
               ],
             ),
@@ -445,28 +437,33 @@ class _TripCard extends ConsumerWidget {
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(context, true),
-                  child: Text(ref.tr('leave'), style: TextStyle(color: AppColors.error)),
+                  child: Text(ref.tr('leave'),
+                      style: TextStyle(color: AppColors.error)),
                 ),
               ],
             ),
           );
         }
       },
-
       onDismissed: (direction) {
         if (direction == DismissDirection.endToStart) {
           HapticFeedback.mediumImpact();
           onDeleted?.call();
           if (isOwner) {
             ref.read(tripControllerProvider.notifier).deleteTrip(trip.id);
-            if (context.mounted) showBottomSnackBar(context, ref.tr('trip_deleted', params: {'name': trip.name}));
+            if (context.mounted)
+              showBottomSnackBar(
+                  context, ref.tr('trip_deleted', params: {'name': trip.name}));
           } else {
-            ref.read(tripControllerProvider.notifier).leaveTrip(trip.id, userId);
-            if (context.mounted) showBottomSnackBar(context, ref.tr('left_trip', params: {'name': trip.name}));
+            ref
+                .read(tripControllerProvider.notifier)
+                .leaveTrip(trip.id, userId);
+            if (context.mounted)
+              showBottomSnackBar(
+                  context, ref.tr('left_trip', params: {'name': trip.name}));
           }
         }
       },
-
       child: _TripCardContent(
         trip: trip,
         isDark: isDark,
@@ -549,32 +546,32 @@ class _TripCardContentState extends State<_TripCardContent>
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
               color: widget.isArchived
-                  ? cardColor.withOpacity(0.5)
+                  ? cardColor.withValues(alpha: 0.5)
                   : cardColor,
               borderRadius: BorderRadius.circular(20),
               border: widget.isOngoing
                   ? Border.all(
                       color: AppColors.primary
-                          .withOpacity(0.5 + _pulseAnim.value * 0.3),
+                          .withValues(alpha: 0.5 + _pulseAnim.value * 0.3),
                       width: 1.5,
                     )
                   : widget.isArchived
                       ? Border.all(
-                          color:
-                              AppColors.borderColor(context).withOpacity(0.4),
+                          color: AppColors.borderColor(context)
+                              .withValues(alpha: 0.4),
                           width: 1,
                         )
                       : null,
               boxShadow: [
                 if (!widget.isDark && !widget.isArchived)
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
+                    color: Colors.black.withValues(alpha: 0.06),
                     blurRadius: 10,
                     offset: const Offset(0, 2),
                   ),
                 if (widget.isOngoing)
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(glowOpacity),
+                    color: AppColors.primary.withValues(alpha: glowOpacity),
                     blurRadius: glowBlur,
                     spreadRadius: glowSpread,
                   ),
@@ -679,19 +676,19 @@ class _StatusBadge extends ConsumerWidget {
     String label;
 
     if (isArchived) {
-      bgColor = AppColors.textTertiary(context).withOpacity(0.1);
+      bgColor = AppColors.textTertiary(context).withValues(alpha: 0.1);
       textColor = AppColors.textTertiary(context);
       label = ref.tr('archived');
     } else if (isOngoing) {
-      bgColor = AppColors.primary.withOpacity(0.15);
+      bgColor = AppColors.primary.withValues(alpha: 0.15);
       textColor = AppColors.primary;
       label = ref.tr('ongoing');
     } else if (isUpcoming) {
-      bgColor = AppColors.success.withOpacity(0.15);
+      bgColor = AppColors.success.withValues(alpha: 0.15);
       textColor = AppColors.success;
       label = ref.tr('upcoming');
     } else {
-      bgColor = AppColors.textTertiary(context).withOpacity(0.15);
+      bgColor = AppColors.textTertiary(context).withValues(alpha: 0.15);
       textColor = AppColors.textTertiary(context);
       label = ref.tr('past');
     }
@@ -739,14 +736,12 @@ class _MemberAvatars extends StatelessWidget {
               width: 28,
               height: 28,
               decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.3 + i * 0.2),
+                color: AppColors.primary.withValues(alpha: 0.3 + i * 0.2),
                 shape: BoxShape.circle,
-                border:
-                    Border.all(color: AppColors.card(context), width: 2),
+                border: Border.all(color: AppColors.card(context), width: 2),
               ),
               child: Center(
-                child:
-                    Icon(Icons.person, size: 14, color: AppColors.primary),
+                child: Icon(Icons.person, size: 14, color: AppColors.primary),
               ),
             ),
           );
@@ -760,8 +755,7 @@ class _MemberAvatars extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.surface(context),
                 shape: BoxShape.circle,
-                border:
-                    Border.all(color: AppColors.card(context), width: 2),
+                border: Border.all(color: AppColors.card(context), width: 2),
               ),
               child: Center(
                 child: Text(
@@ -888,14 +882,13 @@ class _BottomSnackBarState extends State<_BottomSnackBar>
           child: FadeTransition(
             opacity: _fade,
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
                 color: AppColors.error,
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.25),
+                    color: Colors.black.withValues(alpha: 0.25),
                     blurRadius: 12,
                   ),
                 ],

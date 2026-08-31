@@ -11,7 +11,8 @@ class ChecklistPage extends ConsumerWidget {
   final String tripId;
   final bool isReadOnly;
 
-  const ChecklistPage({super.key, required this.tripId, this.isReadOnly = false});
+  const ChecklistPage(
+      {super.key, required this.tripId, this.isReadOnly = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -24,7 +25,8 @@ class ChecklistPage extends ConsumerWidget {
         isReadOnly: isReadOnly,
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text(
+      error: (e, _) => Center(
+          child: Text(
         context.tr('generic_error', params: {'error': e.toString()}),
       )),
     );
@@ -49,38 +51,40 @@ class _ChecklistContent extends StatelessWidget {
     return Scaffold(
       body: items.isEmpty
           ? _EmptyChecklist(
-        onAdd: isReadOnly ? null : () => _showAddSheet(context),
-      )
+              onAdd: isReadOnly ? null : () => _showAddSheet(context),
+            )
           : SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Progress header
-            _ProgressHeader(
-              total: items.length,
-              done: _doneCount,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Progress header
+                  _ProgressHeader(
+                    total: items.length,
+                    done: _doneCount,
+                  ),
+
+                  // Sections por tipo
+                  ...ChecklistType.values.map((type) {
+                    final typeItems =
+                        items.where((i) => i.type == type).toList();
+                    if (typeItems.isEmpty) return const SizedBox.shrink();
+                    return _ChecklistSection(
+                      type: type,
+                      items: typeItems,
+                    );
+                  }),
+
+                  const SizedBox(height: 100),
+                ],
+              ),
             ),
-
-            // Sections por tipo
-            ...ChecklistType.values.map((type) {
-              final typeItems =
-              items.where((i) => i.type == type).toList();
-              if (typeItems.isEmpty) return const SizedBox.shrink();
-              return _ChecklistSection(
-                type: type,
-                items: typeItems,
-              );
-            }),
-
-            const SizedBox(height: 100),
-          ],
-        ),
-      ),
-      floatingActionButton: isReadOnly ? null : FloatingActionButton(
-        onPressed: () => _showAddSheet(context),
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+      floatingActionButton: isReadOnly
+          ? null
+          : FloatingActionButton(
+              onPressed: () => _showAddSheet(context),
+              backgroundColor: AppColors.primary,
+              child: const Icon(Icons.add, color: Colors.white),
+            ),
     );
   }
 
@@ -120,13 +124,15 @@ class _ProgressHeader extends StatelessWidget {
           Row(
             children: [
               Text(
-                isComplete ? context.tr('all_done_check') : context.tr(
-                  'progress_done_check',
-                  params: {
-                    'done': done.toString(),
-                    'total': total.toString(),
-                  },
-                ),
+                isComplete
+                    ? context.tr('all_done_check')
+                    : context.tr(
+                        'progress_done_check',
+                        params: {
+                          'done': done.toString(),
+                          'total': total.toString(),
+                        },
+                      ),
                 style: AppTextStyles.labelSmall.copyWith(
                   color: isComplete
                       ? AppColors.success
@@ -236,7 +242,7 @@ class _ChecklistRow extends ConsumerWidget {
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
-        color: AppColors.error.withOpacity(0.15),
+        color: AppColors.error.withValues(alpha: 0.15),
         child: Icon(Icons.delete_outline, color: AppColors.error),
       ),
       child: InkWell(
@@ -259,19 +265,20 @@ class _ChecklistRow extends ConsumerWidget {
                   border: Border.all(
                     color: item.isDone
                         ? AppColors.success
-                        : AppColors.textTertiary(context).withOpacity(0.4),
+                        : AppColors.textTertiary(context)
+                            .withValues(alpha: 0.4),
                     width: 1.5,
                   ),
                   color: item.isDone
-                      ? AppColors.success.withOpacity(0.15)
+                      ? AppColors.success.withValues(alpha: 0.15)
                       : Colors.transparent,
                 ),
                 child: item.isDone
                     ? const Icon(
-                  Icons.check,
-                  size: 13,
-                  color: AppColors.success,
-                )
+                        Icons.check,
+                        size: 13,
+                        color: AppColors.success,
+                      )
                     : null,
               ),
 
@@ -285,9 +292,7 @@ class _ChecklistRow extends ConsumerWidget {
                     color: item.isDone
                         ? AppColors.textTertiary(context)
                         : AppColors.textPrimary(context),
-                    decoration: item.isDone
-                        ? TextDecoration.lineThrough
-                        : null,
+                    decoration: item.isDone ? TextDecoration.lineThrough : null,
                     decorationColor: AppColors.textTertiary(context),
                   ),
                 ),
@@ -349,8 +354,7 @@ class AddChecklistItemSheet extends ConsumerStatefulWidget {
       _AddChecklistItemSheetState();
 }
 
-class _AddChecklistItemSheetState
-    extends ConsumerState<AddChecklistItemSheet> {
+class _AddChecklistItemSheetState extends ConsumerState<AddChecklistItemSheet> {
   final _titleController = TextEditingController();
   ChecklistType _selectedType = ChecklistType.preTip;
 
@@ -363,13 +367,12 @@ class _AddChecklistItemSheetState
   Future<void> _submit() async {
     if (_titleController.text.trim().isEmpty) return;
 
-    final success = await ref
-        .read(checklistControllerProvider.notifier)
-        .createItem(
-      tripId: widget.tripId,
-      title: _titleController.text.trim(),
-      type: _selectedType,
-    );
+    final success =
+        await ref.read(checklistControllerProvider.notifier).createItem(
+              tripId: widget.tripId,
+              title: _titleController.text.trim(),
+              type: _selectedType,
+            );
 
     if (mounted && success) Navigator.of(context).pop();
   }
@@ -421,7 +424,7 @@ class _AddChecklistItemSheetState
 
             // Type selector — igual que Timeline
             Text(
-                context.tr('when').toUpperCase(),
+              context.tr('when').toUpperCase(),
               style: AppTextStyles.labelSmall.copyWith(
                 color: AppColors.textTertiary(context),
                 letterSpacing: 1.2,
@@ -441,7 +444,7 @@ class _AddChecklistItemSheetState
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? AppColors.primary.withOpacity(0.15)
+                              ? AppColors.primary.withValues(alpha: 0.15)
                               : AppColors.card(context),
                           borderRadius: BorderRadius.circular(10),
                           border: Border.all(
@@ -499,10 +502,10 @@ class _AddChecklistItemSheetState
                 onPressed: state.isLoading ? null : _submit,
                 child: state.isLoading
                     ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : Text(context.tr('add_item')),
               ),
             ),

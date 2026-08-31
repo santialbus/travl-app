@@ -81,9 +81,9 @@ class _AddActivityBottomSheetState
       context: context,
       initialTime: _selectedTime != null
           ? TimeOfDay(
-        hour: _selectedTime!.hour,
-        minute: _selectedTime!.minute,
-      )
+              hour: _selectedTime!.hour,
+              minute: _selectedTime!.minute,
+            )
           : TimeOfDay.now(),
       builder: (context, child) {
         final theme = Theme.of(context);
@@ -121,58 +121,58 @@ class _AddActivityBottomSheetState
       success = await ref
           .read(activityControllerProvider.notifier)
           .updateActivity(
-        activityId: widget.activityToEdit!.id,
-        title: _titleController.text.trim(),
-        type: _selectedType,
-        description: _descriptionController.text.trim().isNotEmpty
-            ? _descriptionController.text.trim()
-            : null,
-        time: _selectedTime,
-        locationName: _locationController.text.trim().isNotEmpty
-            ? _locationController.text.trim()
-            : null,
-        flightNumber: _flightNumberController.text.trim().isNotEmpty
-            ? _flightNumberController.text.trim()
-            : null,
-        trainNumber: _trainNumberController.text.trim().isNotEmpty
-            ? _trainNumberController.text.trim()
-            : null,
-        transportCompany: _transportCompanyController.text.trim().isNotEmpty
-            ? _transportCompanyController.text.trim()
-            : null,
-        bookingReference: _bookingReferenceController.text.trim().isNotEmpty
-            ? _bookingReferenceController.text.trim()
-            : null,
-      );
+            activityId: widget.activityToEdit!.id,
+            title: _titleController.text.trim(),
+            type: _selectedType,
+            description: _descriptionController.text.trim().isNotEmpty
+                ? _descriptionController.text.trim()
+                : null,
+            time: _selectedTime,
+            locationName: _locationController.text.trim().isNotEmpty
+                ? _locationController.text.trim()
+                : null,
+            flightNumber: _flightNumberController.text.trim().isNotEmpty
+                ? _flightNumberController.text.trim()
+                : null,
+            trainNumber: _trainNumberController.text.trim().isNotEmpty
+                ? _trainNumberController.text.trim()
+                : null,
+            transportCompany: _transportCompanyController.text.trim().isNotEmpty
+                ? _transportCompanyController.text.trim()
+                : null,
+            bookingReference: _bookingReferenceController.text.trim().isNotEmpty
+                ? _bookingReferenceController.text.trim()
+                : null,
+          );
     } else {
       success = await ref
           .read(activityControllerProvider.notifier)
           .createActivity(
-        tripId: widget.tripId,
-        dayId: widget.dayId,
-        title: _titleController.text.trim(),
-        type: _selectedType,
-        description: _descriptionController.text.trim().isNotEmpty
-            ? _descriptionController.text.trim()
-            : null,
-        time: _selectedTime,
-        locationName: _locationController.text.trim().isNotEmpty
-            ? _locationController.text.trim()
-            : null,
-        createdBy: widget.userId,
-        flightNumber: _flightNumberController.text.trim().isNotEmpty
-            ? _flightNumberController.text.trim()
-            : null,
-        trainNumber: _trainNumberController.text.trim().isNotEmpty
-            ? _trainNumberController.text.trim()
-            : null,
-        transportCompany: _transportCompanyController.text.trim().isNotEmpty
-            ? _transportCompanyController.text.trim()
-            : null,
-        bookingReference: _bookingReferenceController.text.trim().isNotEmpty
-            ? _bookingReferenceController.text.trim()
-            : null,
-      );
+            tripId: widget.tripId,
+            dayId: widget.dayId,
+            title: _titleController.text.trim(),
+            type: _selectedType,
+            description: _descriptionController.text.trim().isNotEmpty
+                ? _descriptionController.text.trim()
+                : null,
+            time: _selectedTime,
+            locationName: _locationController.text.trim().isNotEmpty
+                ? _locationController.text.trim()
+                : null,
+            createdBy: widget.userId,
+            flightNumber: _flightNumberController.text.trim().isNotEmpty
+                ? _flightNumberController.text.trim()
+                : null,
+            trainNumber: _trainNumberController.text.trim().isNotEmpty
+                ? _trainNumberController.text.trim()
+                : null,
+            transportCompany: _transportCompanyController.text.trim().isNotEmpty
+                ? _transportCompanyController.text.trim()
+                : null,
+            bookingReference: _bookingReferenceController.text.trim().isNotEmpty
+                ? _bookingReferenceController.text.trim()
+                : null,
+          );
     }
 
     if (!mounted) return;
@@ -257,10 +257,10 @@ class _AddActivityBottomSheetState
                     margin: const EdgeInsets.only(bottom: 16),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppColors.warning.withOpacity(0.1),
+                      color: AppColors.warning.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: AppColors.warning.withOpacity(0.3),
+                        color: AppColors.warning.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Row(
@@ -316,7 +316,7 @@ class _AddActivityBottomSheetState
                             ),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? AppColors.primary.withOpacity(0.15)
+                                  ? AppColors.primary.withValues(alpha: 0.15)
                                   : AppColors.surface(context),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
@@ -415,8 +415,7 @@ class _AddActivityBottomSheetState
                         ),
                         if (_selectedTime != null)
                           GestureDetector(
-                            onTap: () =>
-                                setState(() => _selectedTime = null),
+                            onTap: () => setState(() => _selectedTime = null),
                             child: const Icon(Icons.clear, size: 20),
                           ),
                       ],
@@ -447,15 +446,15 @@ class _AddActivityBottomSheetState
                     onPressed: activityState.isLoading ? null : _submit,
                     child: activityState.isLoading
                         ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
                         : Text(
-                        _isEditing
-                            ? context.tr('save_changes')
-                            : context.tr('add_activity'),
-                    ),
+                            _isEditing
+                                ? context.tr('save_changes')
+                                : context.tr('add_activity'),
+                          ),
                   ),
                 ),
               ],
@@ -558,4 +557,3 @@ class _AddActivityBottomSheetState
     }
   }
 }
-

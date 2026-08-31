@@ -19,12 +19,12 @@ import 'expenses_page.dart';
 import 'checklist_page.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 
-
 class TripDashboardPage extends ConsumerWidget {
   final String tripId;
   final bool isReadOnly;
 
-  const TripDashboardPage({super.key, required this.tripId, this.isReadOnly = false});
+  const TripDashboardPage(
+      {super.key, required this.tripId, this.isReadOnly = false});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -107,10 +107,10 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
   }
 
   void _toggleCoHost(
-      BuildContext rootContext,
-      TripEntity trip,
-      MemberEntity member,
-      ) async {
+    BuildContext rootContext,
+    TripEntity trip,
+    MemberEntity member,
+  ) async {
     final newRole = member.isCoHost ? 'member' : 'cohost';
     final action = member.isCoHost ? 'removed as co-host' : 'made co-host';
 
@@ -119,10 +119,10 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
 
     try {
       await ref.read(tripControllerProvider.notifier).updateMemberRole(
-        tripId: trip.id,
-        userId: member.userId,
-        newRole: newRole,
-      );
+            tripId: trip.id,
+            userId: member.userId,
+            newRole: newRole,
+          );
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.tr('member_role_updated'))),
@@ -134,7 +134,8 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
 
   @override
   Widget build(BuildContext context) {
-    final trip = ref.watch(tripStreamProvider(widget.trip.id)).value ?? widget.trip;
+    final trip =
+        ref.watch(tripStreamProvider(widget.trip.id)).value ?? widget.trip;
     final isOngoing = trip.startDate.isBefore(DateTime.now()) &&
         trip.endDate.isAfter(DateTime.now());
     final isUpcoming = trip.startDate.isAfter(DateTime.now());
@@ -153,7 +154,6 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                 elevation: 0,
                 scrolledUnderElevation: 0,
                 backgroundColor: AppColors.background(context),
-
                 title: AnimatedOpacity(
                   opacity: _showTitle ? 1.0 : 0.0,
                   duration: const Duration(milliseconds: 200),
@@ -170,7 +170,6 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                   ),
                 ),
                 centerTitle: true,
-
                 leading: IconButton(
                   icon: Icon(
                     Icons.arrow_back,
@@ -192,7 +191,8 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                         Icons.ios_share_outlined,
                         color: AppColors.textSecondary(context),
                       ),
-                      onPressed: () => _showInviteSheet(context, widget.trip.inviteCode),
+                      onPressed: () =>
+                          _showInviteSheet(context, widget.trip.inviteCode),
                     ),
                   ],
                   const SizedBox(width: 4),
@@ -214,30 +214,29 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                         ),
                         decoration: BoxDecoration(
                           color: isOngoing
-                              ? AppColors.primary.withOpacity(0.15)
+                              ? AppColors.primary.withValues(alpha: 0.15)
                               : isUpcoming
-                              ? AppColors.success.withOpacity(0.15)
-                              : AppColors.surface(context),
+                                  ? AppColors.success.withValues(alpha: 0.15)
+                                  : AppColors.surface(context),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            if (isOngoing)
-                              PulsingDot(color: AppColors.primary),
+                            if (isOngoing) PulsingDot(color: AppColors.primary),
                             if (isOngoing) const SizedBox(width: 6),
                             Text(
                               isOngoing
                                   ? context.tr('ongoing')
                                   : isUpcoming
-                                  ? context.tr('upcoming')
-                                  : context.tr('past_trip'),
+                                      ? context.tr('upcoming')
+                                      : context.tr('past_trip'),
                               style: AppTextStyles.labelSmall.copyWith(
                                 color: isOngoing
                                     ? AppColors.primary
                                     : isUpcoming
-                                    ? AppColors.success
-                                    : AppColors.textTertiary(context),
+                                        ? AppColors.success
+                                        : AppColors.textTertiary(context),
                               ),
                             ),
                           ],
@@ -424,110 +423,113 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
                   const SizedBox(height: 16),
 
                   ...tripData.members.map((member) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Row(
-                      children: [
-                        // Avatar
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: AppColors.card(context),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.person,
-                            color: AppColors.textSecondary(context),
-                            size: 22,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-
-                        // Nombre real
-                        Expanded(
-                          child: Consumer(
-                            builder: (context, ref, _) {
-                              final nameAsync = ref.watch(userNameProvider(member.userId));
-                              final name = nameAsync.maybeWhen(
-                                data: (n) => n,
-                                orElse: () => '...',
-                              );
-                              return Text(
-                                name,
-                                style: AppTextStyles.bodyMedium,
-                              );
-                            },
-                          ),
-                        ),
-
-                        // Badge rol
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: member.isHost
-                                ? AppColors.primary.withOpacity(0.15)
-                                : member.isCoHost
-                                ? AppColors.primary.withOpacity(0.1)
-                                : AppColors.card(context),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            member.isHost
-                                ? '👑 ${context.tr('host')}'
-                                : member.isCoHost
-                                ? '🤝 ${context.tr('co_host')}'
-                                : context.tr('member'),
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: member.isHost || member.isCoHost
-                                  ? AppColors.primary
-                                  : AppColors.textSecondary(context),
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Row(
+                          children: [
+                            // Avatar
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: AppColors.card(context),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.person,
+                                color: AppColors.textSecondary(context),
+                                size: 22,
+                              ),
                             ),
-                          ),
-                        ),
+                            const SizedBox(width: 12),
 
-                        // Toggle co-host
-                        if (isHost && !member.isHost) ...[
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: () {
-                              _toggleCoHost(rootContext, tripData, member);
-                            },
-                            child: Container(
+                            // Nombre real
+                            Expanded(
+                              child: Consumer(
+                                builder: (context, ref, _) {
+                                  final nameAsync = ref
+                                      .watch(userNameProvider(member.userId));
+                                  final name = nameAsync.maybeWhen(
+                                    data: (n) => n,
+                                    orElse: () => '...',
+                                  );
+                                  return Text(
+                                    name,
+                                    style: AppTextStyles.bodyMedium,
+                                  );
+                                },
+                              ),
+                            ),
+
+                            // Badge rol
+                            Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
+                                horizontal: 10,
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: member.isCoHost
-                                    ? AppColors.primary.withOpacity(0.15)
-                                    : AppColors.card(context),
+                                color: member.isHost
+                                    ? AppColors.primary.withValues(alpha: 0.15)
+                                    : member.isCoHost
+                                        ? AppColors.primary
+                                            .withValues(alpha: 0.1)
+                                        : AppColors.card(context),
                                 borderRadius: BorderRadius.circular(20),
-                                border: Border.all(
-                                  color: member.isCoHost
-                                      ? AppColors.primary
-                                      : AppColors.borderColor(context),
-                                ),
                               ),
                               child: Text(
-                                member.isCoHost
-                                    ? '✓ ${context.tr('co_host')}'
-                                    : context.tr('make_co_host'),
+                                member.isHost
+                                    ? '👑 ${context.tr('host')}'
+                                    : member.isCoHost
+                                        ? '🤝 ${context.tr('co_host')}'
+                                        : context.tr('member'),
                                 style: AppTextStyles.labelSmall.copyWith(
-                                  color: member.isCoHost
+                                  color: member.isHost || member.isCoHost
                                       ? AppColors.primary
-                                      : AppColors.textTertiary(context),
-                                  fontSize: 10,
+                                      : AppColors.textSecondary(context),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  )),
+
+                            // Toggle co-host
+                            if (isHost && !member.isHost) ...[
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () {
+                                  _toggleCoHost(rootContext, tripData, member);
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: member.isCoHost
+                                        ? AppColors.primary
+                                            .withValues(alpha: 0.15)
+                                        : AppColors.card(context),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(
+                                      color: member.isCoHost
+                                          ? AppColors.primary
+                                          : AppColors.borderColor(context),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    member.isCoHost
+                                        ? '✓ ${context.tr('co_host')}'
+                                        : context.tr('make_co_host'),
+                                    style: AppTextStyles.labelSmall.copyWith(
+                                      color: member.isCoHost
+                                          ? AppColors.primary
+                                          : AppColors.textTertiary(context),
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      )),
 
                   const SizedBox(height: 16),
 
@@ -568,7 +570,7 @@ class _TripDashboardContentState extends ConsumerState<_TripDashboardContent>
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
+                  color: Colors.black.withValues(alpha: 0.2),
                   blurRadius: 10,
                 )
               ],
@@ -684,7 +686,8 @@ class _StickyTabBarDelegate extends SliverPersistentHeaderDelegate {
   _StickyTabBarDelegate(this.tabBar, {required this.backgroundColor});
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
       color: backgroundColor,
       child: tabBar,

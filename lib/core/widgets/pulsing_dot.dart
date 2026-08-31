@@ -50,7 +50,7 @@ class _PulsingDotState extends State<PulsingDot>
             width: widget.size * 2 + (_pulse.value * widget.size),
             height: widget.size * 2 + (_pulse.value * widget.size),
             decoration: BoxDecoration(
-              color: widget.color.withOpacity(0.2 + _pulse.value * 0.3),
+              color: widget.color.withValues(alpha: 0.2 + _pulse.value * 0.3),
               shape: BoxShape.circle,
             ),
           ),

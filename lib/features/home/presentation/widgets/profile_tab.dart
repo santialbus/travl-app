@@ -170,7 +170,8 @@ class ProfileTab extends ConsumerWidget {
                   ...AppLanguage.values.map((lang) {
                     final isSelected = current == lang;
                     final label = switch (lang) {
-                      AppLanguage.system => '${ref.tr('language_system')} (${_deviceLocaleName()})',
+                      AppLanguage.system =>
+                        '${ref.tr('language_system')} (${_deviceLocaleName()})',
                       AppLanguage.en => '🇬🇧  ${ref.tr('language_english')}',
                       AppLanguage.es => '🇪🇸  ${ref.tr('language_spanish')}',
                       AppLanguage.de => '🇩🇪  ${ref.tr('language_german')}',
@@ -180,19 +181,24 @@ class ProfileTab extends ConsumerWidget {
 
                     return InkWell(
                       onTap: () {
-                        ref.read(appLanguageProvider.notifier).setLanguage(lang);
+                        ref
+                            .read(appLanguageProvider.notifier)
+                            .setLanguage(lang);
                         Navigator.pop(context);
                       },
                       borderRadius: BorderRadius.circular(12),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 14, horizontal: 4),
                         child: Row(
                           children: [
                             Expanded(
-                              child: Text(label, style: AppTextStyles.bodyMedium),
+                              child:
+                                  Text(label, style: AppTextStyles.bodyMedium),
                             ),
                             if (isSelected)
-                              Icon(Icons.check, color: AppColors.primary, size: 20),
+                              Icon(Icons.check,
+                                  color: AppColors.primary, size: 20),
                           ],
                         ),
                       ),
@@ -212,7 +218,8 @@ class ProfileTab extends ConsumerWidget {
     return code == 'es' ? 'Español' : 'English';
   }
 
-  void _showEditNameDialog(BuildContext context, WidgetRef ref, String currentName) {
+  void _showEditNameDialog(
+      BuildContext context, WidgetRef ref, String currentName) {
     final controller = TextEditingController(text: currentName);
     final formKey = GlobalKey<FormState>();
 
@@ -232,8 +239,9 @@ class ProfileTab extends ConsumerWidget {
                 decoration: InputDecoration(labelText: ref.tr('name')),
                 textCapitalization: TextCapitalization.words,
                 autofocus: true,
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? ref.tr('name_required') : null,
+                validator: (v) => v == null || v.trim().isEmpty
+                    ? ref.tr('name_required')
+                    : null,
               ),
             ),
             actions: [
@@ -258,13 +266,17 @@ class ProfileTab extends ConsumerWidget {
                           ));
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text(authState.error ?? ref.tr('failed_update_name')),
+                            content: Text(authState.error ??
+                                ref.tr('failed_update_name')),
                             backgroundColor: AppColors.error,
                           ));
                         }
                       },
                 child: authState.isLoading
-                    ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    ? const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2))
                     : Text(ref.tr('save')),
               ),
             ],
@@ -295,7 +307,8 @@ class ProfileTab extends ConsumerWidget {
                 children: [
                   TextFormField(
                     controller: newPasswordController,
-                    decoration: InputDecoration(labelText: ref.tr('new_password')),
+                    decoration:
+                        InputDecoration(labelText: ref.tr('new_password')),
                     obscureText: true,
                     autofocus: true,
                     validator: (v) {
@@ -307,10 +320,12 @@ class ProfileTab extends ConsumerWidget {
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: confirmPasswordController,
-                    decoration: InputDecoration(labelText: ref.tr('confirm_password')),
+                    decoration:
+                        InputDecoration(labelText: ref.tr('confirm_password')),
                     obscureText: true,
                     validator: (v) {
-                      if (v != newPasswordController.text) return ref.tr('passwords_no_match');
+                      if (v != newPasswordController.text)
+                        return ref.tr('passwords_no_match');
                       return null;
                     },
                   ),
@@ -339,7 +354,8 @@ class ProfileTab extends ConsumerWidget {
                           ));
                         } else {
                           final error = authState.error ?? '';
-                          final needsRelogin = error.contains('requires-recent-login');
+                          final needsRelogin =
+                              error.contains('requires-recent-login');
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                             content: Text(needsRelogin
@@ -350,7 +366,10 @@ class ProfileTab extends ConsumerWidget {
                         }
                       },
                 child: authState.isLoading
-                    ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    ? const SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2))
                     : Text(ref.tr('save')),
               ),
             ],
@@ -368,7 +387,8 @@ class _ProfileHeader extends StatelessWidget {
   final String email;
   final String? photoUrl;
 
-  const _ProfileHeader({required this.name, required this.email, this.photoUrl});
+  const _ProfileHeader(
+      {required this.name, required this.email, this.photoUrl});
 
   @override
   Widget build(BuildContext context) {
@@ -387,7 +407,8 @@ class _ProfileHeader extends StatelessWidget {
                   gradient: AppColors.primaryGradient,
                 ),
                 child: photoUrl != null
-                    ? ClipOval(child: Image.network(photoUrl!, fit: BoxFit.cover))
+                    ? ClipOval(
+                        child: Image.network(photoUrl!, fit: BoxFit.cover))
                     : Center(
                         child: Text(
                           name.isNotEmpty ? name[0].toUpperCase() : '?',
@@ -404,9 +425,11 @@ class _ProfileHeader extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.primary,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.background(context), width: 2),
+                    border: Border.all(
+                        color: AppColors.background(context), width: 2),
                   ),
-                  child: const Icon(Icons.camera_alt, size: 14, color: Colors.white),
+                  child: const Icon(Icons.camera_alt,
+                      size: 14, color: Colors.white),
                 ),
               ),
             ],
@@ -414,7 +437,9 @@ class _ProfileHeader extends StatelessWidget {
           const SizedBox(height: 16),
           Text(name, style: AppTextStyles.h3),
           const SizedBox(height: 4),
-          Text(email, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary(context))),
+          Text(email,
+              style: AppTextStyles.bodySmall
+                  .copyWith(color: AppColors.textSecondary(context))),
         ],
       ),
     );
@@ -453,7 +478,8 @@ class _SettingsItem extends StatelessWidget {
   final String? value;
   final VoidCallback? onTap;
 
-  const _SettingsItem({required this.icon, required this.title, this.value, this.onTap});
+  const _SettingsItem(
+      {required this.icon, required this.title, this.value, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -462,7 +488,9 @@ class _SettingsItem extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         decoration: BoxDecoration(
-          border: Border(bottom: BorderSide(color: AppColors.dividerColor(context), width: 0.5)),
+          border: Border(
+              bottom: BorderSide(
+                  color: AppColors.dividerColor(context), width: 0.5)),
         ),
         child: Row(
           children: [
@@ -470,10 +498,13 @@ class _SettingsItem extends StatelessWidget {
             const SizedBox(width: 16),
             Expanded(child: Text(title, style: AppTextStyles.bodyMedium)),
             if (value != null)
-              Text(value!, style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary(context))),
+              Text(value!,
+                  style: AppTextStyles.bodySmall
+                      .copyWith(color: AppColors.textSecondary(context))),
             if (onTap != null) ...[
               const SizedBox(width: 8),
-              Icon(Icons.arrow_forward_ios, size: 14, color: AppColors.textTertiary(context)),
+              Icon(Icons.arrow_forward_ios,
+                  size: 14, color: AppColors.textTertiary(context)),
             ],
           ],
         ),
@@ -490,21 +521,30 @@ class _SettingsToggle extends StatelessWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
 
-  const _SettingsToggle({required this.icon, required this.title, required this.value, required this.onChanged});
+  const _SettingsToggle(
+      {required this.icon,
+      required this.title,
+      required this.value,
+      required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: AppColors.dividerColor(context), width: 0.5)),
+        border: Border(
+            bottom:
+                BorderSide(color: AppColors.dividerColor(context), width: 0.5)),
       ),
       child: Row(
         children: [
           Icon(icon, size: 22, color: AppColors.textSecondary(context)),
           const SizedBox(width: 16),
           Expanded(child: Text(title, style: AppTextStyles.bodyMedium)),
-          Switch(value: value, onChanged: onChanged, activeColor: AppColors.primary),
+          Switch(
+              value: value,
+              onChanged: onChanged,
+              activeThumbColor: AppColors.primary),
         ],
       ),
     );

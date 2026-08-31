@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/localization/app_strings.dart';
@@ -46,9 +45,9 @@ class _JoinTripDialogState extends ConsumerState<JoinTripDialog> {
     setState(() => _isLoading = true);
 
     final trip = await ref.read(tripControllerProvider.notifier).joinTripByCode(
-      code,
-      widget.userId,
-    );
+          code,
+          widget.userId,
+        );
 
     if (!mounted) return;
 
@@ -121,7 +120,8 @@ class _JoinTripDialogState extends ConsumerState<JoinTripDialog> {
                 if (formatted != value) {
                   _codeController.value = _codeController.value.copyWith(
                     text: formatted,
-                    selection: TextSelection.collapsed(offset: formatted.length),
+                    selection:
+                        TextSelection.collapsed(offset: formatted.length),
                   );
                 }
               },
@@ -133,10 +133,10 @@ class _JoinTripDialogState extends ConsumerState<JoinTripDialog> {
                 onPressed: _isLoading ? null : _joinTrip,
                 child: _isLoading
                     ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : Text(context.tr('join_trip_join_trip')),
               ),
             ),

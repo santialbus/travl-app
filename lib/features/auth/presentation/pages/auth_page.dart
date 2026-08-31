@@ -50,15 +50,15 @@ class _AuthPageState extends ConsumerState<AuthPage> {
 
     if (_isSignUp) {
       await ref.read(authControllerProvider.notifier).signUpWithEmailPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-        name: _nameController.text.trim(),
-      );
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+            name: _nameController.text.trim(),
+          );
     } else {
       await ref.read(authControllerProvider.notifier).signInWithEmailPassword(
-        _emailController.text.trim(),
-        _passwordController.text,
-      );
+            _emailController.text.trim(),
+            _passwordController.text,
+          );
     }
 
     if (mounted) {
@@ -129,7 +129,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                 Text(
                   context.tr('plan_adventures_together'),
                   style: AppTextStyles.bodyMedium.copyWith(
-                    color: Colors.white.withOpacity(0.5),
+                    color: Colors.white.withValues(alpha: 0.5),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -151,7 +151,8 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                               label: context.tr('name'),
                               icon: Icons.person_outline,
                             ),
-                            validator: (value) => Validators.required(value, context.tr('name')),
+                            validator: (value) =>
+                                Validators.required(value, context.tr('name')),
                           ),
                         ),
 
@@ -176,7 +177,8 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                           icon: Icons.lock_outline,
                         ),
                         obscureText: true,
-                        validator: (value) => Validators.required(value, 'Password'),
+                        validator: (value) =>
+                            Validators.required(value, 'Password'),
                       ),
 
                       const SizedBox(height: 24),
@@ -186,25 +188,27 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                         width: double.infinity,
                         height: 56,
                         child: ElevatedButton(
-                          onPressed: authState.isLoading ? null : _handleEmailAuth,
+                          onPressed:
+                              authState.isLoading ? null : _handleEmailAuth,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
                             foregroundColor: Colors.white,
                           ),
                           child: authState.isLoading
                               ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation(Colors.white),
-                            ),
-                          )
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor:
+                                        AlwaysStoppedAnimation(Colors.white),
+                                  ),
+                                )
                               : Text(
-                            _isSignUp
-                                ? context.tr('sign_up')
-                                : context.tr('sign_in'),
-                          ),
+                                  _isSignUp
+                                      ? context.tr('sign_up')
+                                      : context.tr('sign_in'),
+                                ),
                         ),
                       ),
                     ],
@@ -224,7 +228,8 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                     _isSignUp
                         ? context.tr('already_have_account')
                         : context.tr('no_account_sign_up'),
-                    style: TextStyle(color: Colors.white.withOpacity(0.7)),
+                    style:
+                        TextStyle(color: Colors.white.withValues(alpha: 0.7)),
                   ),
                 ),
 
@@ -234,19 +239,21 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                 Row(
                   children: [
                     Expanded(
-                      child: Divider(color: Colors.white.withOpacity(0.15)),
+                      child:
+                          Divider(color: Colors.white.withValues(alpha: 0.15)),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
                         context.tr('or'),
                         style: AppTextStyles.labelSmall.copyWith(
-                          color: Colors.white.withOpacity(0.4),
+                          color: Colors.white.withValues(alpha: 0.4),
                         ),
                       ),
                     ),
                     Expanded(
-                      child: Divider(color: Colors.white.withOpacity(0.15)),
+                      child:
+                          Divider(color: Colors.white.withValues(alpha: 0.15)),
                     ),
                   ],
                 ),
@@ -271,20 +278,21 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     );
   }
 
-  InputDecoration _inputDecoration({required String label, required IconData icon}) {
+  InputDecoration _inputDecoration(
+      {required String label, required IconData icon}) {
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-      prefixIcon: Icon(icon, color: Colors.white.withOpacity(0.5)),
+      labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
+      prefixIcon: Icon(icon, color: Colors.white.withValues(alpha: 0.5)),
       filled: true,
-      fillColor: Colors.white.withOpacity(0.05),
+      fillColor: Colors.white.withValues(alpha: 0.05),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
       ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.white.withOpacity(0.1)),
+        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

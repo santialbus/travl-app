@@ -13,7 +13,6 @@ class SplashPage extends ConsumerStatefulWidget {
 
 class _SplashPageState extends ConsumerState<SplashPage>
     with SingleTickerProviderStateMixin {
-
   late AnimationController _fadeController;
   late Animation<double> _fadeAnim;
 
@@ -72,7 +71,6 @@ class _SplashPageState extends ConsumerState<SplashPage>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-
               const Spacer(flex: 3),
 
               // Logo
@@ -102,7 +100,7 @@ class _SplashPageState extends ConsumerState<SplashPage>
               Text(
                 'PLAN IT. SHARE IT. LIVE IT.',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.4),
+                  color: Colors.white.withValues(alpha: 0.4),
                   fontSize: 11,
                   letterSpacing: 2.5,
                   fontWeight: FontWeight.w400,
@@ -118,13 +116,12 @@ class _SplashPageState extends ConsumerState<SplashPage>
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    Colors.white.withOpacity(0.3),
+                    Colors.white.withValues(alpha: 0.3),
                   ),
                 ),
               ),
 
               SizedBox(height: size.height * 0.07),
-
             ],
           ),
         ),

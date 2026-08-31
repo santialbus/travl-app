@@ -21,7 +21,7 @@ class OfflineIndicator extends ConsumerWidget {
             vertical: 3,
           ),
           decoration: BoxDecoration(
-            color: AppColors.error.withOpacity(0.15),
+            color: AppColors.error.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Row(

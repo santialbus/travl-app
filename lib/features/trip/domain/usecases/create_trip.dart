@@ -1,5 +1,4 @@
 import '../repositories/trip_repository.dart';
-import '../entities/trip_entity.dart';
 
 class CreateTrip {
   final TripRepository repository;
