@@ -12,8 +12,11 @@ class TripHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final initial =
+        trip.destination.isNotEmpty ? trip.destination[0].toUpperCase() : '?';
+
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -23,19 +26,32 @@ class TripHeader extends StatelessWidget {
           ],
         ),
       ),
-      child: trip.coverImage != null
+      child: trip.coverImage != null && trip.coverImage!.isNotEmpty
           ? Image.network(
-        trip.coverImage!,
-        fit: BoxFit.cover,
-      )
-          : Center(
-        child: Text(
-          trip.destination[0].toUpperCase(),
-          style: const TextStyle(
-            fontSize: 64,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+              trip.coverImage!,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+              errorBuilder: (context, error, stackTrace) =>
+                  _buildPlaceholder(initial),
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return const Center(
+                    child: CircularProgressIndicator(color: Colors.white));
+              },
+            )
+          : _buildPlaceholder(initial),
+    );
+  }
+
+  Widget _buildPlaceholder(String initial) {
+    return Center(
+      child: Text(
+        initial,
+        style: const TextStyle(
+          fontSize: 64,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
         ),
       ),
     );
