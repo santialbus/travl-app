@@ -566,6 +566,17 @@ class _TripMarker extends StatelessWidget {
     required this.isSelected,
   });
 
+  Color _markerColor() {
+    final now = DateTime.now();
+    if (trip.startDate.isBefore(now) && trip.endDate.isAfter(now)) {
+      return AppColors.primary;
+    } else if (trip.startDate.isAfter(now)) {
+      return AppColors.success;
+    } else {
+      return Colors.grey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final primary = AppColors.primary;
@@ -577,7 +588,9 @@ class _TripMarker extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
-            color: isSelected ? primary : Theme.of(context).colorScheme.surface,
+            color: isSelected
+                ? _markerColor()
+                : Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
@@ -603,7 +616,7 @@ class _TripMarker extends StatelessWidget {
           width: 14,
           height: 14,
           decoration: BoxDecoration(
-            color: primary,
+            color: _markerColor(),
             shape: BoxShape.circle,
             border: Border.all(
               color: Colors.white,
