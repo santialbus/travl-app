@@ -122,7 +122,8 @@ class _DayActivities extends ConsumerWidget {
               tripId: tripId,
               dayId: day.id,
               userId: userId,
-              allDays: [], // Se pasa desde TimelinePage
+              allDays: allDays,
+              isReadOnly: isReadOnly,
             );
           },
         ),
@@ -164,6 +165,7 @@ class _DraggableActivityRow extends ConsumerWidget {
   final String dayId;
   final String userId;
   final List<dynamic> allDays;
+  final bool isReadOnly;
 
   const _DraggableActivityRow({
     super.key,
@@ -173,12 +175,13 @@ class _DraggableActivityRow extends ConsumerWidget {
     required this.dayId,
     required this.userId,
     required this.allDays,
+    this.isReadOnly = false,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final member = ref.watch(currentMemberProvider(tripId));
-    final canEdit = member?.canEditActivities ?? false;
+    final canEdit = (member?.canEditActivities ?? false) && !isReadOnly;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -213,6 +216,7 @@ class _DraggableActivityRow extends ConsumerWidget {
             tripId: tripId,
             dayId: dayId,
             userId: userId,
+            isReadOnly: isReadOnly,
             onTap: () {},
           ),
         ),

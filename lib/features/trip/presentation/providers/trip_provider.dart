@@ -16,19 +16,22 @@ final tripRepositoryProvider = Provider<TripRepository>((ref) {
 });
 
 // User Trips Stream Provider
-final userTripsProvider = StreamProvider.family<List<TripEntity>, String>((ref, userId) {
+final userTripsProvider =
+    StreamProvider.autoDispose.family<List<TripEntity>, String>((ref, userId) {
   final repository = ref.watch(tripRepositoryProvider);
   return repository.getUserTrips(userId);
 });
 
 // Single Trip Stream Provider
-final tripStreamProvider = StreamProvider.family<TripEntity, String>((ref, tripId) {
+final tripStreamProvider =
+    StreamProvider.family<TripEntity, String>((ref, tripId) {
   final repository = ref.watch(tripRepositoryProvider);
   return repository.getTripStream(tripId);
 });
 
 // Trip Controller
-final tripControllerProvider = StateNotifierProvider<TripController, TripState>((ref) {
+final tripControllerProvider =
+    StateNotifierProvider<TripController, TripState>((ref) {
   final repository = ref.watch(tripRepositoryProvider);
   return TripController(repository);
 });

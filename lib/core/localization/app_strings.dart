@@ -1669,6 +1669,21 @@ class AppStrings {
       'fr': 'Voir le voyage',
       'ja': '旅行を見る',
     },
+
+    'confirm_sign_out': {
+      'en': 'Are you sure you want to sign out?',
+      'es': '¿Estás seguro de que quieres cerrar sesión?',
+      'de': 'Möchten Sie sich wirklich abmelden?',
+      'fr': 'Voulez-vous vraiment vous déconnecter ?',
+      'ja': '本当にログアウトしますか？',
+    },
+    'edit_expense': {
+      'en': 'Edit expense',
+      'es': 'Editar gasto',
+      'de': 'Ausgabe bearbeiten',
+      'fr': 'Modifier la dépense',
+      'ja': '支出を編集',
+    },
   };
 
   static String get(String key, String languageCode,

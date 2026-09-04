@@ -71,9 +71,11 @@ class ActivityRemoteDataSource {
 
       String? mapsUrl;
       if (latitude != null && longitude != null) {
-        mapsUrl = 'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
+        mapsUrl =
+            'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
       } else if (locationName != null && locationName.isNotEmpty) {
-        mapsUrl = 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(locationName)}';
+        mapsUrl =
+            'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(locationName)}';
       }
 
       final activity = ActivityModel(
@@ -125,7 +127,8 @@ class ActivityRemoteDataSource {
     try {
       String? mapsUrl;
       if (locationName != null && locationName.isNotEmpty) {
-        mapsUrl = 'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(locationName)}';
+        mapsUrl =
+            'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(locationName)}';
       }
 
       await _firestore
@@ -149,7 +152,8 @@ class ActivityRemoteDataSource {
   }
 
   // Toggle activity completion
-  Future<void> toggleActivityCompletion(String activityId, bool isCompleted) async {
+  Future<void> toggleActivityCompletion(
+      String activityId, bool isCompleted) async {
     try {
       await _firestore
           .collection(FirebaseConstants.activitiesCollection)
@@ -160,13 +164,39 @@ class ActivityRemoteDataSource {
     }
   }
 
-  // Delete activity
   Future<void> deleteActivity(String activityId) async {
     try {
-      await _firestore
+      final activityRef = _firestore
           .collection(FirebaseConstants.activitiesCollection)
-          .doc(activityId)
-          .delete();
+          .doc(activityId);
+
+      final activityDoc = await activityRef.get();
+
+      if (!activityDoc.exists) {
+        throw Exception('Activity not found');
+      }
+
+      final activity = ActivityModel.fromFirestore(activityDoc);
+
+      final remainingActivities = await _firestore
+          .collection(FirebaseConstants.activitiesCollection)
+          .where('dayId', isEqualTo: activity.dayId)
+          .orderBy('orderIndex')
+          .get();
+
+      final remainingDocs = remainingActivities.docs
+          .where((doc) => doc.id != activityId)
+          .toList();
+
+      final batch = _firestore.batch();
+
+      batch.delete(activityRef);
+
+      for (int i = 0; i < remainingDocs.length; i++) {
+        batch.update(remainingDocs[i].reference, {'orderIndex': i});
+      }
+
+      await batch.commit();
     } catch (e) {
       throw Exception('Failed to delete activity: $e');
     }
@@ -193,9 +223,9 @@ class ActivityRemoteDataSource {
 
   // Reordenar actividades dentro de un día
   Future<void> reorderActivitiesInDay(
-      String dayId,
-      List<String> activityIds,
-      ) async {
+    String dayId,
+    List<String> activityIds,
+  ) async {
     try {
       final batch = _firestore.batch();
 
@@ -212,22 +242,75 @@ class ActivityRemoteDataSource {
     }
   }
 
-// Mover actividad a otro día
   Future<void> moveActivityToDay(
-      String activityId,
-      String newDayId,
-      int newOrderIndex,
-      ) async {
+    String activityId,
+    String newDayId,
+    int newOrderIndex,
+  ) async {
     try {
-      await _firestore
+      final activityRef = _firestore
           .collection(FirebaseConstants.activitiesCollection)
-          .doc(activityId)
-          .update({
+          .doc(activityId);
+
+      final activityDoc = await activityRef.get();
+
+      if (!activityDoc.exists) {
+        throw Exception('Activity not found');
+      }
+
+      final activity = ActivityModel.fromFirestore(activityDoc);
+      final oldDayId = activity.dayId;
+
+      if (oldDayId == newDayId) return;
+
+      final oldDayActivities = await _firestore
+          .collection(FirebaseConstants.activitiesCollection)
+          .where('dayId', isEqualTo: oldDayId)
+          .orderBy('orderIndex')
+          .get();
+
+      final newDayActivities = await _firestore
+          .collection(FirebaseConstants.activitiesCollection)
+          .where('dayId', isEqualTo: newDayId)
+          .orderBy('orderIndex')
+          .get();
+
+      final batch = _firestore.batch();
+
+      final remainingOldActivities =
+          oldDayActivities.docs.where((doc) => doc.id != activityId).toList();
+
+      for (int i = 0; i < remainingOldActivities.length; i++) {
+        batch.update(
+          remainingOldActivities[i].reference,
+          {'orderIndex': i},
+        );
+      }
+
+      final targetActivities =
+          List<QueryDocumentSnapshot<Map<String, dynamic>>>.from(
+        newDayActivities.docs,
+      );
+
+      final insertIndex = newOrderIndex.clamp(0, targetActivities.length);
+
+      for (int i = 0; i < targetActivities.length; i++) {
+        final orderIndex = i >= insertIndex ? i + 1 : i;
+
+        batch.update(
+          targetActivities[i].reference,
+          {'orderIndex': orderIndex},
+        );
+      }
+
+      batch.update(activityRef, {
         'dayId': newDayId,
-        'orderIndex': newOrderIndex,
+        'orderIndex': insertIndex,
       });
+
+      await batch.commit();
     } catch (e) {
-      throw Exception('Failed to move activity: $e');
+      throw Exception('Failed to move activity to day: $e');
     }
   }
 }

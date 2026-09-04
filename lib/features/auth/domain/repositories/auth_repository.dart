@@ -27,5 +27,5 @@ abstract class AuthRepository {
   Future<void> updateDisplayName(String name);
 
 // Update password
-  Future<void> updatePassword(String newPassword);
+  Future<void> updatePassword(String currentPassword, String newPassword);
 }

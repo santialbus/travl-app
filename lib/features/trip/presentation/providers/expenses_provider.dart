@@ -7,14 +7,14 @@ final expenseDataSourceProvider = Provider<ExpenseRemoteDataSource>((ref) {
 });
 
 final tripExpensesProvider = StreamProvider.family<List<ExpenseEntity>, String>(
-      (ref, tripId) {
+  (ref, tripId) {
     final dataSource = ref.watch(expenseDataSourceProvider);
     return dataSource.getTripExpenses(tripId);
   },
 );
 
 final expenseControllerProvider =
-StateNotifierProvider<ExpenseController, ExpenseState>((ref) {
+    StateNotifierProvider<ExpenseController, ExpenseState>((ref) {
   final dataSource = ref.watch(expenseDataSourceProvider);
   return ExpenseController(dataSource);
 });
@@ -55,6 +55,32 @@ class ExpenseController extends StateNotifier<ExpenseState> {
         amount: amount,
         currency: currency,
         paidBy: paidBy,
+        participants: participants,
+        category: category,
+      );
+      state = ExpenseState();
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> updateExpense({
+    required String expenseId,
+    required String title,
+    required double amount,
+    required String currency,
+    required List<String> participants,
+    required ExpenseCategory category,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _dataSource.updateExpense(
+        expenseId: expenseId,
+        title: title,
+        amount: amount,
+        currency: currency,
         participants: participants,
         category: category,
       );

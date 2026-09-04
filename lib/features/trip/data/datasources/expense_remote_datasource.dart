@@ -20,9 +20,8 @@ class ExpenseRemoteDataSource {
         .where('tripId', isEqualTo: tripId)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snap) => snap.docs
-        .map((doc) => ExpenseModel.fromFirestore(doc))
-        .toList());
+        .map((snap) =>
+            snap.docs.map((doc) => ExpenseModel.fromFirestore(doc)).toList());
   }
 
   Future<ExpenseModel> createExpense({
@@ -56,6 +55,30 @@ class ExpenseRemoteDataSource {
       return expense;
     } catch (e) {
       throw Exception('Failed to create expense: $e');
+    }
+  }
+
+  Future<void> updateExpense({
+    required String expenseId,
+    required String title,
+    required double amount,
+    required String currency,
+    required List<String> participants,
+    required ExpenseCategory category,
+  }) async {
+    try {
+      await _firestore
+          .collection(FirebaseConstants.expensesCollection)
+          .doc(expenseId)
+          .update({
+        'title': title,
+        'amount': amount,
+        'currency': currency,
+        'participants': participants,
+        'category': category.value,
+      });
+    } catch (e) {
+      throw Exception('Failed to update expense: $e');
     }
   }
 

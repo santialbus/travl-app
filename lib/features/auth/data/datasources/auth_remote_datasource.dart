@@ -43,7 +43,8 @@ class AuthRemoteDataSource {
       }
 
       // Obtain auth details
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
 
       // Create credential
       final credential = GoogleAuthProvider.credential(
@@ -52,7 +53,8 @@ class AuthRemoteDataSource {
       );
 
       // Sign in to Firebase
-      final userCredential = await _firebaseAuth.signInWithCredential(credential);
+      final userCredential =
+          await _firebaseAuth.signInWithCredential(credential);
       final firebaseUser = userCredential.user!;
 
       // Create user model
@@ -73,7 +75,8 @@ class AuthRemoteDataSource {
   }
 
   // Sign in with Email/Password
-  Future<UserModel> signInWithEmailPassword(String email, String password) async {
+  Future<UserModel> signInWithEmailPassword(
+      String email, String password) async {
     try {
       final userCredential = await _firebaseAuth.signInWithEmailAndPassword(
         email: email,
@@ -106,7 +109,6 @@ class AuthRemoteDataSource {
       throw Exception('Sign in failed: $e');
     }
   }
-
 
   // Sign up with Email/Password
   // Sign up with Email/Password
@@ -172,9 +174,8 @@ class AuthRemoteDataSource {
 
   // Helper: Save user to Firestore
   Future<void> _saveUserToFirestore(UserModel user) async {
-    final userRef = _firestore
-        .collection(FirebaseConstants.usersCollection)
-        .doc(user.id);
+    final userRef =
+        _firestore.collection(FirebaseConstants.usersCollection).doc(user.id);
 
     final userDoc = await userRef.get();
 
@@ -210,12 +211,19 @@ class AuthRemoteDataSource {
     }
   }
 
-// Update password
-  Future<void> updatePassword(String newPassword) async {
+  Future<void> updatePassword(
+      String currentPassword, String newPassword) async {
     try {
       final user = _firebaseAuth.currentUser;
       if (user == null) throw Exception('No user logged in');
+      if (user.email == null) throw Exception('User email not available');
 
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+
+      await user.reauthenticateWithCredential(credential);
       await user.updatePassword(newPassword);
     } catch (e) {
       throw Exception('Failed to update password: $e');

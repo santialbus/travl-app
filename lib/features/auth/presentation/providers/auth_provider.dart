@@ -28,7 +28,8 @@ final currentUserProvider = FutureProvider<UserEntity?>((ref) {
 });
 
 // Auth Controller
-final authControllerProvider = StateNotifierProvider<AuthController, AuthState>((ref) {
+final authControllerProvider =
+    StateNotifierProvider<AuthController, AuthState>((ref) {
   final repository = ref.watch(authRepositoryProvider);
   return AuthController(repository);
 });
@@ -124,10 +125,11 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
-  Future<bool> updatePassword(String newPassword) async {
+  Future<bool> updatePassword(
+      String currentPassword, String newPassword) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
-      await _repository.updatePassword(newPassword);
+      await _repository.updatePassword(currentPassword, newPassword);
       state = state.copyWith(isLoading: false);
       return true;
     } catch (e) {

@@ -26,7 +26,8 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<UserEntity> signInWithEmailPassword(String email, String password) async {
+  Future<UserEntity> signInWithEmailPassword(
+      String email, String password) async {
     try {
       return await _remoteDataSource.signInWithEmailPassword(email, password);
     } catch (e) {
@@ -75,9 +76,10 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<void> updatePassword(String newPassword) async {
+  Future<void> updatePassword(
+      String currentPassword, String newPassword) async {
     try {
-      await _remoteDataSource.updatePassword(newPassword);
+      await _remoteDataSource.updatePassword(currentPassword, newPassword);
     } catch (e) {
       throw Exception('Failed to update password: $e');
     }

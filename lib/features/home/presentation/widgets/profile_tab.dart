@@ -18,8 +18,8 @@ class ProfileTab extends ConsumerWidget {
 
     final languageLabel = switch (currentLanguage) {
       AppLanguage.system => ref.tr('language_system'),
-      AppLanguage.en => ref.tr('language_english'),
-      AppLanguage.es => ref.tr('language_spanish'),
+      AppLanguage.en => '🇬🇧  ${ref.tr('language_english')}',
+      AppLanguage.es => '🇪🇸  ${ref.tr('language_spanish')}',
       AppLanguage.de => '🇩🇪  ${ref.tr('language_german')}',
       AppLanguage.fr => '🇫🇷  ${ref.tr('language_french')}',
       AppLanguage.ja => '🇯🇵  ${ref.tr('language_japanese')}',
@@ -98,12 +98,7 @@ class ProfileTab extends ConsumerWidget {
                       width: double.infinity,
                       height: 56,
                       child: OutlinedButton.icon(
-                        onPressed: () async {
-                          await ref
-                              .read(authControllerProvider.notifier)
-                              .signOut();
-                          if (context.mounted) context.go('/auth');
-                        },
+                        onPressed: () => _showSignOutDialog(context, ref),
                         icon: const Icon(Icons.logout, color: AppColors.error),
                         label: Text(
                           ref.tr('sign_out'),
@@ -130,6 +125,40 @@ class ProfileTab extends ConsumerWidget {
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('Error: $e')),
+    );
+  }
+
+  void _showSignOutDialog(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.surface(dialogContext),
+        title: Text(
+          ref.tr('sign_out'),
+          style: AppTextStyles.h4,
+        ),
+        content: Text(ref.tr('confirm_sign_out')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(ref.tr('cancel')),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              await ref.read(authControllerProvider.notifier).signOut();
+              if (context.mounted) {
+                context.go('/auth');
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+            ),
+            child: Text(ref.tr('sign_out')),
+          ),
+        ],
+      ),
     );
   }
 
@@ -214,8 +243,14 @@ class ProfileTab extends ConsumerWidget {
   }
 
   String _deviceLocaleName() {
-    final code = WidgetsBinding.instance.platformDispatcher.locale.languageCode;
-    return code == 'es' ? 'Español' : 'English';
+    return switch (
+        WidgetsBinding.instance.platformDispatcher.locale.languageCode) {
+      'es' => 'Español',
+      'de' => 'Deutsch',
+      'fr' => 'Français',
+      'ja' => '日本語',
+      _ => 'English',
+    };
   }
 
   void _showEditNameDialog(
@@ -225,7 +260,7 @@ class ProfileTab extends ConsumerWidget {
 
     showDialog(
       context: context,
-      builder: (context) => Consumer(
+      builder: (dialogContext) => Consumer(
         builder: (context, ref, _) {
           final authState = ref.watch(authControllerProvider);
 
@@ -246,7 +281,7 @@ class ProfileTab extends ConsumerWidget {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.pop(dialogContext),
                 child: Text(ref.tr('cancel')),
               ),
               ElevatedButton(
@@ -254,23 +289,24 @@ class ProfileTab extends ConsumerWidget {
                     ? null
                     : () async {
                         if (!formKey.currentState!.validate()) return;
+
                         final success = await ref
                             .read(authControllerProvider.notifier)
                             .updateDisplayName(controller.text.trim());
-                        if (!context.mounted) return;
-                        if (success) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text(ref.tr('name_updated')),
-                            backgroundColor: AppColors.success,
-                          ));
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text(authState.error ??
-                                ref.tr('failed_update_name')),
-                            backgroundColor: AppColors.error,
-                          ));
-                        }
+
+                        if (!dialogContext.mounted) return;
+
+                        Navigator.pop(dialogContext);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(success
+                                ? ref.tr('name_updated')
+                                : ref.tr('failed_update_name')),
+                            backgroundColor:
+                                success ? AppColors.success : AppColors.error,
+                          ),
+                        );
                       },
                 child: authState.isLoading
                     ? const SizedBox(
@@ -288,12 +324,13 @@ class ProfileTab extends ConsumerWidget {
 
   void _showChangePasswordDialog(BuildContext context, WidgetRef ref) {
     final formKey = GlobalKey<FormState>();
+    final currentPasswordController = TextEditingController();
     final newPasswordController = TextEditingController();
     final confirmPasswordController = TextEditingController();
 
     showDialog(
       context: context,
-      builder: (context) => Consumer(
+      builder: (dialogContext) => Consumer(
         builder: (context, ref, _) {
           final authState = ref.watch(authControllerProvider);
 
@@ -306,11 +343,22 @@ class ProfileTab extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   TextFormField(
+                    controller: currentPasswordController,
+                    decoration:
+                        InputDecoration(labelText: ref.tr('current_password')),
+                    obscureText: true,
+                    autofocus: true,
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return ref.tr('required');
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextFormField(
                     controller: newPasswordController,
                     decoration:
                         InputDecoration(labelText: ref.tr('new_password')),
                     obscureText: true,
-                    autofocus: true,
                     validator: (v) {
                       if (v == null || v.isEmpty) return ref.tr('required');
                       if (v.length < 6) return ref.tr('min_6_chars');
@@ -334,7 +382,7 @@ class ProfileTab extends ConsumerWidget {
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () => Navigator.pop(dialogContext),
                 child: Text(ref.tr('cancel')),
               ),
               ElevatedButton(
@@ -342,28 +390,29 @@ class ProfileTab extends ConsumerWidget {
                     ? null
                     : () async {
                         if (!formKey.currentState!.validate()) return;
+
                         final success = await ref
                             .read(authControllerProvider.notifier)
-                            .updatePassword(newPasswordController.text);
-                        if (!context.mounted) return;
-                        if (success) {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text(ref.tr('password_updated')),
-                            backgroundColor: AppColors.success,
-                          ));
-                        } else {
-                          final error = authState.error ?? '';
-                          final needsRelogin =
-                              error.contains('requires-recent-login');
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text(needsRelogin
-                                ? ref.tr('relogin_required')
+                            .updatePassword(
+                              currentPasswordController.text,
+                              newPasswordController.text,
+                            );
+
+                        if (!dialogContext.mounted) return;
+
+                        final updatedState = ref.read(authControllerProvider);
+
+                        Navigator.pop(dialogContext);
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(success
+                                ? ref.tr('password_updated')
                                 : ref.tr('failed_update_password')),
-                            backgroundColor: AppColors.error,
-                          ));
-                        }
+                            backgroundColor:
+                                success ? AppColors.success : AppColors.error,
+                          ),
+                        );
                       },
                 child: authState.isLoading
                     ? const SizedBox(

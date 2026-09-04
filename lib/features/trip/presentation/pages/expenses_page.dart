@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:travl/features/trip/presentation/providers/permissions_provider.dart';
 
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -52,19 +53,21 @@ class _ExpensesContent extends ConsumerWidget {
     this.isReadOnly = false,
   });
 
-  Map<String, double> _calculateBalances() {
-    final balances = <String, double>{};
+  Map<String, Map<String, double>> _calculateBalances() {
+    final balances = <String, Map<String, double>>{};
 
     for (final expense in expenses) {
       if (expense.participants.isEmpty) continue;
 
+      final currencyBalances = balances.putIfAbsent(expense.currency, () => {});
       final splitAmount = expense.amount / expense.participants.length;
 
-      balances[expense.paidBy] =
-          (balances[expense.paidBy] ?? 0) + expense.amount;
+      currencyBalances[expense.paidBy] =
+          (currencyBalances[expense.paidBy] ?? 0) + expense.amount;
 
       for (final participant in expense.participants) {
-        balances[participant] = (balances[participant] ?? 0) - splitAmount;
+        currencyBalances[participant] =
+            (currencyBalances[participant] ?? 0) - splitAmount;
       }
     }
 
@@ -106,9 +109,37 @@ class _ExpensesContent extends ConsumerWidget {
     );
   }
 
+  void _showEditExpenseSheet(
+    BuildContext context,
+    WidgetRef ref,
+    ExpenseEntity expense,
+  ) async {
+    final user = await ref.read(currentUserProvider.future);
+    final trip = await ref.read(tripRepositoryProvider).getTrip(tripId);
+
+    if (user == null) return;
+    if (!context.mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => AddExpenseBottomSheet(
+        tripId: tripId,
+        userId: user.id,
+        members: trip.members.map((m) => m.userId).toList(),
+        expenseToEdit: expense,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final total = expenses.fold<double>(0, (sum, e) => sum + e.amount);
+    final member = ref.watch(currentMemberProvider(tripId));
+    final canManageAll =
+        !isReadOnly && (member?.isHost == true || member?.isCoHost == true);
     final balances = _calculateBalances();
     final grouped = _groupByDate();
 
@@ -123,7 +154,7 @@ class _ExpensesContent extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _SummarySection(
-                    total: total,
+                    expenses: expenses,
                     balances: balances,
                   ),
                   const SizedBox(height: 8),
@@ -131,9 +162,14 @@ class _ExpensesContent extends ConsumerWidget {
                     return _ExpenseDateGroup(
                       date: entry.key,
                       expenses: entry.value,
+                      canManageAll: canManageAll,
+                      userId: ref.watch(currentUserProvider).value?.id,
+                      isReadOnly: isReadOnly,
                       onDelete: (id) => ref
                           .read(expenseControllerProvider.notifier)
                           .deleteExpense(id),
+                      onEdit: (expense) =>
+                          _showEditExpenseSheet(context, ref, expense),
                     );
                   }),
                   const SizedBox(height: 100),
@@ -151,69 +187,91 @@ class _ExpensesContent extends ConsumerWidget {
   }
 }
 
+String currencySymbol(String currency) {
+  switch (currency) {
+    case 'EUR':
+      return '€';
+    case 'USD':
+      return '\$';
+    case 'GBP':
+      return '£';
+    case 'CNY':
+      return '¥';
+    default:
+      return currency;
+  }
+}
+
 // ================= SUMMARY =================
 
 class _SummarySection extends ConsumerWidget {
-  final double total;
-  final Map<String, double> balances;
+  final List<ExpenseEntity> expenses;
+  final Map<String, Map<String, double>> balances;
 
   const _SummarySection({
-    required this.total,
+    required this.expenses,
     required this.balances,
   });
 
   /// Calcula quién debe a quién y cuánto
-  List<Map<String, dynamic>> _calculateDebts() {
-    // Separar deudores (negativo) y acreedores (positivo)
-    final debtors = <String, double>{};
-    final creditors = <String, double>{};
+  Map<String, List<Map<String, dynamic>>> _calculateDebts() {
+    final debtsByCurrency = <String, List<Map<String, dynamic>>>{};
 
-    balances.forEach((userId, balance) {
-      if (balance < -0.01) {
-        debtors[userId] = balance.abs();
-      } else if (balance > 0.01) {
-        creditors[userId] = balance;
+    balances.forEach((currency, currencyBalances) {
+      final debtors = <String, double>{};
+      final creditors = <String, double>{};
+
+      currencyBalances.forEach((userId, balance) {
+        if (balance < -0.01) {
+          debtors[userId] = balance.abs();
+        } else if (balance > 0.01) {
+          creditors[userId] = balance;
+        }
+      });
+
+      final debts = <Map<String, dynamic>>[];
+
+      final debtorList = debtors.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+      final creditorList = creditors.entries.toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
+
+      int i = 0;
+      int j = 0;
+
+      while (i < debtorList.length && j < creditorList.length) {
+        final debtor = debtorList[i];
+        final creditor = creditorList[j];
+
+        final amount =
+            debtor.value < creditor.value ? debtor.value : creditor.value;
+
+        if (amount > 0.01) {
+          debts.add({
+            'from': debtor.key,
+            'to': creditor.key,
+            'amount': amount,
+          });
+        }
+
+        debtorList[i] = MapEntry(debtor.key, debtor.value - amount);
+        creditorList[j] = MapEntry(creditor.key, creditor.value - amount);
+
+        if (debtorList[i].value < 0.01) i++;
+        if (creditorList[j].value < 0.01) j++;
+      }
+
+      if (debts.isNotEmpty) {
+        debtsByCurrency[currency] = debts;
       }
     });
 
-    final debts = <Map<String, dynamic>>[];
-
-    // Algoritmo greedy para minimizar transacciones
-    final debtorList = debtors.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    final creditorList = creditors.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-
-    int i = 0, j = 0;
-
-    while (i < debtorList.length && j < creditorList.length) {
-      final debtor = debtorList[i];
-      final creditor = creditorList[j];
-
-      final amount =
-          debtor.value < creditor.value ? debtor.value : creditor.value;
-
-      if (amount > 0.01) {
-        debts.add({
-          'from': debtor.key,
-          'to': creditor.key,
-          'amount': amount,
-        });
-      }
-
-      debtorList[i] = MapEntry(debtor.key, debtor.value - amount);
-      creditorList[j] = MapEntry(creditor.key, creditor.value - amount);
-
-      if (debtorList[i].value < 0.01) i++;
-      if (creditorList[j].value < 0.01) j++;
-    }
-
-    return debts;
+    return debtsByCurrency;
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final debts = _calculateDebts();
+    Map<String, List<Map<String, dynamic>>> debts = _calculateDebts();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
@@ -229,13 +287,25 @@ class _SummarySection extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 6),
-          Text(
-            '€${total.toStringAsFixed(2)}',
-            style: AppTextStyles.h1.copyWith(
-              fontSize: 36,
-              letterSpacing: -1,
-            ),
-          ),
+          ...expenses
+              .fold<Map<String, double>>({}, (totals, expense) {
+                totals[expense.currency] =
+                    (totals[expense.currency] ?? 0) + expense.amount;
+                return totals;
+              })
+              .entries
+              .map(
+                (entry) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    '${currencySymbol(entry.key)} ${entry.value.toStringAsFixed(2)}',
+                    style: AppTextStyles.h1.copyWith(
+                      fontSize: 36,
+                      letterSpacing: -1,
+                    ),
+                  ),
+                ),
+              ),
 
           const SizedBox(height: 20),
 
@@ -249,58 +319,63 @@ class _SummarySection extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 12),
-            ...balances.entries.map((e) {
-              final userAsync = ref.watch(userNameProvider(e.key));
-              final name = userAsync.maybeWhen(
-                data: (n) => n,
-                orElse: () => '...',
-              );
-              final positive = e.value >= 0;
+            ...balances.entries.expand((currencyEntry) {
+              final currency = currencyEntry.key;
+              final currencyBalances = currencyEntry.value;
 
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: AppColors.card(context),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          name.isNotEmpty ? name[0].toUpperCase() : '?',
-                          style: AppTextStyles.labelLarge,
+              return currencyBalances.entries.map((e) {
+                final userAsync = ref.watch(userNameProvider(e.key));
+                final name = userAsync.maybeWhen(
+                  data: (n) => n,
+                  orElse: () => '...',
+                );
+                final positive = e.value >= 0;
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: AppColors.card(context),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            name.isNotEmpty ? name[0].toUpperCase() : '?',
+                            style: AppTextStyles.labelLarge,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(name, style: AppTextStyles.bodyMedium),
-                          Text(
-                            positive
-                                ? context.tr('gets_back')
-                                : context.tr('owes'),
-                            style: AppTextStyles.labelSmall.copyWith(
-                              color: AppColors.textTertiary(context),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(name, style: AppTextStyles.bodyMedium),
+                            Text(
+                              positive
+                                  ? context.tr('gets_back')
+                                  : context.tr('owes'),
+                              style: AppTextStyles.labelSmall.copyWith(
+                                color: AppColors.textTertiary(context),
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    Text(
-                      '${positive ? '+' : ''}€${e.value.toStringAsFixed(2)}',
-                      style: AppTextStyles.labelLarge.copyWith(
-                        color: positive ? AppColors.success : AppColors.error,
+                      Text(
+                        '${positive ? '+' : ''}${currencySymbol(currency)} ${e.value.toStringAsFixed(2)}',
+                        style: AppTextStyles.labelLarge.copyWith(
+                          color: positive ? AppColors.success : AppColors.error,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              );
+                    ],
+                  ),
+                );
+              });
             }),
           ],
 
@@ -320,112 +395,107 @@ class _SummarySection extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 12),
-            ...debts.map((debt) {
-              final fromAsync = ref.watch(userNameProvider(debt['from']));
-              final toAsync = ref.watch(userNameProvider(debt['to']));
+            ...debts.entries.expand((currencyEntry) {
+              final currency = currencyEntry.key;
 
-              final fromName = fromAsync.maybeWhen(
-                data: (n) => n,
-                orElse: () => '...',
-              );
-              final toName = toAsync.maybeWhen(
-                data: (n) => n,
-                orElse: () => '...',
-              );
+              return currencyEntry.value.map((debt) {
+                final fromAsync = ref.watch(userNameProvider(debt['from']));
+                final toAsync = ref.watch(userNameProvider(debt['to']));
 
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Row(
-                  children: [
-                    // Avatar from
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          fromName.isNotEmpty ? fromName[0].toUpperCase() : '?',
-                          style: AppTextStyles.labelMedium.copyWith(
-                            color: AppColors.error,
+                final fromName = fromAsync.maybeWhen(
+                  data: (n) => n,
+                  orElse: () => '...',
+                );
+                final toName = toAsync.maybeWhen(
+                  data: (n) => n,
+                  orElse: () => '...',
+                );
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: AppColors.error.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            fromName.isNotEmpty
+                                ? fromName[0].toUpperCase()
+                                : '?',
+                            style: AppTextStyles.labelMedium.copyWith(
+                              color: AppColors.error,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-
-                    const SizedBox(width: 8),
-
-                    // Arrow
-                    Icon(
-                      Icons.arrow_forward,
-                      size: 16,
-                      color: AppColors.textTertiary(context),
-                    ),
-
-                    const SizedBox(width: 8),
-
-                    // Avatar to
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: AppColors.success.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.arrow_forward,
+                        size: 16,
+                        color: AppColors.textTertiary(context),
                       ),
-                      child: Center(
-                        child: Text(
-                          toName.isNotEmpty ? toName[0].toUpperCase() : '?',
-                          style: AppTextStyles.labelMedium.copyWith(
-                            color: AppColors.success,
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            toName.isNotEmpty ? toName[0].toUpperCase() : '?',
+                            style: AppTextStyles.labelMedium.copyWith(
+                              color: AppColors.success,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-
-                    const SizedBox(width: 12),
-
-                    // Texto
-                    Expanded(
-                      child: RichText(
-                        text: TextSpan(
-                          style: AppTextStyles.bodySmall,
-                          children: [
-                            TextSpan(
-                              text: fromName,
-                              style: TextStyle(
-                                color: AppColors.textPrimary(context),
-                                fontWeight: FontWeight.w600,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: RichText(
+                          text: TextSpan(
+                            style: AppTextStyles.bodySmall,
+                            children: [
+                              TextSpan(
+                                text: fromName,
+                                style: TextStyle(
+                                  color: AppColors.textPrimary(context),
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                            ),
-                            TextSpan(
-                              text: ' ${context.tr('owes')} ',
-                              style: TextStyle(
-                                  color: AppColors.textTertiary(context)),
-                            ),
-                            TextSpan(
-                              text: toName,
-                              style: TextStyle(
-                                color: AppColors.textPrimary(context),
-                                fontWeight: FontWeight.w600,
+                              TextSpan(
+                                text: ' ${context.tr('owes')} ',
+                                style: TextStyle(
+                                  color: AppColors.textTertiary(context),
+                                ),
                               ),
-                            ),
-                          ],
+                              TextSpan(
+                                text: toName,
+                                style: TextStyle(
+                                  color: AppColors.textPrimary(context),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-
-                    // Cantidad
-                    Text(
-                      '€${(debt['amount'] as double).toStringAsFixed(2)}',
-                      style: AppTextStyles.labelLarge.copyWith(
-                        color: AppColors.error,
+                      Text(
+                        '${currencySymbol(currency)} ${(debt['amount'] as double).toStringAsFixed(2)}',
+                        style: AppTextStyles.labelLarge.copyWith(
+                          color: AppColors.error,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              );
+                    ],
+                  ),
+                );
+              });
             }),
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
@@ -470,11 +540,19 @@ class _ExpenseDateGroup extends StatelessWidget {
   final String date;
   final List<ExpenseEntity> expenses;
   final Function(String) onDelete;
+  final bool canManageAll;
+  final String? userId;
+  final bool isReadOnly;
+  final Function(ExpenseEntity) onEdit;
 
   const _ExpenseDateGroup({
     required this.date,
     required this.expenses,
+    required this.canManageAll,
+    required this.userId,
+    required this.isReadOnly,
     required this.onDelete,
+    required this.onEdit,
   });
 
   @override
@@ -495,7 +573,9 @@ class _ExpenseDateGroup extends StatelessWidget {
         ),
         ...expenses.map((e) => _ExpenseRow(
               expense: e,
+              canManage: !isReadOnly && (canManageAll || e.paidBy == userId),
               onDelete: () => onDelete(e.id),
+              onEdit: () => onEdit(e),
             )),
       ],
     );
@@ -507,10 +587,14 @@ class _ExpenseDateGroup extends StatelessWidget {
 class _ExpenseRow extends ConsumerWidget {
   final ExpenseEntity expense;
   final VoidCallback onDelete;
+  final bool canManage;
+  final VoidCallback onEdit;
 
   const _ExpenseRow({
     required this.expense,
+    required this.canManage,
     required this.onDelete,
+    required this.onEdit,
   });
 
   @override
@@ -521,9 +605,12 @@ class _ExpenseRow extends ConsumerWidget {
       orElse: () => '...',
     );
 
+    final symbol = currencySymbol(expense.currency);
+
     return Dismissible(
       key: Key(expense.id),
-      direction: DismissDirection.endToStart,
+      direction:
+          canManage ? DismissDirection.endToStart : DismissDirection.none,
       confirmDismiss: (_) async {
         return await showDialog(
           context: context,
@@ -599,19 +686,27 @@ class _ExpenseRow extends ConsumerWidget {
               ),
             ),
 
+            if (canManage)
+              IconButton(
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_outlined, size: 20),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+
             const SizedBox(width: 12),
 
-            // Amount
+// Amount
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${expense.currency} ${expense.amount.toStringAsFixed(2)}',
+                  '$symbol ${expense.amount.toStringAsFixed(2)}',
                   style: AppTextStyles.labelLarge,
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  '${expense.currency} ${expense.splitAmount.toStringAsFixed(2)}/p',
+                  '$symbol ${expense.splitAmount.toStringAsFixed(2)}/p',
                   style: AppTextStyles.labelSmall
                       .copyWith(color: AppColors.textTertiary(context)),
                 ),
@@ -669,12 +764,14 @@ class AddExpenseBottomSheet extends ConsumerStatefulWidget {
   final String tripId;
   final String userId;
   final List<String> members;
+  final ExpenseEntity? expenseToEdit;
 
   const AddExpenseBottomSheet({
     super.key,
     required this.tripId,
     required this.userId,
     required this.members,
+    this.expenseToEdit,
   });
 
   @override
@@ -702,8 +799,18 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
   @override
   void initState() {
     super.initState();
-    // Por defecto todos los miembros participan
-    _selectedParticipants = List.from(widget.members);
+
+    final expense = widget.expenseToEdit;
+
+    if (expense != null) {
+      _titleController.text = expense.title;
+      _amountController.text = expense.amount.toStringAsFixed(2);
+      _category = expense.category;
+      _currency = expense.currency;
+      _selectedParticipants = List.from(expense.participants);
+    } else {
+      _selectedParticipants = List.from(widget.members);
+    }
   }
 
   @override
@@ -735,16 +842,27 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final success =
-        await ref.read(expenseControllerProvider.notifier).createExpense(
-              tripId: widget.tripId,
-              title: _titleController.text.trim(),
-              amount: double.parse(_amountController.text),
-              currency: _currency,
-              paidBy: widget.userId,
-              participants: _selectedParticipants,
-              category: _category,
-            );
+    final expense = widget.expenseToEdit;
+    final controller = ref.read(expenseControllerProvider.notifier);
+
+    final success = expense == null
+        ? await controller.createExpense(
+            tripId: widget.tripId,
+            title: _titleController.text.trim(),
+            amount: double.parse(_amountController.text),
+            currency: _currency,
+            paidBy: widget.userId,
+            participants: _selectedParticipants,
+            category: _category,
+          )
+        : await controller.updateExpense(
+            expenseId: expense.id,
+            title: _titleController.text.trim(),
+            amount: double.parse(_amountController.text),
+            currency: _currency,
+            participants: _selectedParticipants,
+            category: _category,
+          );
 
     if (!mounted) return;
     if (success) Navigator.of(context).pop();
@@ -785,8 +903,14 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
               Row(
                 children: [
                   Expanded(
-                    child: Text(context.tr('add_expense'),
-                        style: AppTextStyles.h3),
+                    child: Text(
+                      context.tr(
+                        widget.expenseToEdit == null
+                            ? 'add_expense'
+                            : 'edit_expense',
+                      ),
+                      style: AppTextStyles.h3,
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
@@ -859,7 +983,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                 controller: _titleController,
                 decoration: InputDecoration(
                   labelText: context.tr('title'),
-                  hintText: context.tr(context.tr('title_required')),
+                  hintText: context.tr('title_required'),
                 ),
                 validator: (v) => v == null || v.isEmpty
                     ? context.tr('title_required')
@@ -1118,7 +1242,12 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
                           width: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : Text(context.tr('add_expense')),
+                      : Text(
+                          context.tr(widget.expenseToEdit == null
+                              ? 'add_expense'
+                              : 'edit_expense'),
+                          style: AppTextStyles.h3,
+                        ),
                 ),
               ),
             ],

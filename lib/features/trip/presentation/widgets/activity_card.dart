@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:travl/features/trip/presentation/providers/permissions_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/services/maps_launcher_service.dart';
@@ -16,6 +17,7 @@ class ActivityCard extends ConsumerWidget {
   final String tripId;
   final String dayId;
   final String userId;
+  final bool isReadOnly;
   final VoidCallback? onTap;
 
   const ActivityCard({
@@ -24,6 +26,7 @@ class ActivityCard extends ConsumerWidget {
     required this.tripId,
     required this.dayId,
     required this.userId,
+    this.isReadOnly = false,
     this.onTap,
   });
 
@@ -32,10 +35,16 @@ class ActivityCard extends ConsumerWidget {
     final color =
         AppColors.getActivityColor(context.tr(activity.type.translationKey));
 
+    final member = ref.watch(currentMemberProvider(tripId));
+    final isOwner = activity.createdBy == userId;
+    final canManage = !isReadOnly &&
+        ((member?.isHost ?? false) || (member?.isCoHost ?? false) || isOwner);
+
     return Dismissible(
       key: Key(activity.id),
       // Ahora ambas direcciones activas
-      direction: DismissDirection.horizontal,
+      direction:
+          canManage ? DismissDirection.horizontal : DismissDirection.none,
 
       // Fondo swipe izquierda → borrar
       background: Container(
@@ -278,12 +287,15 @@ class ActivityCard extends ConsumerWidget {
 
                   // Complete toggle
                   GestureDetector(
-                    onTap: () {
-                      HapticFeedback.lightImpact();
-                      ref
-                          .read(activityControllerProvider.notifier)
-                          .toggleCompletion(activity.id, !activity.isCompleted);
-                    },
+                    onTap: canManage
+                        ? () {
+                            HapticFeedback.lightImpact();
+                            ref
+                                .read(activityControllerProvider.notifier)
+                                .toggleCompletion(
+                                    activity.id, !activity.isCompleted);
+                          }
+                        : null,
                     child: Container(
                       width: 22,
                       height: 22,
@@ -344,6 +356,10 @@ class ActivityCard extends ConsumerWidget {
   // ─── DETAIL MODAL (long press) ────────────────────────────────────────────
 
   void _showDetailModal(BuildContext context, WidgetRef ref) {
+    final member = ref.read(currentMemberProvider(tripId));
+    final isOwner = activity.createdBy == userId;
+    final canManage = !isReadOnly &&
+        ((member?.isHost ?? false) || (member?.isCoHost ?? false) || isOwner);
     final color =
         AppColors.getActivityColor(context.tr(activity.type.translationKey));
 
@@ -497,51 +513,54 @@ class ActivityCard extends ConsumerWidget {
             const SizedBox(height: 24),
 
             // Botones de acción
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _showEditSheet(context, ref);
-                    },
-                    icon: const Icon(Icons.edit_outlined, size: 16),
-                    label: Text(context.tr('edit')),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      side: BorderSide(color: AppColors.borderColor(context)),
-                      foregroundColor: AppColors.textPrimary(context),
+            if (canManage) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showEditSheet(context, ref);
+                      },
+                      icon: const Icon(Icons.edit_outlined, size: 16),
+                      label: Text(context.tr('edit')),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        side: BorderSide(color: AppColors.borderColor(context)),
+                        foregroundColor: AppColors.textPrimary(context),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.pop(context);
-                      ref
-                          .read(activityControllerProvider.notifier)
-                          .toggleCompletion(activity.id, !activity.isCompleted);
-                    },
-                    icon: Icon(
-                      activity.isCompleted ? Icons.refresh : Icons.check,
-                      size: 16,
-                    ),
-                    label: Text(activity.isCompleted
-                        ? context.tr('reopen')
-                        : context.tr('complete')),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      backgroundColor: activity.isCompleted
-                          ? AppColors.textTertiary(context)
-                          : color,
-                      foregroundColor: Colors.white,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        Navigator.pop(context);
+                        ref
+                            .read(activityControllerProvider.notifier)
+                            .toggleCompletion(
+                                activity.id, !activity.isCompleted);
+                      },
+                      icon: Icon(
+                        activity.isCompleted ? Icons.refresh : Icons.check,
+                        size: 16,
+                      ),
+                      label: Text(activity.isCompleted
+                          ? context.tr('reopen')
+                          : context.tr('complete')),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        backgroundColor: activity.isCompleted
+                            ? AppColors.textTertiary(context)
+                            : color,
+                        foregroundColor: Colors.white,
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
@@ -551,6 +570,11 @@ class ActivityCard extends ConsumerWidget {
   // ─── EDIT SHEET ──────────────────────────────────────────────────────────
 
   void _showEditSheet(BuildContext context, WidgetRef ref) {
+    final member = ref.read(currentMemberProvider(tripId));
+    final isOwner = activity.createdBy == userId;
+    final canManage = !isReadOnly &&
+        ((member?.isHost ?? false) || (member?.isCoHost ?? false) || isOwner);
+    if (!canManage) return;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
