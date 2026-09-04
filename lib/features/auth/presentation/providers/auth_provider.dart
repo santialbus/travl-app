@@ -125,6 +125,18 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
+  Future<bool> updatePreferredCurrency(String currency) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _repository.updatePreferredCurrency(currency);
+      state = state.copyWith(isLoading: false);
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      return false;
+    }
+  }
+
   Future<bool> updatePassword(
       String currentPassword, String newPassword) async {
     state = state.copyWith(isLoading: true, error: null);

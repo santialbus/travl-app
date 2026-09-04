@@ -15,6 +15,7 @@ class ProfileTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authAsync = ref.watch(authStateProvider);
     final currentLanguage = ref.watch(appLanguageProvider);
+    final currentCurrency = authAsync.valueOrNull?.preferredCurrency ?? 'EUR';
 
     final languageLabel = switch (currentLanguage) {
       AppLanguage.system => ref.tr('language_system'),
@@ -87,6 +88,13 @@ class ProfileTab extends ConsumerWidget {
                     title: ref.tr('language'),
                     value: languageLabel,
                     onTap: () => _showLanguageSheet(context, ref),
+                  ),
+                  _SettingsItem(
+                    icon: Icons.currency_exchange_outlined,
+                    title: ref.tr('currency'),
+                    value: currentCurrency,
+                    onTap: () =>
+                        _showCurrencySheet(context, ref, currentCurrency),
                   ),
 
                   const SizedBox(height: 32),
@@ -238,6 +246,100 @@ class ProfileTab extends ConsumerWidget {
             ),
           );
         },
+      ),
+    );
+  }
+
+  static const _currencies = {
+    'EUR': '€',
+    'USD': '\$',
+    'GBP': '£',
+    'JPY': '¥',
+    'CNY': '¥',
+  };
+
+  void _showCurrencySheet(
+    BuildContext context,
+    WidgetRef ref,
+    String currentCurrency,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.textTertiary(context),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(ref.tr('currency'), style: AppTextStyles.h3),
+              const SizedBox(height: 20),
+              ..._currencies.entries.map((entry) {
+                final isSelected = currentCurrency == entry.key;
+
+                return InkWell(
+                  onTap: () async {
+                    final success = await ref
+                        .read(authControllerProvider.notifier)
+                        .updatePreferredCurrency(entry.key);
+
+                    if (!context.mounted) return;
+
+                    if (success) {
+                      Navigator.pop(context);
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 14,
+                      horizontal: 4,
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 32,
+                          child: Text(
+                            entry.value,
+                            style: AppTextStyles.bodyMedium,
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            entry.key,
+                            style: AppTextStyles.bodyMedium,
+                          ),
+                        ),
+                        if (isSelected)
+                          Icon(
+                            Icons.check,
+                            color: AppColors.primary,
+                            size: 20,
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ],
+          ),
+        ),
       ),
     );
   }

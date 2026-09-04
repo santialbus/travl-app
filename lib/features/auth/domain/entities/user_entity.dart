@@ -6,6 +6,7 @@ class UserEntity {
   final List<String> tripsOwned;
   final List<String> tripsJoined;
   final DateTime createdAt;
+  final String preferredCurrency;
 
   const UserEntity({
     required this.id,
@@ -15,5 +16,6 @@ class UserEntity {
     required this.tripsOwned,
     required this.tripsJoined,
     required this.createdAt,
+    required this.preferredCurrency,
   });
 }

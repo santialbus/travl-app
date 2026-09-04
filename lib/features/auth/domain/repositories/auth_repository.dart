@@ -28,4 +28,6 @@ abstract class AuthRepository {
 
 // Update password
   Future<void> updatePassword(String currentPassword, String newPassword);
+
+  Future<void> updatePreferredCurrency(String currency);
 }

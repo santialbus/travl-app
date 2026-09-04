@@ -142,6 +142,7 @@ class _ExpensesContent extends ConsumerWidget {
         !isReadOnly && (member?.isHost == true || member?.isCoHost == true);
     final balances = _calculateBalances();
     final grouped = _groupByDate();
+    final usedCurrencies = expenses.map((e) => e.currency).toSet().toList();
 
     return Scaffold(
       body: expenses.isEmpty
@@ -156,6 +157,7 @@ class _ExpensesContent extends ConsumerWidget {
                   _SummarySection(
                     expenses: expenses,
                     balances: balances,
+                    usedCurrencies: usedCurrencies,
                   ),
                   const SizedBox(height: 8),
                   ...grouped.entries.map((entry) {
@@ -203,21 +205,120 @@ String currencySymbol(String currency) {
 }
 
 // ================= SUMMARY =================
-
-class _SummarySection extends ConsumerWidget {
+class _SummarySection extends ConsumerStatefulWidget {
   final List<ExpenseEntity> expenses;
   final Map<String, Map<String, double>> balances;
+  final List<String> usedCurrencies;
 
   const _SummarySection({
     required this.expenses,
     required this.balances,
+    required this.usedCurrencies,
   });
+
+  @override
+  ConsumerState<_SummarySection> createState() => _SummarySectionState();
+}
+
+class _SummarySectionState extends ConsumerState<_SummarySection> {
+  late String _selectedCurrency;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedCurrency = widget.usedCurrencies.first;
+
+    ref.listenManual(currentUserProvider, (previous, next) {
+      final preferredCurrency = next.valueOrNull?.preferredCurrency;
+
+      if (preferredCurrency != null &&
+          widget.usedCurrencies.contains(preferredCurrency)) {
+        setState(() {
+          _selectedCurrency = preferredCurrency;
+        });
+      }
+    });
+  }
+
+  void _showCurrencySheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.textTertiary(context),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  context.tr('currency'),
+                  style: AppTextStyles.h3,
+                ),
+                const SizedBox(height: 20),
+                ...widget.usedCurrencies.map((currency) {
+                  final isSelected = _selectedCurrency == currency;
+
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        _selectedCurrency = currency;
+                      });
+                      Navigator.pop(context);
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 14,
+                        horizontal: 4,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '$currency (${currencySymbol(currency)})',
+                              style: AppTextStyles.bodyMedium,
+                            ),
+                          ),
+                          if (isSelected)
+                            Icon(
+                              Icons.check,
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   /// Calcula quién debe a quién y cuánto
   Map<String, List<Map<String, dynamic>>> _calculateDebts() {
     final debtsByCurrency = <String, List<Map<String, dynamic>>>{};
 
-    balances.forEach((currency, currencyBalances) {
+    widget.balances.forEach((currency, currencyBalances) {
       final debtors = <String, double>{};
       final creditors = <String, double>{};
 
@@ -270,24 +371,56 @@ class _SummarySection extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    Map<String, List<Map<String, dynamic>>> debts = _calculateDebts();
+  Widget build(BuildContext context) {
+    final debts = _calculateDebts();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Total
-          Text(
-            context.tr('total_spent'),
-            style: AppTextStyles.labelSmall.copyWith(
-              color: AppColors.textTertiary(context),
-              letterSpacing: 1.2,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                context.tr('total_spent'),
+                style: AppTextStyles.labelSmall.copyWith(
+                  color: AppColors.textTertiary(context),
+                  letterSpacing: 1.2,
+                ),
+              ),
+              InkWell(
+                onTap: _showCurrencySheet,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _selectedCurrency,
+                        style: AppTextStyles.labelMedium.copyWith(
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.keyboard_arrow_down,
+                        size: 18,
+                        color: AppColors.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 6),
-          ...expenses
+
+          ...widget.expenses
               .fold<Map<String, double>>({}, (totals, expense) {
                 totals[expense.currency] =
                     (totals[expense.currency] ?? 0) + expense.amount;
@@ -310,7 +443,7 @@ class _SummarySection extends ConsumerWidget {
           const SizedBox(height: 20),
 
           // Balances por persona
-          if (balances.isNotEmpty) ...[
+          if (widget.balances.isNotEmpty) ...[
             Text(
               context.tr('balances').toUpperCase(),
               style: AppTextStyles.labelSmall.copyWith(
@@ -319,7 +452,7 @@ class _SummarySection extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 12),
-            ...balances.entries.expand((currencyEntry) {
+            ...widget.balances.entries.expand((currencyEntry) {
               final currency = currencyEntry.key;
               final currencyBalances = currencyEntry.value;
 
@@ -504,7 +637,7 @@ class _SummarySection extends ConsumerWidget {
           ],
 
           // Si todo está saldado
-          if (debts.isEmpty && balances.isNotEmpty)
+          if (debts.isEmpty && widget.balances.isNotEmpty)
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(

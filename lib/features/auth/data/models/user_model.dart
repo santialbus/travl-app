@@ -11,6 +11,7 @@ class UserModel extends UserEntity {
     required super.tripsOwned,
     required super.tripsJoined,
     required super.createdAt,
+    required super.preferredCurrency,
   });
 
   // From Firebase Auth User
@@ -28,6 +29,7 @@ class UserModel extends UserEntity {
       tripsOwned: [],
       tripsJoined: [],
       createdAt: DateTime.now(),
+      preferredCurrency: 'EUR',
     );
   }
 
@@ -40,9 +42,14 @@ class UserModel extends UserEntity {
       name: data[FirebaseConstants.userNameField] ?? '',
       email: data[FirebaseConstants.userEmailField] ?? '',
       photoUrl: data[FirebaseConstants.userPhotoUrlField],
-      tripsOwned: List<String>.from(data[FirebaseConstants.userTripsOwnedField] ?? []),
-      tripsJoined: List<String>.from(data[FirebaseConstants.userTripsJoinedField] ?? []),
-      createdAt: (data[FirebaseConstants.userCreatedAtField] as Timestamp).toDate(),
+      tripsOwned:
+          List<String>.from(data[FirebaseConstants.userTripsOwnedField] ?? []),
+      tripsJoined:
+          List<String>.from(data[FirebaseConstants.userTripsJoinedField] ?? []),
+      createdAt:
+          (data[FirebaseConstants.userCreatedAtField] as Timestamp).toDate(),
+      preferredCurrency:
+          data[FirebaseConstants.userPreferredCurrencyField] ?? 'EUR',
     );
   }
 
@@ -56,6 +63,7 @@ class UserModel extends UserEntity {
       FirebaseConstants.userTripsOwnedField: tripsOwned,
       FirebaseConstants.userTripsJoinedField: tripsJoined,
       FirebaseConstants.userCreatedAtField: Timestamp.fromDate(createdAt),
+      FirebaseConstants.userPreferredCurrencyField: preferredCurrency,
     };
   }
 
@@ -68,6 +76,7 @@ class UserModel extends UserEntity {
     List<String>? tripsOwned,
     List<String>? tripsJoined,
     DateTime? createdAt,
+    String? preferredCurrency,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -77,6 +86,7 @@ class UserModel extends UserEntity {
       tripsOwned: tripsOwned ?? this.tripsOwned,
       tripsJoined: tripsJoined ?? this.tripsJoined,
       createdAt: createdAt ?? this.createdAt,
+      preferredCurrency: preferredCurrency ?? this.preferredCurrency,
     );
   }
 }

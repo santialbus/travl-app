@@ -229,4 +229,20 @@ class AuthRemoteDataSource {
       throw Exception('Failed to update password: $e');
     }
   }
+
+  Future<void> updatePreferredCurrency(String currency) async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null) throw Exception('No user logged in');
+
+      await _firestore
+          .collection(FirebaseConstants.usersCollection)
+          .doc(user.uid)
+          .update({
+        FirebaseConstants.userPreferredCurrencyField: currency,
+      });
+    } catch (e) {
+      throw Exception('Failed to update preferred currency: $e');
+    }
+  }
 }

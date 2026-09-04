@@ -76,6 +76,15 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<void> updatePreferredCurrency(String currency) async {
+    try {
+      await _remoteDataSource.updatePreferredCurrency(currency);
+    } catch (e) {
+      throw Exception('Failed to update preferred currency: $e');
+    }
+  }
+
+  @override
   Future<void> updatePassword(
       String currentPassword, String newPassword) async {
     try {
