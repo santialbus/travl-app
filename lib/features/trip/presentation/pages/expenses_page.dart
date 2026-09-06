@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:travl/features/trip/presentation/providers/currency_provider.dart';
 import 'package:travl/features/trip/presentation/providers/permissions_provider.dart';
 
 import '../../../../core/localization/app_strings.dart';
@@ -223,6 +224,30 @@ class _SummarySection extends ConsumerStatefulWidget {
 class _SummarySectionState extends ConsumerState<_SummarySection> {
   late String _selectedCurrency;
 
+  double _calculateTotal(Map<String, double> rates) {
+    return widget.expenses.fold(0, (total, expense) {
+      final rate = rates[expense.currency] ?? 1;
+      return total + (expense.amount * rate);
+    });
+  }
+
+  Map<String, double> _calculateConvertedBalances(
+    Map<String, double> rates,
+  ) {
+    final convertedBalances = <String, double>{};
+
+    widget.balances.forEach((currency, currencyBalances) {
+      final rate = rates[currency] ?? 1;
+
+      currencyBalances.forEach((userId, balance) {
+        convertedBalances[userId] =
+            (convertedBalances[userId] ?? 0) + (balance * rate);
+      });
+    });
+
+    return convertedBalances;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -234,7 +259,7 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
       if (preferredCurrency != null &&
           widget.usedCurrencies.contains(preferredCurrency)) {
         setState(() {
-          _selectedCurrency = preferredCurrency;
+          _selectedCurrency == widget.usedCurrencies.first;
         });
       }
     });
@@ -315,64 +340,86 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
   }
 
   /// Calcula quién debe a quién y cuánto
-  Map<String, List<Map<String, dynamic>>> _calculateDebts() {
-    final debtsByCurrency = <String, List<Map<String, dynamic>>>{};
+  Map<String, List<Map<String, dynamic>>> _calculateDebts(
+    Map<String, double> rates,
+  ) {
+    final balances = _calculateConvertedBalances(rates);
 
-    widget.balances.forEach((currency, currencyBalances) {
-      final debtors = <String, double>{};
-      final creditors = <String, double>{};
+    final debtors = <String, double>{};
+    final creditors = <String, double>{};
 
-      currencyBalances.forEach((userId, balance) {
-        if (balance < -0.01) {
-          debtors[userId] = balance.abs();
-        } else if (balance > 0.01) {
-          creditors[userId] = balance;
-        }
-      });
-
-      final debts = <Map<String, dynamic>>[];
-
-      final debtorList = debtors.entries.toList()
-        ..sort((a, b) => b.value.compareTo(a.value));
-      final creditorList = creditors.entries.toList()
-        ..sort((a, b) => b.value.compareTo(a.value));
-
-      int i = 0;
-      int j = 0;
-
-      while (i < debtorList.length && j < creditorList.length) {
-        final debtor = debtorList[i];
-        final creditor = creditorList[j];
-
-        final amount =
-            debtor.value < creditor.value ? debtor.value : creditor.value;
-
-        if (amount > 0.01) {
-          debts.add({
-            'from': debtor.key,
-            'to': creditor.key,
-            'amount': amount,
-          });
-        }
-
-        debtorList[i] = MapEntry(debtor.key, debtor.value - amount);
-        creditorList[j] = MapEntry(creditor.key, creditor.value - amount);
-
-        if (debtorList[i].value < 0.01) i++;
-        if (creditorList[j].value < 0.01) j++;
-      }
-
-      if (debts.isNotEmpty) {
-        debtsByCurrency[currency] = debts;
+    balances.forEach((userId, balance) {
+      if (balance < -0.01) {
+        debtors[userId] = balance.abs();
+      } else if (balance > 0.01) {
+        creditors[userId] = balance;
       }
     });
 
-    return debtsByCurrency;
+    final debts = <Map<String, dynamic>>[];
+
+    final debtorList = debtors.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final creditorList = creditors.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    int i = 0;
+    int j = 0;
+
+    while (i < debtorList.length && j < creditorList.length) {
+      final debtor = debtorList[i];
+      final creditor = creditorList[j];
+
+      final amount =
+          debtor.value < creditor.value ? debtor.value : creditor.value;
+
+      if (amount > 0.01) {
+        debts.add({
+          'from': debtor.key,
+          'to': creditor.key,
+          'amount': amount,
+        });
+      }
+
+      debtorList[i] = MapEntry(debtor.key, debtor.value - amount);
+      creditorList[j] = MapEntry(creditor.key, creditor.value - amount);
+
+      if (debtorList[i].value < 0.01) i++;
+      if (creditorList[j].value < 0.01) j++;
+    }
+
+    return {
+      _selectedCurrency: debts,
+    };
   }
 
   @override
   Widget build(BuildContext context) {
-    final debts = _calculateDebts();
+    final ratesAsync = ref.watch(
+      currencyRatesProvider(
+        CurrencyRatesParams(
+          sourceCurrencies: widget.usedCurrencies,
+          targetCurrency: _selectedCurrency,
+        ),
+      ),
+    );
+
+    ratesAsync.when(
+      data: (rates) {
+        print('Currency rates received: $rates');
+      },
+      loading: () {
+        print('Currency rates loading...');
+      },
+      error: (error, stackTrace) {
+        print('Currency rates error: $error');
+      },
+    );
+
+    final debts = ratesAsync.maybeWhen(
+      data: (rates) => _calculateDebts(rates),
+      orElse: () => <String, List<Map<String, dynamic>>>{},
+    );
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
@@ -420,25 +467,31 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
           ),
           const SizedBox(height: 6),
 
-          ...widget.expenses
-              .fold<Map<String, double>>({}, (totals, expense) {
-                totals[expense.currency] =
-                    (totals[expense.currency] ?? 0) + expense.amount;
-                return totals;
-              })
-              .entries
-              .map(
-                (entry) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(
-                    '${currencySymbol(entry.key)} ${entry.value.toStringAsFixed(2)}',
-                    style: AppTextStyles.h1.copyWith(
-                      fontSize: 36,
-                      letterSpacing: -1,
-                    ),
-                  ),
-                ),
+          ratesAsync.when(
+            loading: () => const SizedBox(
+              height: 43,
+              child: Center(
+                child: CircularProgressIndicator(),
               ),
+            ),
+            error: (error, stackTrace) => Text(
+              'Error loading currency rates',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textTertiary(context),
+              ),
+            ),
+            data: (rates) {
+              final total = _calculateTotal(rates);
+
+              return Text(
+                '${currencySymbol(_selectedCurrency)} ${total.toStringAsFixed(2)}',
+                style: AppTextStyles.h1.copyWith(
+                  fontSize: 36,
+                  letterSpacing: -1,
+                ),
+              );
+            },
+          ),
 
           const SizedBox(height: 20),
 
