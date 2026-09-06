@@ -416,6 +416,11 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
       },
     );
 
+    final convertedBalances = ratesAsync.maybeWhen(
+      data: (rates) => _calculateConvertedBalances(rates),
+      orElse: () => <String, double>{},
+    );
+
     final debts = ratesAsync.maybeWhen(
       data: (rates) => _calculateDebts(rates),
       orElse: () => <String, List<Map<String, dynamic>>>{},
@@ -496,7 +501,7 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
           const SizedBox(height: 20),
 
           // Balances por persona
-          if (widget.balances.isNotEmpty) ...[
+          if (convertedBalances.isNotEmpty) ...[
             Text(
               context.tr('balances').toUpperCase(),
               style: AppTextStyles.labelSmall.copyWith(
@@ -505,63 +510,60 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
               ),
             ),
             const SizedBox(height: 12),
-            ...widget.balances.entries.expand((currencyEntry) {
-              final currency = currencyEntry.key;
-              final currencyBalances = currencyEntry.value;
+            ...convertedBalances.entries.map((entry) {
+              final userId = entry.key;
+              final balance = entry.value;
+              final userAsync = ref.watch(userNameProvider(userId));
+              final name = userAsync.maybeWhen(
+                data: (n) => n,
+                orElse: () => '...',
+              );
+              final positive = balance >= 0;
 
-              return currencyBalances.entries.map((e) {
-                final userAsync = ref.watch(userNameProvider(e.key));
-                final name = userAsync.maybeWhen(
-                  data: (n) => n,
-                  orElse: () => '...',
-                );
-                final positive = e.value >= 0;
-
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: AppColors.card(context),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            name.isNotEmpty ? name[0].toUpperCase() : '?',
-                            style: AppTextStyles.labelLarge,
-                          ),
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.card(context),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          name.isNotEmpty ? name[0].toUpperCase() : '?',
+                          style: AppTextStyles.labelLarge,
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(name, style: AppTextStyles.bodyMedium),
-                            Text(
-                              positive
-                                  ? context.tr('gets_back')
-                                  : context.tr('owes'),
-                              style: AppTextStyles.labelSmall.copyWith(
-                                color: AppColors.textTertiary(context),
-                              ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(name, style: AppTextStyles.bodyMedium),
+                          Text(
+                            positive
+                                ? context.tr('gets_back')
+                                : context.tr('owes'),
+                            style: AppTextStyles.labelSmall.copyWith(
+                              color: AppColors.textTertiary(context),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        '${positive ? '+' : ''}${currencySymbol(currency)} ${e.value.toStringAsFixed(2)}',
-                        style: AppTextStyles.labelLarge.copyWith(
-                          color: positive ? AppColors.success : AppColors.error,
-                        ),
+                    ),
+                    Text(
+                      '${positive ? '+' : ''}${currencySymbol(_selectedCurrency)} ${balance.toStringAsFixed(2)}',
+                      style: AppTextStyles.labelLarge.copyWith(
+                        color: positive ? AppColors.success : AppColors.error,
                       ),
-                    ],
-                  ),
-                );
-              });
+                    ),
+                  ],
+                ),
+              );
             }),
           ],
 
