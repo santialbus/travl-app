@@ -1684,6 +1684,25 @@ class AppStrings {
       'fr': 'Modifier la dépense',
       'ja': '支出を編集',
     },
+
+    'calculation_info': {
+      'en': 'How is this calculated?',
+      'es': '¿Cómo se calcula?',
+      'de': 'Wie wird das berechnet?',
+      'fr': 'Comment est-ce calculé ?',
+      'ja': 'どのように計算されていますか？',
+    },
+    'balance_explanation': {
+      'en':
+          'The balance shows how much each person should receive or pay after splitting all expenses.',
+      'es':
+          'El balance muestra cuánto debe recibir o pagar cada persona después de repartir todos los gastos.',
+      'de':
+          'Der Saldo zeigt, wie viel jede Person nach der Aufteilung aller Ausgaben erhalten oder zahlen sollte.',
+      'fr':
+          'Le solde indique combien chaque personne doit recevoir ou payer après le partage de toutes les dépenses.',
+      'ja': '残高は、すべての支出を分割した後に各人が受け取る、または支払うべき金額を示します。',
+    },
   };
 
   static String get(String key, String languageCode,

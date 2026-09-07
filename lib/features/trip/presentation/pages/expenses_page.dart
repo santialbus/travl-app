@@ -222,8 +222,6 @@ class _SummarySection extends ConsumerStatefulWidget {
 }
 
 class _SummarySectionState extends ConsumerState<_SummarySection> {
-  late String _selectedCurrency;
-
   double _calculateTotal(Map<String, double> rates) {
     return widget.expenses.fold(0, (total, expense) {
       final rate = rates[expense.currency] ?? 1;
@@ -251,21 +249,21 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
   @override
   void initState() {
     super.initState();
-    _selectedCurrency = widget.usedCurrencies.first;
 
     ref.listenManual(currentUserProvider, (previous, next) {
       final preferredCurrency = next.valueOrNull?.preferredCurrency;
 
       if (preferredCurrency != null &&
-          widget.usedCurrencies.contains(preferredCurrency)) {
-        setState(() {
-          _selectedCurrency == widget.usedCurrencies.first;
-        });
+          widget.usedCurrencies.contains(preferredCurrency) &&
+          ref.read(selectedCurrencyProvider) == null) {
+        ref.read(selectedCurrencyProvider.notifier).state = preferredCurrency;
       }
     });
   }
 
   void _showCurrencySheet() {
+    final selectedCurrency =
+        ref.read(selectedCurrencyProvider) ?? widget.usedCurrencies.first;
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface(context),
@@ -297,13 +295,12 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
                 ),
                 const SizedBox(height: 20),
                 ...widget.usedCurrencies.map((currency) {
-                  final isSelected = _selectedCurrency == currency;
+                  final isSelected = selectedCurrency == currency;
 
                   return InkWell(
                     onTap: () {
-                      setState(() {
-                        _selectedCurrency = currency;
-                      });
+                      ref.read(selectedCurrencyProvider.notifier).state =
+                          currency;
                       Navigator.pop(context);
                     },
                     borderRadius: BorderRadius.circular(12),
@@ -341,8 +338,7 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
 
   /// Calcula quién debe a quién y cuánto
   Map<String, List<Map<String, dynamic>>> _calculateDebts(
-    Map<String, double> rates,
-  ) {
+      Map<String, double> rates, String selectedCurrency) {
     final balances = _calculateConvertedBalances(rates);
 
     final debtors = <String, double>{};
@@ -389,17 +385,187 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
     }
 
     return {
-      _selectedCurrency: debts,
+      selectedCurrency: debts,
     };
+  }
+
+  void _showCalculationInfo({
+    required Map<String, double> rates,
+    required String selectedCurrency,
+  }) {
+    final total = _calculateTotal(rates);
+    final convertedBalances = _calculateConvertedBalances(rates);
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface(context),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: DraggableScrollableSheet(
+            initialChildSize: 0.75,
+            minChildSize: 0.4,
+            maxChildSize: 0.95,
+            expand: false,
+            builder: (context, scrollController) {
+              return SingleChildScrollView(
+                controller: scrollController,
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: AppColors.textTertiary(context),
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          color: AppColors.error,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          context.tr('calculation_info'),
+                          style: AppTextStyles.h3,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      context.tr('total_spent'),
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: AppColors.textTertiary(context),
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${currencySymbol(selectedCurrency)} ${total.toStringAsFixed(2)}',
+                      style: AppTextStyles.h1.copyWith(
+                        fontSize: 32,
+                        letterSpacing: -1,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      context.tr('expenses'),
+                      style: AppTextStyles.h4,
+                    ),
+                    const SizedBox(height: 12),
+                    ...widget.expenses.map((expense) {
+                      final rate = rates[expense.currency] ?? 1;
+                      final converted = expense.amount * rate;
+                      final originalSymbol = currencySymbol(expense.currency);
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    expense.title,
+                                    style: AppTextStyles.bodyMedium,
+                                  ),
+                                  Text(
+                                    '${originalSymbol} ${expense.amount.toStringAsFixed(2)} · ${expense.currency}',
+                                    style: AppTextStyles.labelSmall.copyWith(
+                                      color: AppColors.textTertiary(context),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              '${currencySymbol(selectedCurrency)} ${converted.toStringAsFixed(2)}',
+                              style: AppTextStyles.labelLarge,
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Divider(color: AppColors.divider),
+                    ),
+                    Text(
+                      context.tr('balances'),
+                      style: AppTextStyles.h4,
+                    ),
+                    const SizedBox(height: 12),
+                    ...convertedBalances.entries.map((entry) {
+                      final userAsync = ref.watch(userNameProvider(entry.key));
+                      final name = userAsync.maybeWhen(
+                        data: (n) => n,
+                        orElse: () => '...',
+                      );
+
+                      final balance = entry.value;
+                      final positive = balance >= 0;
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                name,
+                                style: AppTextStyles.bodyMedium,
+                              ),
+                            ),
+                            Text(
+                              '${positive ? '+' : ''}${currencySymbol(selectedCurrency)} ${balance.toStringAsFixed(2)}',
+                              style: AppTextStyles.labelLarge.copyWith(
+                                color: positive
+                                    ? AppColors.success
+                                    : AppColors.error,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 16),
+                    Text(
+                      context.tr('balance_explanation'),
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textTertiary(context),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final selectedCurrency =
+        ref.watch(selectedCurrencyProvider) ?? widget.usedCurrencies.first;
+
     final ratesAsync = ref.watch(
       currencyRatesProvider(
         CurrencyRatesParams(
           sourceCurrencies: widget.usedCurrencies,
-          targetCurrency: _selectedCurrency,
+          targetCurrency: selectedCurrency,
         ),
       ),
     );
@@ -422,7 +588,7 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
     );
 
     final debts = ratesAsync.maybeWhen(
-      data: (rates) => _calculateDebts(rates),
+      data: (rates) => _calculateDebts(rates, selectedCurrency),
       orElse: () => <String, List<Map<String, dynamic>>>{},
     );
 
@@ -453,7 +619,7 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _selectedCurrency,
+                        selectedCurrency,
                         style: AppTextStyles.labelMedium.copyWith(
                           color: AppColors.primary,
                         ),
@@ -488,12 +654,33 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
             data: (rates) {
               final total = _calculateTotal(rates);
 
-              return Text(
-                '${currencySymbol(_selectedCurrency)} ${total.toStringAsFixed(2)}',
-                style: AppTextStyles.h1.copyWith(
-                  fontSize: 36,
-                  letterSpacing: -1,
-                ),
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    '${currencySymbol(selectedCurrency)} ${total.toStringAsFixed(2)}',
+                    style: AppTextStyles.h1.copyWith(
+                      fontSize: 36,
+                      letterSpacing: -1,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: () => _showCalculationInfo(
+                      rates: rates,
+                      selectedCurrency: selectedCurrency,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.info_outline,
+                        size: 20,
+                        color: AppColors.error,
+                      ),
+                    ),
+                  ),
+                ],
               );
             },
           ),
@@ -556,7 +743,7 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
                       ),
                     ),
                     Text(
-                      '${positive ? '+' : ''}${currencySymbol(_selectedCurrency)} ${balance.toStringAsFixed(2)}',
+                      '${positive ? '+' : ''}${currencySymbol(selectedCurrency)} ${balance.toStringAsFixed(2)}',
                       style: AppTextStyles.labelLarge.copyWith(
                         color: positive ? AppColors.success : AppColors.error,
                       ),
@@ -795,6 +982,18 @@ class _ExpenseRow extends ConsumerWidget {
 
     final symbol = currencySymbol(expense.currency);
 
+    final selectedCurrency = ref.watch(selectedCurrencyProvider);
+    final targetCurrency = selectedCurrency ?? expense.currency;
+
+    final ratesAsync = ref.watch(
+      currencyRatesProvider(
+        CurrencyRatesParams(
+          sourceCurrencies: [expense.currency],
+          targetCurrency: targetCurrency,
+        ),
+      ),
+    );
+
     return Dismissible(
       key: Key(expense.id),
       direction:
@@ -892,11 +1091,35 @@ class _ExpenseRow extends ConsumerWidget {
                   '$symbol ${expense.amount.toStringAsFixed(2)}',
                   style: AppTextStyles.labelLarge,
                 ),
+                if (expense.currency != targetCurrency)
+                  ratesAsync.maybeWhen(
+                    data: (rates) {
+                      final rate = rates[expense.currency];
+
+                      if (rate == null) {
+                        return const SizedBox.shrink();
+                      }
+
+                      final convertedAmount = expense.amount * rate;
+
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          '≈ ${currencySymbol(targetCurrency)} ${convertedAmount.toStringAsFixed(2)}',
+                          style: AppTextStyles.labelSmall.copyWith(
+                            color: AppColors.textTertiary(context),
+                          ),
+                        ),
+                      );
+                    },
+                    orElse: () => const SizedBox.shrink(),
+                  ),
                 const SizedBox(height: 3),
                 Text(
                   '$symbol ${expense.splitAmount.toStringAsFixed(2)}/p',
-                  style: AppTextStyles.labelSmall
-                      .copyWith(color: AppColors.textTertiary(context)),
+                  style: AppTextStyles.labelSmall.copyWith(
+                    color: AppColors.textTertiary(context),
+                  ),
                 ),
               ],
             ),

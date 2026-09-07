@@ -85,3 +85,5 @@ class CurrencyRatesParams {
     return true;
   }
 }
+
+final selectedCurrencyProvider = StateProvider<String?>((ref) => null);
