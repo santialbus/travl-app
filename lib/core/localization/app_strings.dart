@@ -1703,6 +1703,20 @@ class AppStrings {
           'Le solde indique combien chaque personne doit recevoir ou payer après le partage de toutes les dépenses.',
       'ja': '残高は、すべての支出を分割した後に各人が受け取る、または支払うべき金額を示します。',
     },
+    'paid': {
+      'en': 'Paid',
+      'es': 'Pagado',
+      'de': 'Bezahlt',
+      'fr': 'Payé',
+      'ja': '支払額',
+    },
+    'share': {
+      'en': 'Share',
+      'es': 'Parte',
+      'de': 'Anteil',
+      'fr': 'Part',
+      'ja': '負担額',
+    },
   };
 
   static String get(String key, String languageCode,

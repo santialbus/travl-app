@@ -229,21 +229,51 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
     });
   }
 
+  Map<String, Map<String, double>> _calculateUserBreakdown(
+    Map<String, double> rates,
+  ) {
+    final breakdown = <String, Map<String, double>>{};
+
+    for (final expense in widget.expenses) {
+      if (expense.participants.isEmpty) continue;
+
+      final rate = rates[expense.currency] ?? 1;
+      final convertedAmount = expense.amount * rate;
+      final convertedShare =
+          (expense.amount / expense.participants.length) * rate;
+
+      final payer = breakdown.putIfAbsent(
+        expense.paidBy,
+        () => {'paid': 0, 'share': 0},
+      );
+
+      payer['paid'] = payer['paid']! + convertedAmount;
+
+      for (final participant in expense.participants) {
+        final user = breakdown.putIfAbsent(
+          participant,
+          () => {'paid': 0, 'share': 0},
+        );
+
+        user['share'] = user['share']! + convertedShare;
+      }
+    }
+
+    for (final user in breakdown.entries) {
+      user.value['balance'] = user.value['paid']! - user.value['share']!;
+    }
+
+    return breakdown;
+  }
+
   Map<String, double> _calculateConvertedBalances(
     Map<String, double> rates,
   ) {
-    final convertedBalances = <String, double>{};
+    final breakdown = _calculateUserBreakdown(rates);
 
-    widget.balances.forEach((currency, currencyBalances) {
-      final rate = rates[currency] ?? 1;
-
-      currencyBalances.forEach((userId, balance) {
-        convertedBalances[userId] =
-            (convertedBalances[userId] ?? 0) + (balance * rate);
-      });
-    });
-
-    return convertedBalances;
+    return {
+      for (final entry in breakdown.entries) entry.key: entry.value['balance']!,
+    };
   }
 
   @override
@@ -394,7 +424,7 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
     required String selectedCurrency,
   }) {
     final total = _calculateTotal(rates);
-    final convertedBalances = _calculateConvertedBalances(rates);
+    final breakdown = _calculateUserBreakdown(rates);
 
     showModalBottomSheet(
       context: context,
@@ -507,32 +537,55 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
                       style: AppTextStyles.h4,
                     ),
                     const SizedBox(height: 12),
-                    ...convertedBalances.entries.map((entry) {
-                      final userAsync = ref.watch(userNameProvider(entry.key));
+                    ...breakdown.entries.map((entry) {
+                      final userId = entry.key;
+                      final data = entry.value;
+
+                      final userAsync = ref.watch(userNameProvider(userId));
                       final name = userAsync.maybeWhen(
                         data: (n) => n,
                         orElse: () => '...',
                       );
 
-                      final balance = entry.value;
+                      final paid = data['paid']!;
+                      final share = data['share']!;
+                      final balance = data['balance']!;
                       final positive = balance >= 0;
 
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: Row(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Text(
-                                name,
-                                style: AppTextStyles.bodyMedium,
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    name,
+                                    style: AppTextStyles.bodyMedium,
+                                  ),
+                                ),
+                                Text(
+                                  '${positive ? '+' : ''}${currencySymbol(selectedCurrency)} ${balance.toStringAsFixed(2)}',
+                                  style: AppTextStyles.labelLarge.copyWith(
+                                    color: positive
+                                        ? AppColors.success
+                                        : AppColors.error,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              '${context.tr('paid')}: ${currencySymbol(selectedCurrency)} ${paid.toStringAsFixed(2)}',
+                              style: AppTextStyles.labelSmall.copyWith(
+                                color: AppColors.textTertiary(context),
                               ),
                             ),
                             Text(
-                              '${positive ? '+' : ''}${currencySymbol(selectedCurrency)} ${balance.toStringAsFixed(2)}',
-                              style: AppTextStyles.labelLarge.copyWith(
-                                color: positive
-                                    ? AppColors.success
-                                    : AppColors.error,
+                              '${context.tr('share')}: ${currencySymbol(selectedCurrency)} ${share.toStringAsFixed(2)}',
+                              style: AppTextStyles.labelSmall.copyWith(
+                                color: AppColors.textTertiary(context),
                               ),
                             ),
                           ],
