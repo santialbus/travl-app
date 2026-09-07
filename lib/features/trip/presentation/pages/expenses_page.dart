@@ -1208,10 +1208,8 @@ class _ExpenseRow extends ConsumerWidget {
     );
 
     final symbol = currencySymbol(expense.currency);
-
     final selectedCurrency = ref.watch(selectedCurrencyProvider);
     final targetCurrency = selectedCurrency ?? expense.currency;
-
     final isSettlement = expense.isSettlement;
 
     final ratesAsync = ref.watch(
@@ -1226,61 +1224,59 @@ class _ExpenseRow extends ConsumerWidget {
     return Dismissible(
       key: Key(expense.id),
       direction:
-          canManage ? DismissDirection.endToStart : DismissDirection.none,
-      confirmDismiss: (_) async {
-        return await showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            backgroundColor: AppColors.surface(context),
-            title: Text(context.tr('delete_expense'), style: AppTextStyles.h4),
-            content: Text(expense.title,
-                style: AppTextStyles.bodyMedium
-                    .copyWith(color: AppColors.textSecondary(context))),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text(context.tr('cancel')),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: Text(context.tr('delete'),
-                    style: TextStyle(color: AppColors.error)),
-              ),
-            ],
-          ),
-        );
+          canManage ? DismissDirection.horizontal : DismissDirection.none,
+      confirmDismiss: (direction) async {
+        if (direction == DismissDirection.startToEnd) {
+          onEdit();
+          return false;
+        }
+
+        if (direction == DismissDirection.endToStart) {
+          onDelete();
+          return true;
+        }
+
+        return false;
       },
-      onDismissed: (_) => onDelete(),
       background: Container(
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        color: AppColors.primary,
+        child: const Icon(
+          Icons.edit_outlined,
+          color: Colors.white,
+        ),
+      ),
+      secondaryBackground: Container(
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        color: AppColors.error.withValues(alpha: 0.15),
-        child: Icon(Icons.delete_outline, color: AppColors.error),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        color: AppColors.error,
+        child: const Icon(
+          Icons.delete_outline,
+          color: Colors.white,
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 12,
+        ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Emoji categoría
             Container(
-              width: 36,
-              height: 36,
+              width: 42,
+              height: 42,
               decoration: BoxDecoration(
-                color: AppColors.card(context),
-                borderRadius: BorderRadius.circular(10),
+                color: AppColors.surface(context),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Center(
-                child: Text(
-                  expense.category.emoji,
-                  style: const TextStyle(fontSize: 18),
-                ),
+              alignment: Alignment.center,
+              child: Text(
+                expense.category.emoji,
+                style: const TextStyle(fontSize: 20),
               ),
             ),
-
             const SizedBox(width: 12),
-
-            // Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1296,31 +1292,27 @@ class _ExpenseRow extends ConsumerWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    context.tr(
+                    ref.tr(
                       'paid_by_with_count',
                       params: {
                         'name': paidByName,
                         'count': expense.participants.length.toString(),
                       },
                     ),
-                    style: AppTextStyles.labelSmall
-                        .copyWith(color: AppColors.textTertiary(context)),
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: AppColors.textTertiary(context),
+                    ),
                   ),
                 ],
               ),
             ),
-
             if (canManage)
               IconButton(
                 onPressed: onEdit,
-                icon: const Icon(Icons.edit_outlined, size: 20),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+                icon: const Icon(Icons.edit_outlined),
+                color: AppColors.textSecondary(context),
+                tooltip: ref.tr('edit'),
               ),
-
-            const SizedBox(width: 12),
-
-// Amount
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -1333,35 +1325,35 @@ class _ExpenseRow extends ConsumerWidget {
                   ),
                 ),
                 if (expense.currency != targetCurrency)
-                  ratesAsync.maybeWhen(
+                  ratesAsync.when(
                     data: (rates) {
-                      final rate = rates[expense.currency];
-
-                      if (rate == null) {
-                        return const SizedBox.shrink();
-                      }
-
+                      final rate = rates[expense.currency] ?? 1;
                       final convertedAmount = expense.amount * rate;
 
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          '≈ ${currencySymbol(targetCurrency)} ${convertedAmount.toStringAsFixed(2)}',
-                          style: AppTextStyles.labelSmall.copyWith(
-                            color: AppColors.textTertiary(context),
-                          ),
+                      return Text(
+                        '${currencySymbol(targetCurrency)} ${convertedAmount.toStringAsFixed(2)}',
+                        style: AppTextStyles.labelSmall.copyWith(
+                          color: AppColors.textTertiary(context),
                         ),
                       );
                     },
-                    orElse: () => const SizedBox.shrink(),
+                    loading: () => Text(
+                      '...',
+                      style: AppTextStyles.labelSmall.copyWith(
+                        color: AppColors.textTertiary(context),
+                      ),
+                    ),
+                    error: (_, __) => const SizedBox.shrink(),
                   ),
-                const SizedBox(height: 3),
-                Text(
-                  '$symbol ${expense.splitAmount.toStringAsFixed(2)}/p',
-                  style: AppTextStyles.labelSmall.copyWith(
-                    color: AppColors.textTertiary(context),
+                if (!isSettlement) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    '$symbol ${expense.splitAmount.toStringAsFixed(2)}/p',
+                    style: AppTextStyles.labelSmall.copyWith(
+                      color: AppColors.textTertiary(context),
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ],
