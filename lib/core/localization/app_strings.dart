@@ -1717,6 +1717,21 @@ class AppStrings {
       'fr': 'Part',
       'ja': '負担額',
     },
+
+    'create_settlement': {
+      'en': 'Create settlement',
+      'es': 'Crear liquidación',
+      'de': 'Ausgleich erstellen',
+      'fr': 'Créer le règlement',
+      'ja': '精算を作成',
+    },
+    'mark_as_paid': {
+      'en': 'Mark as paid',
+      'es': 'Marcar como pagado',
+      'de': 'Als bezahlt markieren',
+      'fr': 'Marquer comme payé',
+      'ja': '支払い済みにする',
+    },
   };
 
   static String get(String key, String languageCode,

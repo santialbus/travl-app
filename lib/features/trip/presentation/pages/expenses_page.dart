@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:travl/features/trip/domain/entities/settlement_entity.dart';
 import 'package:travl/features/trip/presentation/providers/currency_provider.dart';
 import 'package:travl/features/trip/presentation/providers/permissions_provider.dart';
 
@@ -12,6 +13,7 @@ import '../../domain/entities/expense_entity.dart';
 import '../providers/expenses_provider.dart';
 import '../providers/trip_provider.dart';
 import '../providers/users_provider.dart';
+import '../providers/settlement_provider.dart';
 
 class ExpensesPage extends ConsumerWidget {
   final String tripId;
@@ -58,7 +60,7 @@ class _ExpensesContent extends ConsumerWidget {
     final balances = <String, Map<String, double>>{};
 
     for (final expense in expenses) {
-      if (expense.participants.isEmpty) continue;
+      if (expense.isSettlement || expense.participants.isEmpty) continue;
 
       final currencyBalances = balances.putIfAbsent(expense.currency, () => {});
       final splitAmount = expense.amount / expense.participants.length;
@@ -156,6 +158,7 @@ class _ExpensesContent extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _SummarySection(
+                    tripId: tripId,
                     expenses: expenses,
                     balances: balances,
                     usedCurrencies: usedCurrencies,
@@ -210,8 +213,10 @@ class _SummarySection extends ConsumerStatefulWidget {
   final List<ExpenseEntity> expenses;
   final Map<String, Map<String, double>> balances;
   final List<String> usedCurrencies;
+  final String tripId;
 
   const _SummarySection({
+    required this.tripId,
     required this.expenses,
     required this.balances,
     required this.usedCurrencies,
@@ -224,6 +229,8 @@ class _SummarySection extends ConsumerStatefulWidget {
 class _SummarySectionState extends ConsumerState<_SummarySection> {
   double _calculateTotal(Map<String, double> rates) {
     return widget.expenses.fold(0, (total, expense) {
+      if (expense.isSettlement) return total;
+
       final rate = rates[expense.currency] ?? 1;
       return total + (expense.amount * rate);
     });
@@ -235,7 +242,7 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
     final breakdown = <String, Map<String, double>>{};
 
     for (final expense in widget.expenses) {
-      if (expense.participants.isEmpty) continue;
+      if (expense.isSettlement || expense.participants.isEmpty) continue;
 
       final rate = rates[expense.currency] ?? 1;
       final convertedAmount = expense.amount * rate;
@@ -268,8 +275,29 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
 
   Map<String, double> _calculateConvertedBalances(
     Map<String, double> rates,
+    List<SettlementEntity> settlements,
   ) {
     final breakdown = _calculateUserBreakdown(rates);
+
+    for (final settlement in settlements) {
+      if (!settlement.isPaid) continue;
+
+      final rate = rates[settlement.currency] ?? 1;
+      final convertedAmount = settlement.amount * rate;
+
+      final from = breakdown.putIfAbsent(
+        settlement.fromUserId,
+        () => {'paid': 0, 'share': 0, 'balance': 0},
+      );
+
+      final to = breakdown.putIfAbsent(
+        settlement.toUserId,
+        () => {'paid': 0, 'share': 0, 'balance': 0},
+      );
+
+      from['balance'] = (from['balance'] ?? 0) + convertedAmount;
+      to['balance'] = (to['balance'] ?? 0) - convertedAmount;
+    }
 
     return {
       for (final entry in breakdown.entries) entry.key: entry.value['balance']!,
@@ -368,8 +396,14 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
 
   /// Calcula quién debe a quién y cuánto
   Map<String, List<Map<String, dynamic>>> _calculateDebts(
-      Map<String, double> rates, String selectedCurrency) {
-    final balances = _calculateConvertedBalances(rates);
+    Map<String, double> rates,
+    String selectedCurrency,
+    List<SettlementEntity> settlements,
+  ) {
+    final balances = _calculateConvertedBalances(
+      rates,
+      settlements,
+    );
 
     final debtors = <String, double>{};
     final creditors = <String, double>{};
@@ -494,7 +528,9 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
                       style: AppTextStyles.h4,
                     ),
                     const SizedBox(height: 12),
-                    ...widget.expenses.map((expense) {
+                    ...widget.expenses
+                        .where((expense) => !expense.isSettlement)
+                        .map((expense) {
                       final rate = rates[expense.currency] ?? 1;
                       final converted = expense.amount * rate;
                       final originalSymbol = currencySymbol(expense.currency);
@@ -609,10 +645,46 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
     );
   }
 
+  SettlementEntity? _findSettlement(
+    List<SettlementEntity> settlements,
+    Map<String, dynamic> debt,
+    String currency,
+  ) {
+    return settlements.cast<SettlementEntity?>().firstWhere(
+          (settlement) =>
+              settlement!.fromUserId == debt['from'] &&
+              settlement.toUserId == debt['to'] &&
+              settlement.currency == currency &&
+              (settlement.amount - (debt['amount'] as double)).abs() < 0.01,
+          orElse: () => null,
+        );
+  }
+
+  Future<void> _createSettlement({
+    required Map<String, dynamic> debt,
+    required String currency,
+  }) async {
+    await ref.read(settlementControllerProvider.notifier).createSettlement(
+          tripId: widget.tripId,
+          fromUserId: debt['from'] as String,
+          toUserId: debt['to'] as String,
+          amount: debt['amount'] as double,
+          currency: currency,
+        );
+  }
+
+  Future<void> _markSettlementAsPaid(String settlementId) async {
+    await ref
+        .read(settlementControllerProvider.notifier)
+        .markAsPaid(settlementId);
+  }
+
   @override
   Widget build(BuildContext context) {
     final selectedCurrency =
         ref.watch(selectedCurrencyProvider) ?? widget.usedCurrencies.first;
+
+    final settlementsAsync = ref.watch(tripSettlementsProvider(widget.tripId));
 
     final ratesAsync = ref.watch(
       currencyRatesProvider(
@@ -635,15 +707,28 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
       },
     );
 
-    final convertedBalances = ratesAsync.maybeWhen(
-      data: (rates) => _calculateConvertedBalances(rates),
-      orElse: () => <String, double>{},
-    );
+    final convertedBalances = <String, double>{};
+    final debts = <String, List<Map<String, dynamic>>>{};
 
-    final debts = ratesAsync.maybeWhen(
-      data: (rates) => _calculateDebts(rates, selectedCurrency),
-      orElse: () => <String, List<Map<String, dynamic>>>{},
-    );
+    if (ratesAsync.hasValue && settlementsAsync.hasValue) {
+      final rates = ratesAsync.value!;
+      final settlements = settlementsAsync.value!;
+
+      convertedBalances.addAll(
+        _calculateConvertedBalances(
+          rates,
+          settlements,
+        ),
+      );
+
+      debts.addAll(
+        _calculateDebts(
+          rates,
+          selectedCurrency,
+          settlements,
+        ),
+      );
+    }
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
@@ -823,108 +908,195 @@ class _SummarySectionState extends ConsumerState<_SummarySection> {
               ),
             ),
             const SizedBox(height: 12),
-            ...debts.entries.expand((currencyEntry) {
-              final currency = currencyEntry.key;
+            settlementsAsync.when(
+              loading: () => const Center(
+                child: CircularProgressIndicator(),
+              ),
+              error: (error, stackTrace) => Text(
+                error.toString(),
+                style: AppTextStyles.bodySmall,
+              ),
+              data: (settlements) {
+                return Column(
+                  children: [
+                    ...debts.entries.expand((currencyEntry) {
+                      final currency = currencyEntry.key;
 
-              return currencyEntry.value.map((debt) {
-                final fromAsync = ref.watch(userNameProvider(debt['from']));
-                final toAsync = ref.watch(userNameProvider(debt['to']));
+                      return currencyEntry.value.map((debt) {
+                        final fromAsync =
+                            ref.watch(userNameProvider(debt['from']));
+                        final toAsync = ref.watch(userNameProvider(debt['to']));
 
-                final fromName = fromAsync.maybeWhen(
-                  data: (n) => n,
-                  orElse: () => '...',
-                );
-                final toName = toAsync.maybeWhen(
-                  data: (n) => n,
-                  orElse: () => '...',
-                );
+                        final fromName = fromAsync.maybeWhen(
+                          data: (n) => n,
+                          orElse: () => '...',
+                        );
+                        final toName = toAsync.maybeWhen(
+                          data: (n) => n,
+                          orElse: () => '...',
+                        );
 
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: AppColors.error.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            fromName.isNotEmpty
-                                ? fromName[0].toUpperCase()
-                                : '?',
-                            style: AppTextStyles.labelMedium.copyWith(
-                              color: AppColors.error,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Icon(
-                        Icons.arrow_forward,
-                        size: 16,
-                        color: AppColors.textTertiary(context),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: AppColors.success.withValues(alpha: 0.15),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            toName.isNotEmpty ? toName[0].toUpperCase() : '?',
-                            style: AppTextStyles.labelMedium.copyWith(
-                              color: AppColors.success,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: RichText(
-                          text: TextSpan(
-                            style: AppTextStyles.bodySmall,
+                        final amount = debt['amount'] as double;
+
+                        final settlement = _findSettlement(
+                          settlements,
+                          debt,
+                          currency,
+                        );
+
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: Row(
                             children: [
-                              TextSpan(
-                                text: fromName,
-                                style: TextStyle(
-                                  color: AppColors.textPrimary(context),
-                                  fontWeight: FontWeight.w600,
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color:
+                                      AppColors.error.withValues(alpha: 0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    fromName.isNotEmpty
+                                        ? fromName[0].toUpperCase()
+                                        : '?',
+                                    style: AppTextStyles.labelMedium.copyWith(
+                                      color: AppColors.error,
+                                    ),
+                                  ),
                                 ),
                               ),
-                              TextSpan(
-                                text: ' ${context.tr('owes')} ',
-                                style: TextStyle(
-                                  color: AppColors.textTertiary(context),
+                              const SizedBox(width: 8),
+                              Icon(
+                                Icons.arrow_forward,
+                                size: 16,
+                                color: AppColors.textTertiary(context),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color:
+                                      AppColors.success.withValues(alpha: 0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    toName.isNotEmpty
+                                        ? toName[0].toUpperCase()
+                                        : '?',
+                                    style: AppTextStyles.labelMedium.copyWith(
+                                      color: AppColors.success,
+                                    ),
+                                  ),
                                 ),
                               ),
-                              TextSpan(
-                                text: toName,
-                                style: TextStyle(
-                                  color: AppColors.textPrimary(context),
-                                  fontWeight: FontWeight.w600,
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: RichText(
+                                  text: TextSpan(
+                                    style: AppTextStyles.bodySmall,
+                                    children: [
+                                      TextSpan(
+                                        text: fromName,
+                                        style: TextStyle(
+                                          color: AppColors.textPrimary(context),
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: ' ${context.tr('owes')} ',
+                                        style: TextStyle(
+                                          color:
+                                              AppColors.textTertiary(context),
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: toName,
+                                        style: TextStyle(
+                                          color: AppColors.textPrimary(context),
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
+                              ),
+                              const SizedBox(width: 8),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    '${currencySymbol(currency)} ${amount.toStringAsFixed(2)}',
+                                    style: AppTextStyles.labelLarge.copyWith(
+                                      color: settlement?.isPaid == true
+                                          ? AppColors.success
+                                          : AppColors.error,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  if (settlement == null)
+                                    GestureDetector(
+                                      onTap: () async {
+                                        await _createSettlement(
+                                          debt: debt,
+                                          currency: currency,
+                                        );
+                                      },
+                                      child: Text(
+                                        context.tr('create_settlement'),
+                                        style:
+                                            AppTextStyles.labelSmall.copyWith(
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    )
+                                  else if (settlement.isPaid)
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.check_circle,
+                                          size: 14,
+                                          color: AppColors.success,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          context.tr('paid'),
+                                          style:
+                                              AppTextStyles.labelSmall.copyWith(
+                                            color: AppColors.success,
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  else
+                                    GestureDetector(
+                                      onTap: () async {
+                                        await _markSettlementAsPaid(
+                                            settlement.id);
+                                      },
+                                      child: Text(
+                                        context.tr('mark_as_paid'),
+                                        style:
+                                            AppTextStyles.labelSmall.copyWith(
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                             ],
                           ),
-                        ),
-                      ),
-                      Text(
-                        '${currencySymbol(currency)} ${(debt['amount'] as double).toStringAsFixed(2)}',
-                        style: AppTextStyles.labelLarge.copyWith(
-                          color: AppColors.error,
-                        ),
-                      ),
-                    ],
-                  ),
+                        );
+                      });
+                    }),
+                  ],
                 );
-              });
-            }),
+              },
+            ),
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 8),
               child: Divider(color: AppColors.divider),
@@ -1001,9 +1173,11 @@ class _ExpenseDateGroup extends StatelessWidget {
         ),
         ...expenses.map((e) => _ExpenseRow(
               expense: e,
-              canManage: !isReadOnly && (canManageAll || e.paidBy == userId),
-              onDelete: () => onDelete(e.id),
+              canManage: !isReadOnly &&
+                  !e.isSettlement &&
+                  (canManageAll || e.paidBy == userId),
               onEdit: () => onEdit(e),
+              onDelete: () => onDelete(e.id),
             )),
       ],
     );
@@ -1037,6 +1211,8 @@ class _ExpenseRow extends ConsumerWidget {
 
     final selectedCurrency = ref.watch(selectedCurrencyProvider);
     final targetCurrency = selectedCurrency ?? expense.currency;
+
+    final isSettlement = expense.isSettlement;
 
     final ratesAsync = ref.watch(
       currencyRatesProvider(
@@ -1109,7 +1285,15 @@ class _ExpenseRow extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(expense.title, style: AppTextStyles.bodyMedium),
+                  Text(
+                    expense.title,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: isSettlement
+                          ? AppColors.success
+                          : AppColors.textPrimary(context),
+                      fontWeight: isSettlement ? FontWeight.w600 : null,
+                    ),
+                  ),
                   const SizedBox(height: 3),
                   Text(
                     context.tr(
@@ -1142,7 +1326,11 @@ class _ExpenseRow extends ConsumerWidget {
               children: [
                 Text(
                   '$symbol ${expense.amount.toStringAsFixed(2)}',
-                  style: AppTextStyles.labelLarge,
+                  style: AppTextStyles.labelLarge.copyWith(
+                    color: isSettlement
+                        ? AppColors.success
+                        : AppColors.textPrimary(context),
+                  ),
                 ),
                 if (expense.currency != targetCurrency)
                   ratesAsync.maybeWhen(

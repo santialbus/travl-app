@@ -36,16 +36,16 @@ class ExpenseRemoteDataSource {
     try {
       final id = _uuid.v4();
       final expense = ExpenseModel(
-        id: id,
-        tripId: tripId,
-        title: title,
-        amount: amount,
-        currency: currency,
-        paidBy: paidBy,
-        participants: participants,
-        category: category,
-        createdAt: DateTime.now(),
-      );
+          id: id,
+          tripId: tripId,
+          title: title,
+          amount: amount,
+          currency: currency,
+          paidBy: paidBy,
+          participants: participants,
+          category: category,
+          createdAt: DateTime.now(),
+          isSettlement: false);
 
       await _firestore
           .collection(FirebaseConstants.expensesCollection)
@@ -90,6 +90,40 @@ class ExpenseRemoteDataSource {
           .delete();
     } catch (e) {
       throw Exception('Failed to delete expense: $e');
+    }
+  }
+
+  Future<ExpenseModel> createSettlementExpense({
+    required String tripId,
+    required double amount,
+    required String currency,
+    required String paidBy,
+    required String paidTo,
+  }) async {
+    try {
+      final id = _uuid.v4();
+
+      final expense = ExpenseModel(
+        id: id,
+        tripId: tripId,
+        title: 'Liquidación',
+        amount: amount,
+        currency: currency,
+        paidBy: paidBy,
+        participants: [paidTo],
+        category: ExpenseCategory.other,
+        createdAt: DateTime.now(),
+        isSettlement: true,
+      );
+
+      await _firestore
+          .collection(FirebaseConstants.expensesCollection)
+          .doc(id)
+          .set(expense.toFirestore());
+
+      return expense;
+    } catch (e) {
+      throw Exception('Failed to create settlement expense: $e');
     }
   }
 }

@@ -8,6 +8,7 @@ class ExpenseEntity {
   final List<String> participants;
   final ExpenseCategory category;
   final DateTime createdAt;
+  final bool isSettlement;
 
   const ExpenseEntity({
     required this.id,
@@ -19,6 +20,7 @@ class ExpenseEntity {
     required this.participants,
     required this.category,
     required this.createdAt,
+    required this.isSettlement,
   });
 
   double get splitAmount {
@@ -42,7 +44,7 @@ enum ExpenseCategory {
 
   static ExpenseCategory fromString(String value) {
     return ExpenseCategory.values.firstWhere(
-          (c) => c.value == value,
+      (c) => c.value == value,
       orElse: () => ExpenseCategory.other,
     );
   }
