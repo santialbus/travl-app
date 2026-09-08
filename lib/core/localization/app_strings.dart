@@ -1732,6 +1732,90 @@ class AppStrings {
       'fr': 'Marquer comme payé',
       'ja': '支払い済みにする',
     },
+    'edit_item': {
+      'en': 'Edit Item',
+      'es': 'Editar elemento',
+      'de': 'Element bearbeiten',
+      'fr': 'Modifier l’élément',
+      'ja': 'アイテムを編集'
+    },
+    'checklist_type_preTip': {
+      'en': 'Before trip',
+      'es': 'Antes del viaje',
+      'de': 'Vor der Reise',
+      'fr': 'Avant le voyage',
+      'ja': '旅行前'
+    },
+    'checklist_type_during': {
+      'en': 'During trip',
+      'es': 'Durante el viaje',
+      'de': 'Während der Reise',
+      'fr': 'Pendant le voyage',
+      'ja': '旅行中'
+    },
+    'checklist_type_postTrip': {
+      'en': 'After trip',
+      'es': 'Después del viaje',
+      'de': 'Nach der Reise',
+      'fr': 'Après le voyage',
+      'ja': '旅行後'
+    },
+    'assigned_to': {
+      'en': 'Assigned to',
+      'es': 'Asignado a',
+      'de': 'Zugewiesen an',
+      'fr': 'Assigné à',
+      'ja': '担当者'
+    },
+    'unassigned': {
+      'en': 'Unassigned',
+      'es': 'Sin asignar',
+      'de': 'Nicht zugewiesen',
+      'fr': 'Non assigné',
+      'ja': '未割り当て'
+    },
+    'assign_task': {
+      'en': 'Assign task',
+      'es': 'Asignar tarea',
+      'de': 'Aufgabe zuweisen',
+      'fr': 'Attribuer la tâche',
+      'ja': 'タスクを割り当て'
+    },
+    'remove_assignment': {
+      'en': 'Remove assignment',
+      'es': 'Quitar asignación',
+      'de': 'Zuweisung entfernen',
+      'fr': 'Supprimer l’attribution',
+      'ja': '割り当てを解除'
+    },
+    'delete_item': {
+      'en': 'Delete item?',
+      'es': '¿Eliminar elemento?',
+      'de': 'Element löschen?',
+      'fr': 'Supprimer l’élément ?',
+      'ja': 'アイテムを削除しますか？'
+    },
+    'delete_item_description': {
+      'en': 'This item will be permanently deleted.',
+      'es': 'Este elemento se eliminará permanentemente.',
+      'de': 'Dieses Element wird dauerhaft gelöscht.',
+      'fr': 'Cet élément sera définitivement supprimé.',
+      'ja': 'このアイテムは完全に削除されます。'
+    },
+    'edit_item_swipe': {
+      'en': 'Edit',
+      'es': 'Editar',
+      'de': 'Bearbeiten',
+      'fr': 'Modifier',
+      'ja': '編集'
+    },
+    'delete_item_swipe': {
+      'en': 'Delete',
+      'es': 'Eliminar',
+      'de': 'Löschen',
+      'fr': 'Supprimer',
+      'ja': '削除'
+    },
   };
 
   static String get(String key, String languageCode,

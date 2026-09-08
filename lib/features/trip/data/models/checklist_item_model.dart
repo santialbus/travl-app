@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import '../../domain/entities/checklist_item_entity.dart';
 
 class ChecklistItemModel extends ChecklistItemEntity {
@@ -9,10 +10,12 @@ class ChecklistItemModel extends ChecklistItemEntity {
     required super.isDone,
     required super.type,
     required super.createdAt,
+    super.assignedTo,
   });
 
   factory ChecklistItemModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+
     return ChecklistItemModel(
       id: doc.id,
       tripId: data['tripId'] as String,
@@ -20,6 +23,7 @@ class ChecklistItemModel extends ChecklistItemEntity {
       isDone: data['isDone'] as bool? ?? false,
       type: ChecklistType.fromString(data['type'] as String),
       createdAt: (data['createdAt'] as Timestamp).toDate(),
+      assignedTo: data['assignedTo'] as String?,
     );
   }
 
@@ -31,6 +35,7 @@ class ChecklistItemModel extends ChecklistItemEntity {
       'isDone': isDone,
       'type': type.value,
       'createdAt': Timestamp.fromDate(createdAt),
+      'assignedTo': assignedTo,
     };
   }
 
@@ -41,6 +46,7 @@ class ChecklistItemModel extends ChecklistItemEntity {
     bool? isDone,
     ChecklistType? type,
     DateTime? createdAt,
+    String? assignedTo,
   }) {
     return ChecklistItemModel(
       id: id ?? this.id,
@@ -49,6 +55,7 @@ class ChecklistItemModel extends ChecklistItemEntity {
       isDone: isDone ?? this.isDone,
       type: type ?? this.type,
       createdAt: createdAt ?? this.createdAt,
+      assignedTo: assignedTo ?? this.assignedTo,
     );
   }
 }

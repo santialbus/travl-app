@@ -5,6 +5,7 @@ class ChecklistItemEntity {
   final bool isDone;
   final ChecklistType type;
   final DateTime createdAt;
+  final String? assignedTo;
 
   const ChecklistItemEntity({
     required this.id,
@@ -13,6 +14,7 @@ class ChecklistItemEntity {
     required this.isDone,
     required this.type,
     required this.createdAt,
+    this.assignedTo,
   });
 }
 
@@ -28,7 +30,7 @@ enum ChecklistType {
 
   static ChecklistType fromString(String value) {
     return ChecklistType.values.firstWhere(
-          (t) => t.value == value,
+      (t) => t.value == value,
       orElse: () => ChecklistType.preTip,
     );
   }

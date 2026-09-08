@@ -21,17 +21,19 @@ class ChecklistRemoteDataSource {
         .orderBy('createdAt')
         .snapshots()
         .map((snap) => snap.docs
-        .map((doc) => ChecklistItemModel.fromFirestore(doc))
-        .toList());
+            .map((doc) => ChecklistItemModel.fromFirestore(doc))
+            .toList());
   }
 
   Future<ChecklistItemModel> createItem({
     required String tripId,
     required String title,
     required ChecklistType type,
+    String? assignedTo,
   }) async {
     try {
       final id = _uuid.v4();
+
       final item = ChecklistItemModel(
         id: id,
         tripId: tripId,
@@ -39,6 +41,7 @@ class ChecklistRemoteDataSource {
         isDone: false,
         type: type,
         createdAt: DateTime.now(),
+        assignedTo: assignedTo,
       );
 
       await _firestore
@@ -49,6 +52,26 @@ class ChecklistRemoteDataSource {
       return item;
     } catch (e) {
       throw Exception('Failed to create checklist item: $e');
+    }
+  }
+
+  Future<void> updateItem({
+    required String itemId,
+    required String title,
+    required ChecklistType type,
+    String? assignedTo,
+  }) async {
+    try {
+      await _firestore
+          .collection(FirebaseConstants.checklistCollection)
+          .doc(itemId)
+          .update({
+        'title': title,
+        'type': type.value,
+        'assignedTo': assignedTo,
+      });
+    } catch (e) {
+      throw Exception('Failed to update checklist item: $e');
     }
   }
 
