@@ -75,6 +75,20 @@ class ProfileTab extends ConsumerWidget {
 
                   // Preferences
                   _SectionTitle(title: ref.tr('preferences')),
+
+                  _SettingsItem(
+                    icon: Icons.language_outlined,
+                    title: ref.tr('language'),
+                    value: languageLabel,
+                    onTap: () => _showLanguageSheet(context, ref),
+                  ),
+                  _SettingsItem(
+                    icon: Icons.currency_exchange_outlined,
+                    title: ref.tr('currency'),
+                    value: currentCurrency,
+                    onTap: () =>
+                        _showCurrencySheet(context, ref, currentCurrency),
+                  ),
                   Consumer(
                     builder: (context, ref, _) {
                       final themeMode = ref.watch(themeModeProvider);
@@ -92,45 +106,11 @@ class ProfileTab extends ConsumerWidget {
                       );
                     },
                   ),
-                  _SettingsItem(
-                    icon: Icons.language_outlined,
-                    title: ref.tr('language'),
-                    value: languageLabel,
-                    onTap: () => _showLanguageSheet(context, ref),
-                  ),
-                  _SettingsItem(
-                    icon: Icons.currency_exchange_outlined,
-                    title: ref.tr('currency'),
-                    value: currentCurrency,
-                    onTap: () =>
-                        _showCurrencySheet(context, ref, currentCurrency),
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // Sign Out
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: OutlinedButton.icon(
-                        onPressed: () => _showSignOutDialog(context, ref),
-                        icon: const Icon(Icons.logout, color: AppColors.error),
-                        label: Text(
-                          ref.tr('sign_out'),
-                          style: AppTextStyles.button.copyWith(
-                            color: AppColors.error,
-                          ),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.error),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
+                  _SectionTitle(title: ref.tr('sign_out')),
+                  const SizedBox(height: 8),
+                  _SignOutItem(
+                    title: ref.tr('sign_out'),
+                    onTap: () => _showSignOutDialog(context, ref),
                   ),
 
                   const SizedBox(height: 32),
@@ -765,7 +745,7 @@ class _AvatarSelectionSheetState extends ConsumerState<_AvatarSelectionSheet> {
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                ref.tr('avatar_background'),
+                ref.tr('generate_new_avatar'),
                 style: AppTextStyles.bodyMedium,
               ),
             ),
@@ -920,45 +900,69 @@ class _ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
       child: Column(
         children: [
           GestureDetector(
             onTap: onAvatarTap,
             child: Stack(
+              clipBehavior: Clip.none,
               children: [
                 Container(
-                  width: 96,
-                  height: 96,
-                  decoration: const BoxDecoration(
+                  width: 108,
+                  height: 108,
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: AppColors.primaryGradient,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.18),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
-                  child: _AvatarContent(
-                    name: name,
-                    photoUrl: photoUrl,
-                    avatar: avatar,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.surface(context),
+                    ),
+                    padding: const EdgeInsets.all(2),
+                    child: ClipOval(
+                      child: _AvatarContent(
+                        name: name,
+                        photoUrl: photoUrl,
+                        avatar: avatar,
+                      ),
+                    ),
                   ),
                 ),
                 Positioned(
-                  bottom: 0,
-                  right: 0,
+                  right: -2,
+                  bottom: 2,
                   child: Container(
-                    width: 30,
-                    height: 30,
+                    width: 34,
+                    height: 34,
                     decoration: BoxDecoration(
                       color: AppColors.primary,
                       shape: BoxShape.circle,
                       border: Border.all(
                         color: AppColors.background(context),
-                        width: 2,
+                        width: 3,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.12),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: const Icon(
-                      Icons.edit,
-                      size: 14,
+                      Icons.edit_outlined,
+                      size: 16,
                       color: Colors.white,
                     ),
                   ),
@@ -966,13 +970,42 @@ class _ProfileHeader extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          Text(name, style: AppTextStyles.h3),
-          const SizedBox(height: 4),
+          const SizedBox(height: 18),
+          Text(
+            name.isNotEmpty ? name : 'User',
+            style: AppTextStyles.h3,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 5),
           Text(
             email,
             style: AppTextStyles.bodySmall.copyWith(
               color: AppColors.textSecondary(context),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: onAvatarTap,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.face_retouching_natural,
+                  size: 15,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  avatar == null ? 'Create avatar' : 'Change avatar',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -1069,35 +1102,68 @@ class _SettingsItem extends StatelessWidget {
   final String? value;
   final VoidCallback? onTap;
 
-  const _SettingsItem(
-      {required this.icon, required this.title, this.value, this.onTap});
+  const _SettingsItem({
+    required this.icon,
+    required this.title,
+    this.value,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        decoration: BoxDecoration(
-          border: Border(
-              bottom: BorderSide(
-                  color: AppColors.dividerColor(context), width: 0.5)),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, size: 22, color: AppColors.textSecondary(context)),
-            const SizedBox(width: 16),
-            Expanded(child: Text(title, style: AppTextStyles.bodyMedium)),
-            if (value != null)
-              Text(value!,
-                  style: AppTextStyles.bodySmall
-                      .copyWith(color: AppColors.textSecondary(context))),
-            if (onTap != null) ...[
-              const SizedBox(width: 8),
-              Icon(Icons.arrow_forward_ios,
-                  size: 14, color: AppColors.textTertiary(context)),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.surface(context),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: AppColors.textSecondary(context),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  title,
+                  style: AppTextStyles.bodyMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (value != null)
+                Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: Text(
+                    value!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textSecondary(context),
+                    ),
+                  ),
+                ),
+              if (onTap != null) ...[
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.chevron_right,
+                  size: 20,
+                  color: AppColors.textTertiary(context),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -1112,31 +1178,124 @@ class _SettingsToggle extends StatelessWidget {
   final bool value;
   final ValueChanged<bool> onChanged;
 
-  const _SettingsToggle(
-      {required this.icon,
-      required this.title,
-      required this.value,
-      required this.onChanged});
+  const _SettingsToggle({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      decoration: BoxDecoration(
-        border: Border(
-            bottom:
-                BorderSide(color: AppColors.dividerColor(context), width: 0.5)),
+    return Material(
+      color: Colors.transparent,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: AppColors.dividerColor(context),
+              width: 0.5,
+            ),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.surface(context),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: AppColors.textSecondary(context),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  title,
+                  style: AppTextStyles.bodyMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Switch(
+                value: value,
+                onChanged: onChanged,
+                activeThumbColor: AppColors.primary,
+              ),
+            ],
+          ),
+        ),
       ),
-      child: Row(
-        children: [
-          Icon(icon, size: 22, color: AppColors.textSecondary(context)),
-          const SizedBox(width: 16),
-          Expanded(child: Text(title, style: AppTextStyles.bodyMedium)),
-          Switch(
-              value: value,
-              onChanged: onChanged,
-              activeThumbColor: AppColors.primary),
-        ],
+    );
+  }
+}
+
+class _SignOutItem extends StatelessWidget {
+  final String title;
+  final VoidCallback onTap;
+
+  const _SignOutItem({
+    required this.title,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(
+                color: AppColors.dividerColor(context),
+                width: 0.5,
+              ),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: AppColors.error.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.logout_outlined,
+                  size: 20,
+                  color: AppColors.error,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(
+                  title,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.error,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                size: 20,
+                color: AppColors.error.withValues(alpha: 0.6),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
