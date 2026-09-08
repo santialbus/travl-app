@@ -1,3 +1,5 @@
+import 'package:travl/features/auth/domain/entities/user_avatar.dart';
+
 import '../entities/user_entity.dart';
 
 abstract class AuthRepository {
@@ -30,4 +32,6 @@ abstract class AuthRepository {
   Future<void> updatePassword(String currentPassword, String newPassword);
 
   Future<void> updatePreferredCurrency(String currency);
+
+  Future<void> updateAvatar(UserAvatar? avatar);
 }

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:travl/features/auth/domain/entities/user_avatar.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/entities/user_entity.dart';
@@ -142,6 +143,18 @@ class AuthController extends StateNotifier<AuthState> {
     state = state.copyWith(isLoading: true, error: null);
     try {
       await _repository.updatePassword(currentPassword, newPassword);
+      state = state.copyWith(isLoading: false);
+      return true;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      return false;
+    }
+  }
+
+  Future<bool> updateAvatar(UserAvatar? avatar) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _repository.updateAvatar(avatar);
       state = state.copyWith(isLoading: false);
       return true;
     } catch (e) {

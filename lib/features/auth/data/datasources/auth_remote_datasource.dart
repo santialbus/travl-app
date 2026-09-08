@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:travl/features/auth/domain/entities/user_avatar.dart';
 import '../models/user_model.dart';
 import '../../../../core/constants/firebase_constants.dart';
 
@@ -243,6 +244,31 @@ class AuthRemoteDataSource {
       });
     } catch (e) {
       throw Exception('Failed to update preferred currency: $e');
+    }
+  }
+
+  Future<void> updateAvatar(UserAvatar? avatar) async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null) throw Exception('No user logged in');
+
+      final avatarData = avatar == null
+          ? {
+              FirebaseConstants.userAvatarField: FieldValue.delete(),
+            }
+          : {
+              FirebaseConstants.userAvatarField: {
+                'style': avatar.style.name,
+                'seed': avatar.seed,
+              },
+            };
+
+      await _firestore
+          .collection(FirebaseConstants.usersCollection)
+          .doc(user.uid)
+          .update(avatarData);
+    } catch (e) {
+      throw Exception('Failed to update avatar: $e');
     }
   }
 }

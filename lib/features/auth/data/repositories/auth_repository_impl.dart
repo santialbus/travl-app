@@ -1,3 +1,5 @@
+import 'package:travl/features/auth/domain/entities/user_avatar.dart';
+
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/auth_remote_datasource.dart';
@@ -92,5 +94,10 @@ class AuthRepositoryImpl implements AuthRepository {
     } catch (e) {
       throw Exception('Failed to update password: $e');
     }
+  }
+
+  @override
+  Future<void> updateAvatar(UserAvatar? avatar) {
+    return _remoteDataSource.updateAvatar(avatar);
   }
 }

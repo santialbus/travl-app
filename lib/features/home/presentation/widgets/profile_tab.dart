@@ -1,3 +1,5 @@
+import 'dart:ui' as dart;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +9,10 @@ import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/providers/locale_provider.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/domain/entities/user_avatar.dart';
+import 'package:dicebear_core/dicebear_core.dart';
+import 'package:dicebear_styles/avataaars.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class ProfileTab extends ConsumerWidget {
   const ProfileTab({super.key});
@@ -40,6 +46,9 @@ class ProfileTab extends ConsumerWidget {
                     name: user.name,
                     email: user.email,
                     photoUrl: user.photoUrl,
+                    avatar: user.avatar,
+                    onAvatarTap: () =>
+                        _showAvatarSheet(context, ref, user.avatar),
                   ),
 
                   // Account
@@ -133,6 +142,32 @@ class ProfileTab extends ConsumerWidget {
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('Error: $e')),
+    );
+  }
+
+  void _showAvatarSheet(
+    BuildContext context,
+    WidgetRef ref,
+    UserAvatar? currentAvatar,
+  ) {
+    final seeds = List.generate(
+      8,
+      (index) => '${DateTime.now().microsecondsSinceEpoch}-$index',
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(24),
+        ),
+      ),
+      builder: (context) => _AvatarSelectionSheet(
+        currentAvatar: currentAvatar,
+        seeds: seeds,
+      ),
     );
   }
 
@@ -531,15 +566,323 @@ class ProfileTab extends ConsumerWidget {
   }
 }
 
+class _AvatarSelectionSheet extends ConsumerStatefulWidget {
+  final UserAvatar? currentAvatar;
+  final List<String> seeds;
+
+  const _AvatarSelectionSheet({
+    required this.currentAvatar,
+    required this.seeds,
+  });
+
+  @override
+  ConsumerState<_AvatarSelectionSheet> createState() =>
+      _AvatarSelectionSheetState();
+}
+
+class _AvatarSelectionSheetState extends ConsumerState<_AvatarSelectionSheet> {
+  late List<String> _seeds;
+  String? _selectedSeed;
+  String _selectedBackground = 'b6e3f4';
+
+  final List<String> _backgroundColors = [
+    'b6e3f4',
+    'c0aede',
+    'ffd5dc',
+    'ffdfbf',
+    'd1f4c4',
+    'ffe8a3',
+    'd9d9d9',
+    'bde0fe',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    _seeds = [
+      if (widget.currentAvatar != null) widget.currentAvatar!.seed,
+      ...widget.seeds.where(
+        (seed) => seed != widget.currentAvatar?.seed,
+      ),
+    ];
+
+    _selectedSeed = widget.currentAvatar?.seed;
+    _selectedBackground = widget.currentAvatar?.backgroundColor ?? 'b6e3f4';
+  }
+
+  void _generateNewAvatars() {
+    setState(() {
+      _seeds = List.generate(
+        8,
+        (index) => '${DateTime.now().microsecondsSinceEpoch}-$index',
+      );
+      _selectedSeed = null;
+    });
+  }
+
+  Future<void> _selectAvatar(String seed) async {
+    setState(() => _selectedSeed = seed);
+
+    final success =
+        await ref.read(authControllerProvider.notifier).updateAvatar(
+              UserAvatar(
+                style: UserAvatarStyle.avataaars,
+                seed: seed,
+                backgroundColor: _selectedBackground,
+              ),
+            );
+
+    if (!mounted) return;
+
+    if (success) {
+      ref.invalidate(authStateProvider);
+      Navigator.pop(context);
+    }
+  }
+
+  Future<void> _selectBackground(String color) async {
+    setState(() => _selectedBackground = color);
+
+    if (_selectedSeed == null) return;
+
+    final success =
+        await ref.read(authControllerProvider.notifier).updateAvatar(
+              UserAvatar(
+                style: UserAvatarStyle.avataaars,
+                seed: _selectedSeed!,
+                backgroundColor: color,
+              ),
+            );
+
+    if (!mounted) return;
+
+    if (success) {
+      ref.invalidate(authStateProvider);
+    }
+  }
+
+  Future<void> _removeAvatar() async {
+    final success =
+        await ref.read(authControllerProvider.notifier).updateAvatar(null);
+
+    if (!mounted) return;
+
+    if (success) {
+      ref.invalidate(authStateProvider);
+      Navigator.pop(context);
+    }
+  }
+
+  dart.Color _avatarBackgroundColor(String hex) {
+    return dart.Color(int.parse('FF$hex', radix: 16));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final authState = ref.watch(authControllerProvider);
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.textTertiary(context),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text('Choose your avatar', style: AppTextStyles.h3),
+            const SizedBox(height: 24),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _seeds.length,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                mainAxisSpacing: 16,
+                crossAxisSpacing: 16,
+              ),
+              itemBuilder: (context, index) {
+                final seed = _seeds[index];
+                final isSelected = seed == _selectedSeed;
+
+                return InkWell(
+                  onTap: authState.isLoading ? null : () => _selectAvatar(seed),
+                  borderRadius: BorderRadius.circular(50),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color:
+                            isSelected ? AppColors.primary : Colors.transparent,
+                        width: 3,
+                      ),
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        _DiceBearAvatar(
+                          seed: seed,
+                          backgroundColor: _selectedBackground,
+                        ),
+                        if (isSelected && authState.isLoading)
+                          Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.black.withValues(alpha: 0.35),
+                            ),
+                            child: const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Background',
+                style: AppTextStyles.bodyMedium,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: _backgroundColors.map((color) {
+                final isSelected = color == _selectedBackground;
+
+                return GestureDetector(
+                  onTap: authState.isLoading
+                      ? null
+                      : () => _selectBackground(color),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: _avatarBackgroundColor(color),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color:
+                            isSelected ? AppColors.primary : Colors.transparent,
+                        width: 3,
+                      ),
+                    ),
+                    child: isSelected
+                        ? const Icon(
+                            Icons.check,
+                            size: 18,
+                            color: Colors.black54,
+                          )
+                        : null,
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 24),
+            OutlinedButton.icon(
+              onPressed: authState.isLoading ? null : _generateNewAvatars,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Generate new'),
+            ),
+            if (widget.currentAvatar != null) ...[
+              const SizedBox(height: 12),
+              TextButton.icon(
+                onPressed: authState.isLoading ? null : _removeAvatar,
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: AppColors.error,
+                ),
+                label: const Text(
+                  'Remove avatar',
+                  style: TextStyle(color: AppColors.error),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DiceBearAvatar extends StatelessWidget {
+  final String seed;
+  final String backgroundColor;
+  final double size;
+
+  const _DiceBearAvatar({
+    required this.seed,
+    required this.backgroundColor,
+    this.size = 72,
+  });
+
+  String _buildAvatarSvg(UserAvatar avatar) {
+    final style = Style.parse(avataaars);
+    final dicebearAvatar = Avatar(
+      style,
+      {
+        'seed': avatar.seed,
+        'backgroundColor': [avatar.backgroundColor],
+      },
+    );
+
+    return dicebearAvatar.svg;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final avatar = UserAvatar(
+      style: UserAvatarStyle.avataaars,
+      seed: seed,
+      backgroundColor: backgroundColor,
+    );
+
+    return ClipOval(
+      child: SvgPicture.string(
+        _buildAvatarSvg(avatar),
+        width: size,
+        height: size,
+        fit: BoxFit.cover,
+      ),
+    );
+  }
+}
+
 // ─── Profile Header ───────────────────────────────────────────────────────────
 
 class _ProfileHeader extends StatelessWidget {
   final String name;
   final String email;
   final String? photoUrl;
+  final UserAvatar? avatar;
+  final VoidCallback onAvatarTap;
 
-  const _ProfileHeader(
-      {required this.name, required this.email, this.photoUrl});
+  const _ProfileHeader({
+    required this.name,
+    required this.email,
+    this.photoUrl,
+    this.avatar,
+    required this.onAvatarTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -548,53 +891,116 @@ class _ProfileHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(24, 40, 24, 32),
       child: Column(
         children: [
-          Stack(
-            children: [
-              Container(
-                width: 96,
-                height: 96,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: AppColors.primaryGradient,
-                ),
-                child: photoUrl != null
-                    ? ClipOval(
-                        child: Image.network(photoUrl!, fit: BoxFit.cover))
-                    : Center(
-                        child: Text(
-                          name.isNotEmpty ? name[0].toUpperCase() : '?',
-                          style: AppTextStyles.h1.copyWith(color: Colors.white),
-                        ),
-                      ),
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  width: 30,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
+          GestureDetector(
+            onTap: onAvatarTap,
+            child: Stack(
+              children: [
+                Container(
+                  width: 96,
+                  height: 96,
+                  decoration: const BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(
-                        color: AppColors.background(context), width: 2),
+                    gradient: AppColors.primaryGradient,
                   ),
-                  child: const Icon(Icons.camera_alt,
-                      size: 14, color: Colors.white),
+                  child: _AvatarContent(
+                    name: name,
+                    photoUrl: photoUrl,
+                    avatar: avatar,
+                  ),
                 ),
-              ),
-            ],
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.background(context),
+                        width: 2,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.edit,
+                      size: 14,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           Text(name, style: AppTextStyles.h3),
           const SizedBox(height: 4),
-          Text(email,
-              style: AppTextStyles.bodySmall
-                  .copyWith(color: AppColors.textSecondary(context))),
+          Text(
+            email,
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textSecondary(context),
+            ),
+          ),
         ],
       ),
     );
   }
+}
+
+class _AvatarContent extends StatelessWidget {
+  final String name;
+  final String? photoUrl;
+  final UserAvatar? avatar;
+
+  String _buildAvatarSvg(UserAvatar avatar) {
+    final style = Style.parse(avataaars);
+    final dicebearAvatar = Avatar(
+      style,
+      {
+        'seed': avatar.seed,
+        'backgroundColor': [avatar.backgroundColor],
+      },
+    );
+
+    return dicebearAvatar.svg;
+  }
+
+  const _AvatarContent({
+    required this.name,
+    this.photoUrl,
+    this.avatar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (avatar != null) {
+      return ClipOval(
+        child: SvgPicture.string(
+          _buildAvatarSvg(avatar!),
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+
+    if (photoUrl != null) {
+      return ClipOval(
+        child: Image.network(
+          photoUrl!,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _initial,
+        ),
+      );
+    }
+
+    return _initial;
+  }
+
+  Widget get _initial => Center(
+        child: Text(
+          name.isNotEmpty ? name[0].toUpperCase() : '?',
+          style: AppTextStyles.h1.copyWith(color: Colors.white),
+        ),
+      );
 }
 
 // ─── Section Title ────────────────────────────────────────────────────────────

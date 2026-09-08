@@ -27,6 +27,7 @@ class FirebaseConstants {
   static const String userTripsJoinedField = 'tripsJoined';
   static const String userCreatedAtField = 'createdAt';
   static const userPreferredCurrencyField = 'preferredCurrency';
+  static const userAvatarField = 'avatar';
 
   // Fields - Trip
   static const String tripIdField = 'id';

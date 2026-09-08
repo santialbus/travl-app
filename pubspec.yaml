@@ -50,6 +50,9 @@ dependencies:
   map_launcher: ^3.4.0
   connectivity_plus: ^6.0.3
 
+  dicebear_core: ^10.7.0
+  dicebear_styles: ^10.6.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
