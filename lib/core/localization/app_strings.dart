@@ -1816,6 +1816,34 @@ class AppStrings {
       'fr': 'Supprimer',
       'ja': '削除'
     },
+    'choose_avatar': {
+      'en': 'Choose your avatar',
+      'es': 'Elige tu avatar',
+      'de': 'Wähle deinen Avatar',
+      'fr': 'Choisissez votre avatar',
+      'ja': 'アバターを選択',
+    },
+    'avatar_background': {
+      'en': 'Background',
+      'es': 'Fondo',
+      'de': 'Hintergrund',
+      'fr': 'Arrière-plan',
+      'ja': '背景',
+    },
+    'generate_new_avatar': {
+      'en': 'Generate new',
+      'es': 'Generar nuevos',
+      'de': 'Neue generieren',
+      'fr': 'Générer de nouveaux',
+      'ja': '新しく生成',
+    },
+    'remove_avatar': {
+      'en': 'Remove avatar',
+      'es': 'Eliminar avatar',
+      'de': 'Avatar entfernen',
+      'fr': 'Supprimer l’avatar',
+      'ja': 'アバターを削除',
+    },
   };
 
   static String get(String key, String languageCode,

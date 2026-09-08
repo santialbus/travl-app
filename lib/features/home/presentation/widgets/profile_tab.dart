@@ -583,7 +583,7 @@ class _AvatarSelectionSheet extends ConsumerStatefulWidget {
 class _AvatarSelectionSheetState extends ConsumerState<_AvatarSelectionSheet> {
   late List<String> _seeds;
   String? _selectedSeed;
-  String _selectedBackground = 'b6e3f4';
+  late String _selectedBackground;
 
   final List<String> _backgroundColors = [
     'b6e3f4',
@@ -608,7 +608,8 @@ class _AvatarSelectionSheetState extends ConsumerState<_AvatarSelectionSheet> {
     ];
 
     _selectedSeed = widget.currentAvatar?.seed;
-    _selectedBackground = widget.currentAvatar?.backgroundColor ?? 'b6e3f4';
+    _selectedBackground =
+        widget.currentAvatar?.backgroundColor ?? _backgroundColors.first;
   }
 
   void _generateNewAvatars() {
@@ -621,14 +622,26 @@ class _AvatarSelectionSheetState extends ConsumerState<_AvatarSelectionSheet> {
     });
   }
 
-  Future<void> _selectAvatar(String seed) async {
-    setState(() => _selectedSeed = seed);
+  void _selectAvatar(String seed) {
+    setState(() {
+      _selectedSeed = seed;
+    });
+  }
+
+  void _selectBackground(String color) {
+    setState(() {
+      _selectedBackground = color;
+    });
+  }
+
+  Future<void> _saveAvatar() async {
+    if (_selectedSeed == null) return;
 
     final success =
         await ref.read(authControllerProvider.notifier).updateAvatar(
               UserAvatar(
                 style: UserAvatarStyle.avataaars,
-                seed: seed,
+                seed: _selectedSeed!,
                 backgroundColor: _selectedBackground,
               ),
             );
@@ -638,27 +651,6 @@ class _AvatarSelectionSheetState extends ConsumerState<_AvatarSelectionSheet> {
     if (success) {
       ref.invalidate(authStateProvider);
       Navigator.pop(context);
-    }
-  }
-
-  Future<void> _selectBackground(String color) async {
-    setState(() => _selectedBackground = color);
-
-    if (_selectedSeed == null) return;
-
-    final success =
-        await ref.read(authControllerProvider.notifier).updateAvatar(
-              UserAvatar(
-                style: UserAvatarStyle.avataaars,
-                seed: _selectedSeed!,
-                backgroundColor: color,
-              ),
-            );
-
-    if (!mounted) return;
-
-    if (success) {
-      ref.invalidate(authStateProvider);
     }
   }
 
@@ -682,6 +674,8 @@ class _AvatarSelectionSheetState extends ConsumerState<_AvatarSelectionSheet> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
 
+    final previewSeed = _selectedSeed ?? _seeds.first;
+
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
@@ -697,8 +691,39 @@ class _AvatarSelectionSheetState extends ConsumerState<_AvatarSelectionSheet> {
               ),
             ),
             const SizedBox(height: 24),
-            Text('Choose your avatar', style: AppTextStyles.h3),
+
+            Text(
+              ref.tr('choose_avatar'),
+              style: AppTextStyles.h3,
+            ),
+
+            const SizedBox(height: 20),
+
+            // Preview
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Container(
+                key: ValueKey('$previewSeed-$_selectedBackground'),
+                width: 120,
+                height: 120,
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: AppColors.primary,
+                    width: 3,
+                  ),
+                ),
+                child: _DiceBearAvatar(
+                  seed: previewSeed,
+                  backgroundColor: _selectedBackground,
+                  size: 112,
+                ),
+              ),
+            ),
+
             const SizedBox(height: 24),
+
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -726,43 +751,27 @@ class _AvatarSelectionSheetState extends ConsumerState<_AvatarSelectionSheet> {
                         width: 3,
                       ),
                     ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        _DiceBearAvatar(
-                          seed: seed,
-                          backgroundColor: _selectedBackground,
-                        ),
-                        if (isSelected && authState.isLoading)
-                          Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.black.withValues(alpha: 0.35),
-                            ),
-                            child: const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                      ],
+                    child: _DiceBearAvatar(
+                      seed: seed,
+                      backgroundColor: _selectedBackground,
                     ),
                   ),
                 );
               },
             ),
+
             const SizedBox(height: 24),
+
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'Background',
+                ref.tr('avatar_background'),
                 style: AppTextStyles.bodyMedium,
               ),
             ),
+
             const SizedBox(height: 12),
+
             Wrap(
               spacing: 12,
               runSpacing: 12,
@@ -775,8 +784,8 @@ class _AvatarSelectionSheetState extends ConsumerState<_AvatarSelectionSheet> {
                       : () => _selectBackground(color),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
-                    width: 38,
-                    height: 38,
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
                       color: _avatarBackgroundColor(color),
                       shape: BoxShape.circle,
@@ -797,23 +806,48 @@ class _AvatarSelectionSheetState extends ConsumerState<_AvatarSelectionSheet> {
                 );
               }).toList(),
             ),
+
             const SizedBox(height: 24),
+
             OutlinedButton.icon(
               onPressed: authState.isLoading ? null : _generateNewAvatars,
               icon: const Icon(Icons.refresh),
-              label: const Text('Generate new'),
+              label: Text(ref.tr('avatar_background')),
             ),
+
+            const SizedBox(height: 12),
+
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: _selectedSeed == null || authState.isLoading
+                    ? null
+                    : _saveAvatar,
+                child: authState.isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(ref.tr('save')),
+              ),
+            ),
+
             if (widget.currentAvatar != null) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               TextButton.icon(
                 onPressed: authState.isLoading ? null : _removeAvatar,
                 icon: const Icon(
                   Icons.delete_outline,
                   color: AppColors.error,
                 ),
-                label: const Text(
-                  'Remove avatar',
-                  style: TextStyle(color: AppColors.error),
+                label: Text(
+                  ref.tr('remove_avatar'),
+                  style: const TextStyle(color: AppColors.error),
                 ),
               ),
             ],
@@ -822,6 +856,19 @@ class _AvatarSelectionSheetState extends ConsumerState<_AvatarSelectionSheet> {
       ),
     );
   }
+}
+
+String _buildAvatarSvg(UserAvatar avatar) {
+  final style = Style.parse(avataaars);
+  final dicebearAvatar = Avatar(
+    style,
+    {
+      'seed': avatar.seed,
+      'backgroundColor': [avatar.backgroundColor],
+    },
+  );
+
+  return dicebearAvatar.svg;
 }
 
 class _DiceBearAvatar extends StatelessWidget {
@@ -834,19 +881,6 @@ class _DiceBearAvatar extends StatelessWidget {
     required this.backgroundColor,
     this.size = 72,
   });
-
-  String _buildAvatarSvg(UserAvatar avatar) {
-    final style = Style.parse(avataaars);
-    final dicebearAvatar = Avatar(
-      style,
-      {
-        'seed': avatar.seed,
-        'backgroundColor': [avatar.backgroundColor],
-      },
-    );
-
-    return dicebearAvatar.svg;
-  }
 
   @override
   Widget build(BuildContext context) {
