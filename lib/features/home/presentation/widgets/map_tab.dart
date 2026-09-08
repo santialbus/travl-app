@@ -9,6 +9,7 @@ import 'package:travl/core/theme/app_colors.dart';
 import 'package:travl/features/trip/domain/entities/trip_entity.dart';
 import 'package:travl/features/trip/presentation/providers/trip_provider.dart';
 import '../../../../core/localization/app_strings.dart';
+import 'dart:ui' as ui;
 
 class MapTab extends ConsumerStatefulWidget {
   final String userId;
@@ -36,38 +37,42 @@ class _MapTabState extends ConsumerState<MapTab> {
           return const _EmptyMap();
         }
 
+        final selectedTrip = _selectedTripId == null
+            ? null
+            : trips.cast<TripEntity?>().firstWhere(
+                  (trip) => trip?.id == _selectedTripId,
+                  orElse: () => null,
+                );
+
         return SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _MapHeader(),
-              const SizedBox(height: 12),
-              Expanded(
-                child: _GeocodedMap(
-                  trips: trips,
-                  mapController: _mapController,
-                  selectedTripId: _selectedTripId,
-                  hasInitialFit: _hasInitialFit,
-                  onInitialFitDone: () {
-                    if (mounted) {
-                      setState(() => _hasInitialFit = true);
-                    }
-                  },
-                  onTripSelected: (trip, point) {
-                    setState(() => _selectedTripId = trip.id);
-                    _mapController.move(point, 8.0);
-                  },
-                  onMarkerTap: (trip) {
-                    setState(() => _selectedTripId = trip.id);
-                    _showTripBottomSheet(context, trip);
-                  },
-                  onAllSelected: () {
-                    setState(() => _selectedTripId = null);
-                    _fitAllTrips(trips);
-                  },
-                ),
-              ),
-            ],
+          child: _GeocodedMap(
+            trips: trips,
+            mapController: _mapController,
+            selectedTripId: _selectedTripId,
+            selectedTrip: selectedTrip,
+            hasInitialFit: _hasInitialFit,
+            onInitialFitDone: () {
+              if (mounted) {
+                setState(() => _hasInitialFit = true);
+              }
+            },
+            onTripSelected: (trip, point) {
+              setState(() => _selectedTripId = trip.id);
+              _mapController.move(point, 8.0);
+            },
+            onMarkerTap: (trip) {
+              setState(() => _selectedTripId = trip.id);
+            },
+            onAllSelected: () {
+              setState(() => _selectedTripId = null);
+              _fitAllTrips(trips);
+            },
+            onClosePreview: () {
+              setState(() => _selectedTripId = null);
+            },
+            onViewTrip: (trip) {
+              context.push('/trip/${trip.id}');
+            },
           ),
         );
       },
@@ -76,74 +81,79 @@ class _MapTabState extends ConsumerState<MapTab> {
 
   Widget _buildLoading(BuildContext context) {
     return SafeArea(
-        child: Column(
-      children: [
-        const _MapHeader(),
-        const SizedBox(height: 12),
-        Expanded(
-          child: Stack(
-            children: [
-              _MapBackground(mapController: _mapController),
-              Center(
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .surface
-                        .withValues(alpha: 0.94),
-                    borderRadius: BorderRadius.circular(18),
-                    boxShadow: [
-                      BoxShadow(
-                        blurRadius: 20,
-                        color: Colors.black.withValues(alpha: 0.12),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        context.tr('loading_destinations'),
-                        style: const TextStyle(fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+      child: Stack(
+        children: [
+          _MapBackground(mapController: _mapController),
+          Positioned(
+            top: 16,
+            left: 16,
+            right: 16,
+            child: _FloatingHeader(
+              title: context.tr('map_title'),
+              subtitle: context.tr('map_subtitle'),
+            ),
           ),
-        ),
-      ],
-    ));
+          Center(
+            child: _GlassContainer(
+              borderRadius: 20,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 18,
+                vertical: 14,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    context.tr('loading_destinations'),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildError(BuildContext context, Object error) {
     return SafeArea(
-        child: Column(
-      children: [
-        const _MapHeader(),
-        const SizedBox(height: 12),
-        Expanded(
-          child: Center(
-            child: Text(
-              '${context.tr('error_prefix')} $error',
-              textAlign: TextAlign.center,
+      child: Stack(
+        children: [
+          _MapBackground(mapController: _mapController),
+          Positioned(
+            top: 16,
+            left: 16,
+            right: 16,
+            child: _FloatingHeader(
+              title: context.tr('map_title'),
+              subtitle: context.tr('map_subtitle'),
             ),
           ),
-        ),
-      ],
-    ));
+          Center(
+            child: _GlassContainer(
+              borderRadius: 20,
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                '${context.tr('error_prefix')} $error',
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _fitAllTrips(List<TripEntity> trips) {
@@ -153,7 +163,9 @@ class _MapTabState extends ConsumerState<MapTab> {
       final point = ref.read(geocodingProvider(trip.destination)).valueOrNull;
 
       if (point != null) {
-        points.add(LatLng(point.latitude, point.longitude));
+        points.add(
+          LatLng(point.latitude, point.longitude),
+        );
       }
     }
 
@@ -172,27 +184,10 @@ class _MapTabState extends ConsumerState<MapTab> {
       _mapController.fitCamera(
         CameraFit.bounds(
           bounds: bounds,
-          padding: const EdgeInsets.all(70),
+          padding: const EdgeInsets.fromLTRB(70, 140, 70, 150),
         ),
       );
     });
-  }
-
-  void _showTripBottomSheet(BuildContext context, TripEntity trip) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return _TripBottomSheet(
-          trip: trip,
-          onViewTrip: () {
-            Navigator.of(context).pop();
-            context.push('/trip/${trip.id}');
-          },
-        );
-      },
-    );
   }
 }
 
@@ -200,21 +195,27 @@ class _GeocodedMap extends ConsumerWidget {
   final List<TripEntity> trips;
   final MapController mapController;
   final String? selectedTripId;
+  final TripEntity? selectedTrip;
   final bool hasInitialFit;
   final VoidCallback onInitialFitDone;
   final void Function(TripEntity trip, LatLng point) onTripSelected;
   final void Function(TripEntity trip) onMarkerTap;
   final VoidCallback onAllSelected;
+  final VoidCallback onClosePreview;
+  final void Function(TripEntity trip) onViewTrip;
 
   const _GeocodedMap({
     required this.trips,
     required this.mapController,
     required this.selectedTripId,
+    required this.selectedTrip,
     required this.hasInitialFit,
     required this.onInitialFitDone,
     required this.onTripSelected,
     required this.onMarkerTap,
     required this.onAllSelected,
+    required this.onClosePreview,
+    required this.onViewTrip,
   });
 
   @override
@@ -223,12 +224,17 @@ class _GeocodedMap extends ConsumerWidget {
     var loadingCount = 0;
 
     for (final trip in trips) {
-      final result = ref.watch(geocodingProvider(trip.destination));
+      final result = ref.watch(
+        geocodingProvider(trip.destination),
+      );
 
       result.when(
         data: (geo) {
           if (geo != null) {
-            points[trip.id] = LatLng(geo.latitude, geo.longitude);
+            points[trip.id] = LatLng(
+              geo.latitude,
+              geo.longitude,
+            );
           }
         },
         loading: () => loadingCount++,
@@ -241,12 +247,22 @@ class _GeocodedMap extends ConsumerWidget {
         if (!context.mounted) return;
 
         if (points.length == 1) {
-          mapController.move(points.values.first, 8.0);
+          mapController.move(
+            points.values.first,
+            8.0,
+          );
         } else {
           mapController.fitCamera(
             CameraFit.bounds(
-              bounds: LatLngBounds.fromPoints(points.values.toList()),
-              padding: const EdgeInsets.all(70),
+              bounds: LatLngBounds.fromPoints(
+                points.values.toList(),
+              ),
+              padding: const EdgeInsets.fromLTRB(
+                70,
+                140,
+                70,
+                150,
+              ),
             ),
           );
         }
@@ -265,9 +281,11 @@ class _GeocodedMap extends ConsumerWidget {
       markers.add(
         Marker(
           point: point,
-          width: 170,
-          height: 80,
+          width: trip.id == selectedTripId ? 190 : 52,
+          height: trip.id == selectedTripId ? 92 : 52,
+          alignment: Alignment.bottomCenter,
           child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: () => onMarkerTap(trip),
             child: _TripMarker(
               trip: trip,
@@ -281,11 +299,14 @@ class _GeocodedMap extends ConsumerWidget {
     return Stack(
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(28),
           child: FlutterMap(
             mapController: mapController,
             options: MapOptions(
-              initialCenter: const LatLng(40.4168, -3.7038),
+              initialCenter: const LatLng(
+                40.4168,
+                -3.7038,
+              ),
               initialZoom: 3.0,
               minZoom: 2.0,
               maxZoom: 18.0,
@@ -295,44 +316,87 @@ class _GeocodedMap extends ConsumerWidget {
                 urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.travl.app',
               ),
-              MarkerLayer(markers: markers),
+              MarkerLayer(
+                markers: markers,
+              ),
             ],
           ),
         ),
+
+        // Header
+        Positioned(
+          top: 16,
+          left: 16,
+          right: 16,
+          child: _FloatingHeader(
+            title: context.tr('map_title'),
+            subtitle: trips.length == 1
+                ? '1 ${context.tr('destination')}'
+                : '${trips.length} ${context.tr('destinations')}',
+          ),
+        ),
+
+        // Geocoding loading
         if (loadingCount > 0)
           Positioned(
-            top: 14,
-            left: 14,
-            right: 14,
+            top: 90,
+            left: 16,
             child: _LoadingPill(
               text: context.tr('loading_destinations'),
             ),
           ),
+
+        // Center / fit button
         Positioned(
           right: 16,
-          bottom: 16,
-          child: _MapControlButton(
+          bottom: selectedTrip != null ? 215 : 92,
+          child: _FloatingMapButton(
             icon: Icons.my_location_rounded,
             onPressed: () {
               if (points.isEmpty) return;
 
               if (points.length == 1) {
-                mapController.move(points.values.first, 8.0);
+                mapController.move(
+                  points.values.first,
+                  8.0,
+                );
               } else {
                 mapController.fitCamera(
                   CameraFit.bounds(
-                    bounds: LatLngBounds.fromPoints(points.values.toList()),
-                    padding: const EdgeInsets.all(70),
+                    bounds: LatLngBounds.fromPoints(
+                      points.values.toList(),
+                    ),
+                    padding: const EdgeInsets.fromLTRB(
+                      70,
+                      140,
+                      70,
+                      150,
+                    ),
                   ),
                 );
               }
             },
           ),
         ),
+
+        // Selected trip preview
+        if (selectedTrip != null)
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 78,
+            child: _TripPreviewCard(
+              trip: selectedTrip!,
+              onClose: onClosePreview,
+              onViewTrip: () => onViewTrip(selectedTrip!),
+            ),
+          ),
+
+        // Trip selector
         Positioned(
-          left: 14,
-          right: 14,
-          bottom: 14,
+          left: 16,
+          right: 16,
+          bottom: 16,
           child: _TripSelector(
             trips: trips,
             points: points,
@@ -349,16 +413,21 @@ class _GeocodedMap extends ConsumerWidget {
 class _MapBackground extends StatelessWidget {
   final MapController mapController;
 
-  const _MapBackground({required this.mapController});
+  const _MapBackground({
+    required this.mapController,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(28),
       child: FlutterMap(
         mapController: mapController,
         options: const MapOptions(
-          initialCenter: LatLng(40.4168, -3.7038),
+          initialCenter: LatLng(
+            40.4168,
+            -3.7038,
+          ),
           initialZoom: 3.0,
           minZoom: 2.0,
           maxZoom: 18.0,
@@ -374,12 +443,90 @@ class _MapBackground extends StatelessWidget {
   }
 }
 
+class _FloatingHeader extends StatelessWidget {
+  final String title;
+  final String subtitle;
+
+  const _FloatingHeader({
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _GlassContainer(
+            borderRadius: 20,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 18,
+              vertical: 13,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.explore_rounded,
+                    color: Colors.white,
+                    size: 21,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style:
+                            Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                ),
+                      ),
+                      const SizedBox(height: 1),
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.62),
+                              fontWeight: FontWeight.w500,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _TripSelector extends StatelessWidget {
   final List<TripEntity> trips;
   final Map<String, LatLng> points;
   final String? selectedTripId;
   final VoidCallback onAllSelected;
-  final void Function(TripEntity trip, LatLng point) onTripSelected;
+  final void Function(
+    TripEntity trip,
+    LatLng point,
+  ) onTripSelected;
 
   const _TripSelector({
     required this.trips,
@@ -392,29 +539,39 @@ class _TripSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 48,
+      height: 50,
       child: ListView(
         scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
         children: [
           _TripChip(
             label: context.tr('map_all'),
+            icon: Icons.public_rounded,
             selected: selectedTripId == null,
             onTap: onAllSelected,
           ),
           const SizedBox(width: 8),
-          ...trips.map((trip) {
-            final point = points[trip.id];
+          ...trips.map(
+            (trip) {
+              final point = points[trip.id];
 
-            return Padding(
-              padding: const EdgeInsets.only(right: 8),
-              child: _TripChip(
-                label: trip.destination,
-                selected: selectedTripId == trip.id,
-                enabled: point != null,
-                onTap: point == null ? null : () => onTripSelected(trip, point),
-              ),
-            );
-          }),
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _TripChip(
+                  label: trip.destination,
+                  icon: Icons.flight_takeoff_rounded,
+                  selected: selectedTripId == trip.id,
+                  enabled: point != null,
+                  onTap: point == null
+                      ? null
+                      : () => onTripSelected(
+                            trip,
+                            point,
+                          ),
+                ),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -423,12 +580,14 @@ class _TripSelector extends StatelessWidget {
 
 class _TripChip extends StatelessWidget {
   final String label;
+  final IconData icon;
   final bool selected;
   final bool enabled;
   final VoidCallback? onTap;
 
   const _TripChip({
     required this.label,
+    required this.icon,
     required this.selected,
     this.enabled = true,
     required this.onTap,
@@ -436,46 +595,71 @@ class _TripChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = AppColors.primary;
-    final background = Theme.of(context).colorScheme.surface;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: enabled ? onTap : null,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(25),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 15,
+          ),
           decoration: BoxDecoration(
             color: selected
-                ? primary
-                : background.withValues(alpha: enabled ? 0.94 : 0.65),
-            borderRadius: BorderRadius.circular(24),
+                ? AppColors.primary
+                : colorScheme.surface.withValues(
+                    alpha: enabled ? 0.92 : 0.62,
+                  ),
+            borderRadius: BorderRadius.circular(25),
             border: Border.all(
               color: selected
-                  ? primary
-                  : Theme.of(context).dividerColor.withValues(alpha: 0.5),
+                  ? AppColors.primary
+                  : colorScheme.onSurface.withValues(
+                      alpha: 0.08,
+                    ),
             ),
             boxShadow: [
               BoxShadow(
-                blurRadius: 12,
-                color: Colors.black.withValues(alpha: 0.10),
+                blurRadius: selected ? 16 : 12,
+                offset: const Offset(0, 4),
+                color: Colors.black.withValues(
+                  alpha: selected ? 0.18 : 0.10,
+                ),
               ),
             ],
           ),
-          child: Center(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 17,
                 color: selected
                     ? Colors.white
-                    : Theme.of(context).colorScheme.onSurface,
+                    : colorScheme.onSurface.withValues(
+                        alpha: enabled ? 0.72 : 0.35,
+                      ),
               ),
-            ),
+              const SizedBox(width: 7),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  color: selected
+                      ? Colors.white
+                      : colorScheme.onSurface.withValues(
+                          alpha: enabled ? 0.9 : 0.4,
+                        ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -483,11 +667,11 @@ class _TripChip extends StatelessWidget {
   }
 }
 
-class _MapControlButton extends StatelessWidget {
+class _FloatingMapButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onPressed;
 
-  const _MapControlButton({
+  const _FloatingMapButton({
     required this.icon,
     required this.onPressed,
   });
@@ -495,16 +679,22 @@ class _MapControlButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Theme.of(context).colorScheme.surface,
-      elevation: 5,
-      borderRadius: BorderRadius.circular(16),
+      color: Colors.transparent,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(16),
-        child: const SizedBox(
-          width: 48,
-          height: 48,
-          child: Icon(Icons.my_location_rounded),
+        borderRadius: BorderRadius.circular(17),
+        child: _GlassContainer(
+          borderRadius: 17,
+          padding: EdgeInsets.zero,
+          child: SizedBox(
+            width: 50,
+            height: 50,
+            child: Icon(
+              icon,
+              size: 22,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
         ),
       ),
     );
@@ -514,41 +704,35 @@ class _MapControlButton extends StatelessWidget {
 class _LoadingPill extends StatelessWidget {
   final String text;
 
-  const _LoadingPill({required this.text});
+  const _LoadingPill({
+    required this.text,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 15,
-            color: Colors.black.withValues(alpha: 0.10),
-          ),
-        ],
+    return _GlassContainer(
+      borderRadius: 16,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 13,
+        vertical: 9,
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           SizedBox(
-            width: 15,
-            height: 15,
+            width: 14,
+            height: 14,
             child: CircularProgressIndicator(
               strokeWidth: 2,
               color: AppColors.primary,
             ),
           ),
-          const SizedBox(width: 9),
-          Flexible(
-            child: Text(
-              text,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -568,66 +752,112 @@ class _TripMarker extends StatelessWidget {
 
   Color _markerColor() {
     final now = DateTime.now();
+
     if (trip.startDate.isBefore(now) && trip.endDate.isAfter(now)) {
       return AppColors.primary;
-    } else if (trip.startDate.isAfter(now)) {
-      return AppColors.success;
-    } else {
-      return Colors.grey;
     }
+
+    if (trip.startDate.isAfter(now)) {
+      return AppColors.success;
+    }
+
+    return Colors.grey;
   }
 
   @override
   Widget build(BuildContext context) {
-    final primary = AppColors.primary;
+    final markerColor = _markerColor();
+
+    if (!isSelected) {
+      return Center(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: 22,
+          height: 22,
+          decoration: BoxDecoration(
+            color: markerColor,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: Colors.white,
+              width: 4,
+            ),
+            boxShadow: [
+              BoxShadow(
+                blurRadius: 8,
+                color: Colors.black.withValues(alpha: 0.22),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.flight_rounded,
+            size: 10,
+            color: Colors.white,
+          ),
+        ),
+      );
+    }
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOut,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 13,
+            vertical: 8,
+          ),
           decoration: BoxDecoration(
-            color: isSelected
-                ? _markerColor()
-                : Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(14),
+            color: markerColor,
+            borderRadius: BorderRadius.circular(15),
             boxShadow: [
               BoxShadow(
-                blurRadius: 10,
-                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 14,
+                offset: const Offset(0, 5),
+                color: Colors.black.withValues(alpha: 0.20),
               ),
             ],
           ),
-          child: Text(
-            trip.destination,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: isSelected
-                  ? Colors.white
-                  : Theme.of(context).colorScheme.onSurface,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.flight_rounded,
+                size: 15,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  trip.destination,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        CustomPaint(
+          size: const Size(16, 8),
+          painter: _MarkerPointerPainter(
+            color: markerColor,
           ),
         ),
         Container(
-          width: 14,
-          height: 14,
+          width: 13,
+          height: 13,
           decoration: BoxDecoration(
-            color: _markerColor(),
+            color: markerColor,
             shape: BoxShape.circle,
             border: Border.all(
               color: Colors.white,
               width: 3,
             ),
-            boxShadow: [
-              BoxShadow(
-                blurRadius: 6,
-                color: Colors.black.withValues(alpha: 0.20),
-              ),
-            ],
           ),
         ),
       ],
@@ -635,112 +865,163 @@ class _TripMarker extends StatelessWidget {
   }
 }
 
-class _TripBottomSheet extends StatelessWidget {
+class _MarkerPointerPainter extends CustomPainter {
+  final Color color;
+
+  _MarkerPointerPainter({
+    required this.color,
+  });
+
+  @override
+  void paint(ui.Canvas canvas, ui.Size size) {
+    final path = ui.Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width / 2, size.height)
+      ..lineTo(size.width, 0)
+      ..close();
+
+    canvas.drawPath(
+      path,
+      ui.Paint()..color = color,
+    );
+  }
+
+  @override
+  bool shouldRepaint(
+    covariant _MarkerPointerPainter oldDelegate,
+  ) {
+    return oldDelegate.color != color;
+  }
+}
+
+class _TripPreviewCard extends StatelessWidget {
   final TripEntity trip;
+  final VoidCallback onClose;
   final VoidCallback onViewTrip;
 
-  const _TripBottomSheet({
+  const _TripPreviewCard({
     required this.trip,
+    required this.onClose,
     required this.onViewTrip,
   });
 
   @override
   Widget build(BuildContext context) {
-    final dateFormat = DateFormat('dd MMM yyyy');
+    final dateFormat = DateFormat('dd MMM');
 
-    return SafeArea(
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(28),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Material(
+      color: Colors.transparent,
+      child: _GlassContainer(
+        borderRadius: 22,
+        padding: const EdgeInsets.all(10),
+        child: Row(
           children: [
-            Center(
-              child: Container(
-                width: 42,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).dividerColor,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
+            _TripCover(
+              imageUrl: trip.coverImage,
             ),
-            const SizedBox(height: 20),
-            if (trip.coverImage != null && trip.coverImage!.isNotEmpty)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child: Image.network(
-                  trip.coverImage!,
-                  height: 150,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                ),
-              ),
-            if (trip.coverImage != null && trip.coverImage!.isNotEmpty)
-              const SizedBox(height: 16),
-            Text(
-              trip.name,
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    trip.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
                   ),
-            ),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Icon(
-                  Icons.location_on_outlined,
-                  size: 18,
-                  color: AppColors.primary,
-                ),
-                const SizedBox(width: 5),
-                Expanded(
-                  child: Text(
-                    trip.destination,
-                    style: Theme.of(context).textTheme.bodyLarge,
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.location_on_rounded,
+                        size: 15,
+                        color: AppColors.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          trip.destination,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: _TripInfo(
-                    icon: Icons.calendar_today_outlined,
-                    text:
+                  const SizedBox(height: 5),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.calendar_month_rounded,
+                        size: 14,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.55),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
                         '${dateFormat.format(trip.startDate)} - ${dateFormat.format(trip.endDate)}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.60),
+                            ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                InkWell(
+                  onTap: onClose,
+                  borderRadius: BorderRadius.circular(20),
+                  child: Padding(
+                    padding: const EdgeInsets.all(5),
+                    child: Icon(
+                      Icons.close_rounded,
+                      size: 18,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.55),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                _TripInfo(
-                  icon: Icons.timelapse_rounded,
-                  text: '${trip.numberOfDays} ${context.tr('days')}',
+                const SizedBox(height: 4),
+                SizedBox(
+                  height: 34,
+                  child: FilledButton(
+                    onPressed: onViewTrip,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.arrow_forward_rounded,
+                      size: 18,
+                    ),
+                  ),
                 ),
               ],
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: onViewTrip,
-                icon: const Icon(Icons.arrow_forward_rounded),
-                label: Text(context.tr('view_trip')),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-              ),
             ),
           ],
         ),
@@ -749,68 +1030,87 @@ class _TripBottomSheet extends StatelessWidget {
   }
 }
 
-class _TripInfo extends StatelessWidget {
-  final IconData icon;
-  final String text;
+class _TripCover extends StatelessWidget {
+  final String? imageUrl;
 
-  const _TripInfo({
-    required this.icon,
-    required this.text,
+  const _TripCover({
+    required this.imageUrl,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          size: 17,
+    if (imageUrl == null || imageUrl!.isEmpty) {
+      return Container(
+        width: 72,
+        height: 72,
+        decoration: BoxDecoration(
+          color: AppColors.primary.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Icon(
+          Icons.flight_takeoff_rounded,
           color: AppColors.primary,
+          size: 28,
         ),
-        const SizedBox(width: 6),
-        Flexible(
-          child: Text(
-            text,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Image.network(
+        imageUrl!,
+        width: 72,
+        height: 72,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) {
+          return Container(
+            width: 72,
+            height: 72,
+            color: AppColors.primary.withValues(alpha: 0.10),
+            child: Icon(
+              Icons.flight_takeoff_rounded,
+              color: AppColors.primary,
+              size: 28,
             ),
-          ),
-        ),
-      ],
+          );
+        },
+      ),
     );
   }
 }
 
-class _MapHeader extends ConsumerWidget {
-  const _MapHeader();
+class _GlassContainer extends StatelessWidget {
+  final Widget child;
+  final double borderRadius;
+  final EdgeInsets padding;
+
+  const _GlassContainer({
+    required this.child,
+    required this.borderRadius,
+    required this.padding,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            ref.tr('map_title'),
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            ref.tr('map_subtitle'),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.65),
-                ),
+  Widget build(BuildContext context) {
+    final surface = Theme.of(context).colorScheme.surface;
+
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: surface.withValues(alpha: 0.91),
+        borderRadius: BorderRadius.circular(borderRadius),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.22),
+        ),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 22,
+            offset: const Offset(0, 7),
+            color: Colors.black.withValues(alpha: 0.15),
           ),
         ],
       ),
+      child: child,
     );
   }
 }
@@ -820,41 +1120,72 @@ class _EmptyMap extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Column(
-      children: [
-        const _MapHeader(),
-        Expanded(
-          child: Center(
+    return SafeArea(
+      child: Stack(
+        children: [
+          _MapBackground(
+            mapController: MapController(),
+          ),
+          Positioned(
+            top: 16,
+            left: 16,
+            right: 16,
+            child: _FloatingHeader(
+              title: context.tr('map_title'),
+              subtitle: context.tr('map_subtitle'),
+            ),
+          ),
+          Center(
             child: Padding(
-              padding: const EdgeInsets.all(32),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.map_outlined,
-                    size: 64,
-                    color: AppColors.primary.withValues(alpha: 0.7),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    ref.tr('no_destinations'),
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    ref.tr('no_destinations_description'),
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
+              padding: const EdgeInsets.all(28),
+              child: _GlassContainer(
+                borderRadius: 24,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 30,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.10),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        Icons.map_rounded,
+                        size: 34,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      ref.tr('no_destinations'),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      ref.tr('no_destinations_description'),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.65),
+                          ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

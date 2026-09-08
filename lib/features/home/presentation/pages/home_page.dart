@@ -66,7 +66,7 @@ class _HomeContentState extends ConsumerState<_HomeContent> {
         children: tabs,
       ),
       // ✅ FAB esquina inferior derecha
-      floatingActionButton: _currentIndex != 2
+      floatingActionButton: _currentIndex == 0
           ? FloatingActionButton(
               onPressed: () => _showCreateOrJoin(context),
               backgroundColor: AppColors.primary,
