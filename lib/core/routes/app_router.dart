@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:native_liquid_glass/native_liquid_glass.dart';
+import 'package:travl/features/notifications/presentation/pages/notifications_page.dart';
 import '../../features/auth/presentation/pages/auth_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/splash/presentation/splash_page.dart';
@@ -62,6 +63,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             child: QrScannerPage(
               userId: userId,
             ),
+          );
+        },
+      ),
+      GoRoute(
+        path: RouteConstants.notifications,
+        pageBuilder: (context, state) {
+          final userId = state.extra as String;
+
+          return MaterialPage(
+            child: NotificationsPage(userId: userId),
           );
         },
       ),

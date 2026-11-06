@@ -61,11 +61,9 @@ class TripsTab extends ConsumerWidget {
                           children: [
                             IconButton(
                               onPressed: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        NotificationsPage(userId: userId),
-                                  ),
+                                context.push(
+                                  '/notifications',
+                                  extra: userId,
                                 );
                               },
                               icon: const Icon(Icons.notifications_outlined),

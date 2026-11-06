@@ -9,4 +9,5 @@ class RouteConstants {
   static const String tripDashboard = '/trip/:tripId';
   static const String activityDetail = '/trip/:tripId/activity/:activityId';
   static const String qrScanner = '/qr-scanner';
+  static const String notifications = '/notifications';
 }
