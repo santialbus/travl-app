@@ -32,25 +32,31 @@ class ExpenseRemoteDataSource {
     required String paidBy,
     required List<String> participants,
     required ExpenseCategory category,
+    required String createdBy,
   }) async {
     try {
       final id = _uuid.v4();
-      final expense = ExpenseModel(
-          id: id,
-          tripId: tripId,
-          title: title,
-          amount: amount,
-          currency: currency,
-          paidBy: paidBy,
-          participants: participants,
-          category: category,
-          createdAt: DateTime.now(),
-          isSettlement: false);
 
+      final expense = ExpenseModel(
+        id: id,
+        tripId: tripId,
+        title: title,
+        amount: amount,
+        currency: currency,
+        paidBy: paidBy,
+        participants: participants,
+        category: category,
+        createdAt: DateTime.now(),
+        isSettlement: false,
+        createdBy: createdBy,
+      );
+
+      // DIAGNÓSTICO TEMPORAL
+      final firestoreData = expense.toFirestore();
       await _firestore
           .collection(FirebaseConstants.expensesCollection)
           .doc(id)
-          .set(expense.toFirestore());
+          .set(firestoreData);
 
       return expense;
     } catch (e) {
@@ -99,6 +105,7 @@ class ExpenseRemoteDataSource {
     required String currency,
     required String paidBy,
     required String paidTo,
+    String? createdBy,
   }) async {
     try {
       final id = _uuid.v4();
@@ -114,6 +121,7 @@ class ExpenseRemoteDataSource {
         category: ExpenseCategory.other,
         createdAt: DateTime.now(),
         isSettlement: true,
+        createdBy: createdBy,
       );
 
       await _firestore

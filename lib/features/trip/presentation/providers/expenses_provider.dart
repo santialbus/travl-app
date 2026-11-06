@@ -46,6 +46,7 @@ class ExpenseController extends StateNotifier<ExpenseState> {
     required String paidBy,
     required List<String> participants,
     required ExpenseCategory category,
+    required String createdBy,
   }) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
@@ -55,6 +56,7 @@ class ExpenseController extends StateNotifier<ExpenseState> {
         amount: amount,
         currency: currency,
         paidBy: paidBy,
+        createdBy: createdBy,
         participants: participants,
         category: category,
       );

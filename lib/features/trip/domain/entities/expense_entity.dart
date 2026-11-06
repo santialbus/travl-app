@@ -9,6 +9,7 @@ class ExpenseEntity {
   final ExpenseCategory category;
   final DateTime createdAt;
   final bool isSettlement;
+  final String? createdBy;
 
   const ExpenseEntity({
     required this.id,
@@ -21,6 +22,7 @@ class ExpenseEntity {
     required this.category,
     required this.createdAt,
     required this.isSettlement,
+    this.createdBy,
   });
 
   double get splitAmount {

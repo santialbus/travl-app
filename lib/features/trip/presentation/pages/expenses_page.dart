@@ -1488,7 +1488,6 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
 
     final expense = widget.expenseToEdit;
     final controller = ref.read(expenseControllerProvider.notifier);
-
     final success = expense == null
         ? await controller.createExpense(
             tripId: widget.tripId,
@@ -1496,6 +1495,7 @@ class _AddExpenseBottomSheetState extends ConsumerState<AddExpenseBottomSheet> {
             amount: double.parse(_amountController.text),
             currency: _currency,
             paidBy: widget.userId,
+            createdBy: widget.userId, // NUEVO
             participants: _selectedParticipants,
             category: _category,
           )

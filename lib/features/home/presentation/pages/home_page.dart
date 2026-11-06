@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:native_liquid_glass/native_liquid_glass.dart';
+import 'package:travl/features/notifications/presentation/providers/notification_provider.dart';
 
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -59,6 +60,8 @@ class _HomeContentState extends ConsumerState<_HomeContent> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(notificationControllerProvider(widget.userId));
+
     final tabs = [
       TripsTab(userId: widget.userId),
       MapTab(userId: widget.userId),

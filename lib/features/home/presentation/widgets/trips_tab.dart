@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:travl/features/notifications/presentation/pages/notifications_page.dart';
+import 'package:travl/features/notifications/presentation/providers/notification_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/constants/route_constants.dart';
@@ -24,6 +26,10 @@ class TripsTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tripsAsync = ref.watch(userTripsProvider(userId));
     final authAsync = ref.watch(authStateProvider);
+    final notifications = ref.watch(notificationControllerProvider(userId));
+
+    final unreadCount =
+        notifications.where((notification) => !notification.isRead).length;
 
     final userName = authAsync.maybeWhen(
       data: (user) => user?.name ?? '',
@@ -49,6 +55,55 @@ class TripsTab extends ConsumerWidget {
                         const SizedBox(width: 12),
                         const OfflineIndicator(),
                         const Spacer(),
+                        // NOTIFICACIONES
+                        Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            IconButton(
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        NotificationsPage(userId: userId),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.notifications_outlined),
+                              style: IconButton.styleFrom(
+                                backgroundColor: AppColors.card(context),
+                                padding: const EdgeInsets.all(12),
+                              ),
+                            ),
+                            if (unreadCount > 0)
+                              Positioned(
+                                right: 5,
+                                top: 5,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 18,
+                                    minHeight: 18,
+                                  ),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      unreadCount > 99 ? '99+' : '$unreadCount',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+
+                        const SizedBox(width: 8),
                         IconButton(
                           onPressed: () => _showJoinDialog(context, ref),
                           icon: const Icon(Icons.qr_code_scanner),

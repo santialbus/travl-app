@@ -2016,6 +2016,80 @@ class AppStrings {
       'fr': 'Retour à la connexion',
       'ja': 'ログインに戻る',
     },
+    'notifications': {
+      'en': 'Notifications',
+      'es': 'Notificaciones',
+      'de': 'Benachrichtigungen',
+      'fr': 'Notifications',
+      'ja': '通知',
+    },
+    'mark_all_as_read': {
+      'en': 'Mark all as read',
+      'es': 'Marcar todas como leídas',
+      'de': 'Alle als gelesen markieren',
+      'fr': 'Tout marquer comme lu',
+      'ja': 'すべて既読にする',
+    },
+    'notification_activity_title': {
+      'en': 'New activity',
+      'es': 'Nueva actividad',
+      'de': 'Neue Aktivität',
+      'fr': 'Nouvelle activité',
+      'ja': '新しいアクティビティ',
+    },
+    'notification_activity_body': {
+      'en': 'Someone added "{title}" to the trip.',
+      'es': 'Alguien ha añadido "{title}" al viaje.',
+      'de': 'Jemand hat "{title}" zur Reise hinzugefügt.',
+      'fr': 'Quelqu’un a ajouté "{title}" au voyage.',
+      'ja': '誰かが旅行に「{title}」を追加しました。',
+    },
+    'notification_member_title': {
+      'en': 'New member',
+      'es': 'Nuevo miembro',
+      'de': 'Neues Mitglied',
+      'fr': 'Nouveau membre',
+      'ja': '新しいメンバー',
+    },
+    'notification_member_body': {
+      'en': 'A new member has joined the trip.',
+      'es': 'Un nuevo miembro se ha unido al viaje.',
+      'de': 'Ein neues Mitglied ist der Reise beigetreten.',
+      'fr': 'Un nouveau membre a rejoint le voyage.',
+      'ja': '新しいメンバーが旅行に参加しました。',
+    },
+    'notifications_empty_title': {
+      'en': 'All caught up',
+      'es': 'Todo al día',
+      'de': 'Alles auf dem neuesten Stand',
+      'fr': 'Tout est à jour',
+      'ja': '新しい通知はありません',
+    },
+    'notifications_empty_description': {
+      'en':
+          'When someone adds activities or joins your trips, they will appear here.',
+      'es':
+          'Cuando alguien añada actividades o se una a tus viajes, aparecerán aquí.',
+      'de':
+          'Wenn jemand Aktivitäten hinzufügt oder deinen Reisen beitritt, erscheinen sie hier.',
+      'fr':
+          'Lorsque quelqu’un ajoutera des activités ou rejoindra vos voyages, elles apparaîtront ici.',
+      'ja': '誰かがアクティビティを追加したり、旅行に参加したりすると、ここに表示されます。',
+    },
+    'notification_expense_title': {
+      'en': 'New expense',
+      'es': 'Nuevo gasto',
+      'de': 'Neue Ausgabe',
+      'fr': 'Nouvelle dépense',
+      'ja': '新しい支出',
+    },
+    'notification_expense_body': {
+      'en': 'Someone added a new expense to the trip.',
+      'es': 'Alguien ha añadido un nuevo gasto al viaje.',
+      'de': 'Jemand hat eine neue Ausgabe zur Reise hinzugefügt.',
+      'fr': 'Quelqu’un a ajouté une nouvelle dépense au voyage.',
+      'ja': '誰かが旅行に新しい支出を追加しました。',
+    },
   };
 
   static String get(String key, String languageCode,

@@ -13,6 +13,7 @@ class ExpenseModel extends ExpenseEntity {
     required super.category,
     required super.createdAt,
     required super.isSettlement,
+    super.createdBy,
   });
 
   factory ExpenseModel.fromFirestore(DocumentSnapshot doc) {
@@ -28,6 +29,7 @@ class ExpenseModel extends ExpenseEntity {
       category: ExpenseCategory.fromString(data['category'] as String),
       createdAt: (data['createdAt'] as Timestamp).toDate(),
       isSettlement: data['isSettlement'] as bool? ?? false,
+      createdBy: data['createdBy'] as String?,
     );
   }
 
@@ -43,6 +45,7 @@ class ExpenseModel extends ExpenseEntity {
       'category': category.value,
       'createdAt': Timestamp.fromDate(createdAt),
       'isSettlement': isSettlement,
+      'createdBy': createdBy,
     };
   }
 }

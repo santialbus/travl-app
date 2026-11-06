@@ -85,6 +85,7 @@ class SettlementRemoteDataSource {
         currency: settlement.currency,
         paidBy: settlement.fromUserId,
         paidTo: settlement.toUserId,
+        createdBy: settlement.fromUserId,
       );
 
       await _firestore
