@@ -53,6 +53,8 @@ dependencies:
   dicebear_core: ^10.7.0
   dicebear_styles: ^10.6.0
   native_liquid_glass: ^0.3.1
+    # Local Notifications
+  flutter_local_notifications: ^22.3.3
 
 dev_dependencies:
   flutter_test:

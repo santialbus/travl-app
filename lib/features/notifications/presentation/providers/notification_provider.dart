@@ -6,7 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../../../trip/domain/entities/trip_entity.dart';
 import '../../../trip/presentation/providers/trip_provider.dart';
+import '../../../trip/presentation/providers/users_provider.dart';
 import '../../data/datasources/notification_remote_datasource.dart';
+import '../../data/services/local_notification_service.dart';
+import '../../../../core/localization/app_strings.dart';
+import '../../../../core/providers/locale_provider.dart';
 
 final notificationDataSourceProvider =
     Provider<NotificationRemoteDataSource>((ref) {
@@ -21,6 +25,8 @@ final notificationControllerProvider = StateNotifierProvider.autoDispose
     final controller = NotificationController(
       dataSource: dataSource,
       userId: userId,
+      getLanguageCode: () => ref.read(effectiveLanguageCodeProvider),
+      getUserName: (actorId) => ref.read(userNameProvider(actorId).future),
     );
 
     ref.listen<AsyncValue<List<TripEntity>>>(
@@ -39,6 +45,9 @@ class NotificationController extends StateNotifier<List<NotificationEntity>> {
   final NotificationRemoteDataSource _dataSource;
   final String _userId;
 
+  final String Function() _getLanguageCode;
+  final Future<String> Function(String actorId) _getUserName;
+
   final Map<String, List<StreamSubscription<dynamic>>> _subscriptions = {};
   final Set<String> _processedNotificationIds = {};
 
@@ -47,8 +56,12 @@ class NotificationController extends StateNotifier<List<NotificationEntity>> {
   NotificationController({
     required NotificationRemoteDataSource dataSource,
     required String userId,
+    required String Function() getLanguageCode,
+    required Future<String> Function(String actorId) getUserName,
   })  : _dataSource = dataSource,
         _userId = userId,
+        _getLanguageCode = getLanguageCode,
+        _getUserName = getUserName,
         super(const []);
 
   /// Actualiza los viajes que deben tener listeners activos.
@@ -173,10 +186,77 @@ class NotificationController extends StateNotifier<List<NotificationEntity>> {
 
     if (!_processedNotificationIds.add(notification.id)) return;
 
+    // Mantenemos intacto el sistema interno.
     state = [
       notification,
       ...state,
     ];
+
+    // La notificación nativa se procesa en paralelo.
+    unawaited(_showLocalNotification(notification));
+  }
+
+  Future<void> _showLocalNotification(
+    NotificationEntity notification,
+  ) async {
+    try {
+      final languageCode = _getLanguageCode();
+
+      final actorName = await _getUserName(notification.actorId);
+
+      if (_disposed) return;
+
+      final displayName =
+          actorName.trim().isEmpty || actorName.toLowerCase() == 'unknown'
+              ? 'Travl'
+              : actorName.trim();
+
+      late final String titleKey;
+      late final String bodyKey;
+      final params = <String, String>{
+        'name': displayName,
+      };
+
+      switch (notification.type) {
+        case NotificationType.expenseAdded:
+          titleKey = 'notification_expense_title';
+          bodyKey = 'notification_expense_body';
+          params['title'] = notification.body;
+          break;
+
+        case NotificationType.activityAdded:
+          titleKey = 'notification_activity_title';
+          bodyKey = 'notification_activity_body';
+          params['title'] = notification.body;
+          break;
+
+        case NotificationType.memberJoined:
+          titleKey = 'notification_member_title';
+          bodyKey = 'notification_member_body';
+          break;
+      }
+
+      final title = AppStrings.get(
+        titleKey,
+        languageCode,
+      );
+
+      final body = AppStrings.get(
+        bodyKey,
+        languageCode,
+        params: params,
+      );
+
+      await LocalNotificationService.instance.showNotification(
+        id: notification.id.hashCode & 0x7fffffff,
+        title: title,
+        body: body,
+        payload: notification.tripId,
+      );
+    } catch (_) {
+      // Un fallo de la notificación nativa no debe afectar
+      // al funcionamiento de las notificaciones internas.
+    }
   }
 
   void markAsRead(String notificationId) {
