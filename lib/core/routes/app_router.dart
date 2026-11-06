@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:native_liquid_glass/native_liquid_glass.dart';
 import '../../features/auth/presentation/pages/auth_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/splash/presentation/splash_page.dart';
@@ -11,6 +12,9 @@ import '../constants/route_constants.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
+    observers: [
+      LiquidGlassNavigatorObserver(),
+    ],
     initialLocation: RouteConstants.splash, // ✅ Empieza en splash
     routes: [
       GoRoute(
