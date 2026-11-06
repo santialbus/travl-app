@@ -1,3 +1,11 @@
+
+plugins {
+    id("com.android.application")
+    id("com.google.gms.google-services")
+    id("kotlin-android")
+    id("dev.flutter.flutter-gradle-plugin")
+}
+
 android {
     namespace = "com.albus.travl.travl"
     compileSdk = 36
@@ -31,4 +39,8 @@ android {
 
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
+}
+
+flutter {
+    source = "../.."
 }
