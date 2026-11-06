@@ -2038,11 +2038,11 @@ class AppStrings {
       'ja': '新しいアクティビティ',
     },
     'notification_activity_body': {
-      'en': 'Someone added "{title}" to the trip.',
-      'es': 'Alguien ha añadido "{title}" al viaje.',
-      'de': 'Jemand hat "{title}" zur Reise hinzugefügt.',
-      'fr': 'Quelqu’un a ajouté "{title}" au voyage.',
-      'ja': '誰かが旅行に「{title}」を追加しました。',
+      'en': '{name} added "{title}" to the trip.',
+      'es': '{name} ha añadido "{title}" al viaje.',
+      'de': '{name} hat "{title}" zur Reise hinzugefügt.',
+      'fr': '{name} a ajouté "{title}" au voyage.',
+      'ja': '{name}が旅行に「{title}」を追加しました。',
     },
     'notification_member_title': {
       'en': 'New member',
@@ -2052,11 +2052,11 @@ class AppStrings {
       'ja': '新しいメンバー',
     },
     'notification_member_body': {
-      'en': 'A new member has joined the trip.',
-      'es': 'Un nuevo miembro se ha unido al viaje.',
-      'de': 'Ein neues Mitglied ist der Reise beigetreten.',
-      'fr': 'Un nouveau membre a rejoint le voyage.',
-      'ja': '新しいメンバーが旅行に参加しました。',
+      'en': '{name} has joined the trip.',
+      'es': '{name} se ha unido al viaje.',
+      'de': '{name} ist der Reise beigetreten.',
+      'fr': '{name} a rejoint le voyage.',
+      'ja': '{name}が旅行に参加しました。',
     },
     'notifications_empty_title': {
       'en': 'All caught up',
@@ -2084,11 +2084,11 @@ class AppStrings {
       'ja': '新しい支出',
     },
     'notification_expense_body': {
-      'en': 'Someone added a new expense to the trip.',
-      'es': 'Alguien ha añadido un nuevo gasto al viaje.',
-      'de': 'Jemand hat eine neue Ausgabe zur Reise hinzugefügt.',
-      'fr': 'Quelqu’un a ajouté une nouvelle dépense au voyage.',
-      'ja': '誰かが旅行に新しい支出を追加しました。',
+      'en': '{name} added the expense "{title}" to the trip.',
+      'es': '{name} ha añadido el gasto "{title}" al viaje.',
+      'de': '{name} hat die Ausgabe "{title}" zur Reise hinzugefügt.',
+      'fr': '{name} a ajouté la dépense "{title}" au voyage.',
+      'ja': '{name}が旅行に「{title}」という支出を追加しました。',
     },
   };
 

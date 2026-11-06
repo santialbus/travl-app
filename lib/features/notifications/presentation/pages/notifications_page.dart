@@ -8,6 +8,8 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/localization/app_strings.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../providers/notification_provider.dart';
+import '../../../../core/constants/route_constants.dart';
+import '../../../trip/presentation/providers/users_provider.dart';
 
 class NotificationsPage extends ConsumerWidget {
   final String userId;
@@ -56,7 +58,12 @@ class NotificationsPage extends ConsumerWidget {
                   notification: notification,
                   onTap: () {
                     controller.markAsRead(notification.id);
-                    context.go('/trip/${notification.tripId}');
+                    context.go(
+                      RouteConstants.tripDashboard.replaceFirst(
+                        ':tripId',
+                        notification.tripId,
+                      ),
+                    );
                   },
                 );
               },
@@ -100,23 +107,49 @@ class _NotificationCard extends ConsumerWidget {
     }
   }
 
-  String _getBody(WidgetRef ref) {
+  String _getBody(WidgetRef ref, String actorName) {
     switch (notification.type) {
       case NotificationType.expenseAdded:
-        return ref.tr('notification_expense_body');
+        return ref.tr(
+          'notification_expense_body',
+          params: {
+            'name': actorName,
+            'title': notification.body,
+          },
+        );
+
       case NotificationType.activityAdded:
         return ref.tr(
           'notification_activity_body',
-          params: {'title': notification.body},
+          params: {
+            'name': actorName,
+            'title': notification.body,
+          },
         );
+
       case NotificationType.memberJoined:
-        return ref.tr('notification_member_body');
+        return ref.tr(
+          'notification_member_body',
+          params: {
+            'name': actorName,
+          },
+        );
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isRead = notification.isRead;
+
+    final userNameAsync = ref.watch(
+      userNameProvider(notification.actorId),
+    );
+
+    final actorName = userNameAsync.when(
+      data: (name) => name.isNotEmpty && name != 'Unknown' ? name : 'Alguien',
+      loading: () => 'Alguien',
+      error: (_, __) => 'Alguien',
+    );
 
     return Material(
       color: isRead
@@ -171,7 +204,7 @@ class _NotificationCard extends ConsumerWidget {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      _getBody(ref),
+                      _getBody(ref, actorName),
                       style: AppTextStyles.bodySmall.copyWith(
                         color: AppColors.textSecondary(context),
                       ),
