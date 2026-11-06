@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:travl/features/auth/domain/entities/user_avatar.dart';
 
 import '../../domain/entities/user_entity.dart';
@@ -32,6 +33,8 @@ class AuthRepositoryImpl implements AuthRepository {
       String email, String password) async {
     try {
       return await _remoteDataSource.signInWithEmailPassword(email, password);
+    } on FirebaseAuthException {
+      rethrow;
     } catch (e) {
       throw Exception('Email sign in failed: $e');
     }
@@ -49,6 +52,8 @@ class AuthRepositoryImpl implements AuthRepository {
         password: password,
         name: name,
       );
+    } on FirebaseAuthException {
+      rethrow;
     } catch (e) {
       throw Exception('Sign up failed: $e');
     }

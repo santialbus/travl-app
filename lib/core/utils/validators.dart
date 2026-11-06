@@ -2,24 +2,41 @@ class Validators {
   Validators._();
 
   /// Validate email
-  static String? email(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Email is required';
+  static String? email(
+    String? value, {
+    String requiredMessage = 'Email is required',
+    String invalidMessage = 'Enter a valid email',
+  }) {
+    final email = value?.trim() ?? '';
+
+    if (email.isEmpty) {
+      return requiredMessage;
     }
 
-    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-    if (!emailRegex.hasMatch(value)) {
-      return 'Enter a valid email';
+    // Accepts longer TLDs such as .travel, .technology, etc.
+    final emailRegex = RegExp(
+      r"^[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@"
+      r"[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?"
+      r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$",
+    );
+
+    if (!emailRegex.hasMatch(email)) {
+      return invalidMessage;
     }
 
     return null;
   }
 
   /// Validate required field
-  static String? required(String? value, String fieldName) {
+  static String? required(
+    String? value,
+    String fieldName, {
+    String? requiredMessage,
+  }) {
     if (value == null || value.trim().isEmpty) {
-      return '$fieldName is required';
+      return requiredMessage ?? '$fieldName is required';
     }
+
     return null;
   }
 
@@ -29,7 +46,7 @@ class Validators {
       return 'Trip name is required';
     }
 
-    if (value.length > 50) {
+    if (value.trim().length > 50) {
       return 'Trip name must be less than 50 characters';
     }
 
@@ -42,7 +59,7 @@ class Validators {
       return 'Destination is required';
     }
 
-    if (value.length > 100) {
+    if (value.trim().length > 100) {
       return 'Destination must be less than 100 characters';
     }
 
@@ -64,11 +81,12 @@ class Validators {
 
   /// Validate amount
   static String? amount(String? value) {
-    if (value == null || value.isEmpty) {
+    if (value == null || value.trim().isEmpty) {
       return 'Amount is required';
     }
 
-    final amount = double.tryParse(value);
+    final amount = double.tryParse(value.trim());
+
     if (amount == null || amount <= 0) {
       return 'Enter a valid amount';
     }

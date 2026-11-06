@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../../core/localization/app_strings.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -17,7 +18,6 @@ class AuthPage extends ConsumerStatefulWidget {
 }
 
 class _AuthPageState extends ConsumerState<AuthPage> {
-  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
@@ -32,21 +32,95 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     super.dispose();
   }
 
-  void _handleGoogleSignIn() async {
-    await ref.read(authControllerProvider.notifier).signInWithGoogle();
+  String _getAuthErrorMessage(String errorCode) {
+    switch (errorCode) {
+      // Login: mensaje genérico por seguridad.
+      case 'wrong-password':
+      case 'user-not-found':
+      case 'invalid-credential':
+      case 'invalid-login-credentials':
+        return context.tr('auth_error_invalid_credentials');
 
-    if (mounted) {
-      final authState = ref.read(authControllerProvider);
-      if (authState.user != null) {
-        context.go(RouteConstants.home);
-      } else if (authState.error != null) {
-        _showError(authState.error!);
-      }
+      // Registro: correo duplicado.
+      case 'email-already-in-use':
+        return context.tr('auth_error_email_in_use');
+
+      // Contraseña demasiado débil.
+      case 'weak-password':
+        return context.tr('auth_error_weak_password');
+
+      // Problemas de conexión.
+      case 'network-request-failed':
+        return context.tr('auth_error_network');
+
+      // Demasiados intentos.
+      case 'too-many-requests':
+        return context.tr('auth_error_too_many_requests');
+
+      // Cuenta deshabilitada.
+      case 'user-disabled':
+        return context.tr('auth_error_user_disabled');
+
+      // Proveedor de autenticación no habilitado.
+      case 'operation-not-allowed':
+        return context.tr('auth_error_operation_not_allowed');
+
+      default:
+        return context.tr('auth_error_generic');
     }
   }
 
+  void _handleGoogleSignIn() async {
+    await ref.read(authControllerProvider.notifier).signInWithGoogle();
+
+    if (!mounted) return;
+
+    final authState = ref.read(authControllerProvider);
+
+    if (authState.user != null) {
+      context.go(RouteConstants.home);
+    } else if (authState.error != null) {
+      _showError(_getAuthErrorMessage(authState.error!));
+    }
+  }
+
+  String? _validateInputs() {
+    if (_isSignUp) {
+      final nameError = Validators.required(
+        _nameController.text,
+        context.tr('name'),
+        requiredMessage: context.tr('auth_name_required'),
+      );
+
+      if (nameError != null) return nameError;
+    }
+
+    final emailError = Validators.email(
+      _emailController.text,
+      requiredMessage: context.tr('auth_email_required'),
+      invalidMessage: context.tr('auth_email_invalid'),
+    );
+
+    if (emailError != null) return emailError;
+
+    final passwordError = Validators.required(
+      _passwordController.text,
+      context.tr('password'),
+      requiredMessage: context.tr('auth_password_required'),
+    );
+
+    if (passwordError != null) return passwordError;
+
+    return null;
+  }
+
   void _handleEmailAuth() async {
-    if (!_formKey.currentState!.validate()) return;
+    final validationError = _validateInputs();
+
+    if (validationError != null) {
+      _showError(validationError);
+      return;
+    }
 
     if (_isSignUp) {
       await ref.read(authControllerProvider.notifier).signUpWithEmailPassword(
@@ -61,23 +135,32 @@ class _AuthPageState extends ConsumerState<AuthPage> {
           );
     }
 
-    if (mounted) {
-      final authState = ref.read(authControllerProvider);
-      if (authState.user != null) {
-        context.go(RouteConstants.home);
-      } else if (authState.error != null) {
-        _showError(authState.error!);
-      }
+    if (!mounted) return;
+
+    final authState = ref.read(authControllerProvider);
+
+    if (authState.user != null) {
+      context.go(RouteConstants.home);
+    } else if (authState.error != null) {
+      _showError(_getAuthErrorMessage(authState.error!));
     }
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: AppColors.error,
-      ),
-    );
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          duration: const Duration(seconds: 4),
+        ),
+      );
   }
 
   @override
@@ -108,7 +191,6 @@ class _AuthPageState extends ConsumerState<AuthPage> {
               children: [
                 const SizedBox(height: 40),
 
-                // Logo
                 Center(
                   child: Image.asset(
                     'assets/logo/logotravl.png',
@@ -125,7 +207,9 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                   style: AppTextStyles.h1.copyWith(color: Colors.white),
                   textAlign: TextAlign.center,
                 ),
+
                 const SizedBox(height: 8),
+
                 Text(
                   context.tr('plan_adventures_together'),
                   style: AppTextStyles.bodyMedium.copyWith(
@@ -136,88 +220,73 @@ class _AuthPageState extends ConsumerState<AuthPage> {
 
                 const SizedBox(height: 48),
 
-                // Email/Password Form
-                Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      if (_isSignUp)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: TextFormField(
-                            controller: _nameController,
-                            style: const TextStyle(color: Colors.white),
-                            decoration: _inputDecoration(
-                              label: context.tr('name'),
-                              icon: Icons.person_outline,
-                            ),
-                            validator: (value) =>
-                                Validators.required(value, context.tr('name')),
+                // Email / Password Form
+                Column(
+                  children: [
+                    if (_isSignUp)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: TextFormField(
+                          controller: _nameController,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: _inputDecoration(
+                            label: context.tr('name'),
+                            icon: Icons.person_outline,
                           ),
                         ),
-
-                      TextFormField(
-                        controller: _emailController,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: _inputDecoration(
-                          label: context.tr('email'),
-                          icon: Icons.email_outlined,
-                        ),
-                        keyboardType: TextInputType.emailAddress,
-                        validator: Validators.email,
                       ),
-
-                      const SizedBox(height: 16),
-
-                      TextFormField(
-                        controller: _passwordController,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: _inputDecoration(
-                          label: context.tr('password'),
-                          icon: Icons.lock_outline,
-                        ),
-                        obscureText: true,
-                        validator: (value) =>
-                            Validators.required(value, 'Password'),
+                    TextFormField(
+                      controller: _emailController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: _inputDecoration(
+                        label: context.tr('email'),
+                        icon: Icons.email_outlined,
                       ),
-
-                      const SizedBox(height: 24),
-
-                      // Email Auth Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed:
-                              authState.isLoading ? null : _handleEmailAuth,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                          ),
-                          child: authState.isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor:
-                                        AlwaysStoppedAnimation(Colors.white),
-                                  ),
-                                )
-                              : Text(
-                                  _isSignUp
-                                      ? context.tr('sign_up')
-                                      : context.tr('sign_in'),
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _passwordController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: _inputDecoration(
+                        label: context.tr('password'),
+                        icon: Icons.lock_outline,
+                      ),
+                      obscureText: true,
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed:
+                            authState.isLoading ? null : _handleEmailAuth,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: authState.isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor:
+                                      AlwaysStoppedAnimation(Colors.white),
                                 ),
-                        ),
+                              )
+                            : Text(
+                                _isSignUp
+                                    ? context.tr('sign_up')
+                                    : context.tr('sign_in'),
+                              ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
 
                 const SizedBox(height: 16),
 
-                // Toggle Sign In/Sign Up
                 TextButton(
                   onPressed: () {
                     setState(() {
@@ -228,19 +297,20 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                     _isSignUp
                         ? context.tr('already_have_account')
                         : context.tr('no_account_sign_up'),
-                    style:
-                        TextStyle(color: Colors.white.withValues(alpha: 0.7)),
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                    ),
                   ),
                 ),
 
                 const SizedBox(height: 32),
 
-                // Divider
                 Row(
                   children: [
                     Expanded(
-                      child:
-                          Divider(color: Colors.white.withValues(alpha: 0.15)),
+                      child: Divider(
+                        color: Colors.white.withValues(alpha: 0.15),
+                      ),
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -252,15 +322,15 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                       ),
                     ),
                     Expanded(
-                      child:
-                          Divider(color: Colors.white.withValues(alpha: 0.15)),
+                      child: Divider(
+                        color: Colors.white.withValues(alpha: 0.15),
+                      ),
                     ),
                   ],
                 ),
 
                 const SizedBox(height: 32),
 
-                // Google Sign In Button
                 AuthButton(
                   onPressed: authState.isLoading ? null : _handleGoogleSignIn,
                   label: context.tr('continue_with_google'),
@@ -278,25 +348,39 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     );
   }
 
-  InputDecoration _inputDecoration(
-      {required String label, required IconData icon}) {
+  InputDecoration _inputDecoration({
+    required String label,
+    required IconData icon,
+  }) {
     return InputDecoration(
       labelText: label,
-      labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.5)),
-      prefixIcon: Icon(icon, color: Colors.white.withValues(alpha: 0.5)),
+      labelStyle: TextStyle(
+        color: Colors.white.withValues(alpha: 0.5),
+      ),
+      prefixIcon: Icon(
+        icon,
+        color: Colors.white.withValues(alpha: 0.5),
+      ),
       filled: true,
       fillColor: Colors.white.withValues(alpha: 0.05),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        borderSide: BorderSide(
+          color: Colors.white.withValues(alpha: 0.1),
+        ),
       ),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+        borderSide: BorderSide(
+          color: Colors.white.withValues(alpha: 0.1),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+        borderSide: const BorderSide(
+          color: AppColors.primary,
+          width: 1.5,
+        ),
       ),
     );
   }

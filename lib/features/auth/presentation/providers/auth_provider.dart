@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:travl/features/auth/domain/entities/user_avatar.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
@@ -66,13 +67,24 @@ class AuthController extends StateNotifier<AuthState> {
 
   AuthController(this._repository) : super(AuthState());
 
+  String _getErrorCode(Object error) {
+    if (error is FirebaseAuthException) {
+      return error.code;
+    }
+
+    return 'unknown';
+  }
+
   Future<void> signInWithGoogle() async {
     state = state.copyWith(isLoading: true, error: null);
     try {
       final user = await _repository.signInWithGoogle();
       state = state.copyWith(isLoading: false, user: user);
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      state = state.copyWith(
+        isLoading: false,
+        error: _getErrorCode(e),
+      );
     }
   }
 
@@ -82,7 +94,12 @@ class AuthController extends StateNotifier<AuthState> {
       final user = await _repository.signInWithEmailPassword(email, password);
       state = state.copyWith(isLoading: false, user: user);
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      print('AUTH ERROR TYPE: ${e.runtimeType}');
+      print('AUTH ERROR VALUE: $e');
+      state = state.copyWith(
+        isLoading: false,
+        error: _getErrorCode(e),
+      );
     }
   }
 
@@ -100,7 +117,12 @@ class AuthController extends StateNotifier<AuthState> {
       );
       state = state.copyWith(isLoading: false, user: user);
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      print('AUTH ERROR TYPE: ${e.runtimeType}');
+      print('AUTH ERROR VALUE: $e');
+      state = state.copyWith(
+        isLoading: false,
+        error: _getErrorCode(e),
+      );
     }
   }
 

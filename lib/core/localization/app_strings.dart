@@ -1844,6 +1844,113 @@ class AppStrings {
       'fr': 'Supprimer l’avatar',
       'ja': 'アバターを削除',
     },
+    'auth_email_required': {
+      'en': 'Enter your email address.',
+      'es': 'Introduce tu correo electrónico.',
+      'de': 'Gib deine E-Mail-Adresse ein.',
+      'fr': 'Saisissez votre adresse e-mail.',
+      'ja': 'メールアドレスを入力してください。',
+    },
+    'auth_email_invalid': {
+      'en': 'This email address doesn\'t look right. Check it and try again.',
+      'es':
+          'El correo electrónico no parece correcto. Revísalo e inténtalo de nuevo.',
+      'de':
+          'Diese E-Mail-Adresse scheint nicht korrekt zu sein. Bitte überprüfe sie.',
+      'fr': 'Cette adresse e-mail ne semble pas correcte. Vérifiez-la.',
+      'ja': 'メールアドレスの形式を確認してください。',
+    },
+    'auth_password_required': {
+      'en': 'Enter your password to continue.',
+      'es': 'Introduce tu contraseña para continuar.',
+      'de': 'Gib dein Passwort ein, um fortzufahren.',
+      'fr': 'Saisissez votre mot de passe pour continuer.',
+      'ja': '続行するにはパスワードを入力してください。',
+    },
+    'auth_name_required': {
+      'en': 'What should we call you?',
+      'es': '¿Cómo te llamamos?',
+      'de': 'Wie dürfen wir dich nennen?',
+      'fr': 'Comment pouvons-nous vous appeler ?',
+      'ja': 'お名前を入力してください。',
+    },
+    'auth_email_helper': {
+      'en': 'Use the email address associated with your account.',
+      'es': 'Utiliza el correo electrónico asociado a tu cuenta.',
+      'de': 'Verwende die E-Mail-Adresse deines Kontos.',
+      'fr': 'Utilisez l’adresse e-mail associée à votre compte.',
+      'ja': 'アカウントに登録したメールアドレスを使用してください。',
+    },
+    'auth_password_helper': {
+      'en': 'Your password is kept private and secure.',
+      'es': 'Tu contraseña se mantiene privada y segura.',
+      'de': 'Dein Passwort bleibt privat und sicher.',
+      'fr': 'Votre mot de passe reste privé et sécurisé.',
+      'ja': 'パスワードは安全に保護されます。',
+    },
+    'auth_error_invalid_credentials': {
+      'en': 'Incorrect email or password.',
+      'es': 'El correo o la contraseña no son correctos.',
+      'de': 'E-Mail-Adresse oder Passwort falsch.',
+      'fr': 'E-mail ou mot de passe incorrect.',
+      'ja': 'メールアドレスまたはパスワードが正しくありません。',
+    },
+
+    'auth_error_email_in_use': {
+      'en': 'This email is already registered.',
+      'es': 'Este correo electrónico ya está registrado.',
+      'de': 'Diese E-Mail-Adresse ist bereits registriert.',
+      'fr': 'Cette adresse e-mail est déjà utilisée.',
+      'ja': 'このメールアドレスは既に登録されています。',
+    },
+
+    'auth_error_weak_password': {
+      'en': 'Your password is too weak.',
+      'es': 'La contraseña es demasiado débil.',
+      'de': 'Dein Passwort ist zu schwach.',
+      'fr': 'Votre mot de passe est trop faible.',
+      'ja': 'パスワードが弱すぎます。',
+    },
+
+    'auth_error_network': {
+      'en': 'Check your internet connection.',
+      'es': 'Comprueba tu conexión a Internet.',
+      'de': 'Überprüfe deine Internetverbindung.',
+      'fr': 'Vérifiez votre connexion Internet.',
+      'ja': 'インターネット接続を確認してください。',
+    },
+
+    'auth_error_too_many_requests': {
+      'en': 'Too many attempts. Try again later.',
+      'es': 'Demasiados intentos. Inténtalo más tarde.',
+      'de': 'Zu viele Versuche. Versuche es später erneut.',
+      'fr': 'Trop de tentatives. Réessayez plus tard.',
+      'ja': '試行回数が多すぎます。後でもう一度お試しください。',
+    },
+
+    'auth_error_user_disabled': {
+      'en': 'This account has been disabled.',
+      'es': 'Esta cuenta ha sido deshabilitada.',
+      'de': 'Dieses Konto wurde deaktiviert.',
+      'fr': 'Ce compte a été désactivé.',
+      'ja': 'このアカウントは無効になっています。',
+    },
+
+    'auth_error_operation_not_allowed': {
+      'en': 'This sign-in method is not enabled.',
+      'es': 'Este método de acceso no está habilitado.',
+      'de': 'Diese Anmeldemethode ist nicht aktiviert.',
+      'fr': 'Cette méthode de connexion n’est pas activée.',
+      'ja': 'このログイン方法は有効になっていません。',
+    },
+
+    'auth_error_generic': {
+      'en': 'Something went wrong. Please try again.',
+      'es': 'Algo ha salido mal. Inténtalo de nuevo.',
+      'de': 'Etwas ist schiefgelaufen. Bitte versuche es erneut.',
+      'fr': 'Une erreur s’est produite. Veuillez réessayer.',
+      'ja': 'エラーが発生しました。もう一度お試しください。',
+    },
   };
 
   static String get(String key, String languageCode,

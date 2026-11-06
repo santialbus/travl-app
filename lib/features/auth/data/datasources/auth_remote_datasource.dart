@@ -106,6 +106,8 @@ class AuthRemoteDataSource {
       }
 
       return UserModel.fromFirestore(userDoc);
+    } on FirebaseAuthException {
+      rethrow;
     } catch (e) {
       throw Exception('Sign in failed: $e');
     }
@@ -144,6 +146,8 @@ class AuthRemoteDataSource {
           .set(userModel.toFirestore(), SetOptions(merge: false));
 
       return userModel;
+    } on FirebaseAuthException {
+      rethrow;
     } catch (e) {
       throw Exception('Sign up failed: $e');
     }
