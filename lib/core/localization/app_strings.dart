@@ -1951,6 +1951,71 @@ class AppStrings {
       'fr': 'Une erreur s’est produite. Veuillez réessayer.',
       'ja': 'エラーが発生しました。もう一度お試しください。',
     },
+    'auth_forgot_password': {
+      'en': 'Forgot your password?',
+      'es': '¿Has olvidado tu contraseña?',
+      'de': 'Passwort vergessen?',
+      'fr': 'Mot de passe oublié ?',
+      'ja': 'パスワードをお忘れですか？',
+    },
+    'auth_reset_password_title': {
+      'en': 'Reset your password',
+      'es': 'Restablecer contraseña',
+      'de': 'Passwort zurücksetzen',
+      'fr': 'Réinitialiser le mot de passe',
+      'ja': 'パスワードをリセット',
+    },
+    'auth_reset_password_description': {
+      'en':
+          'Enter your email and we will send you a link to reset your password.',
+      'es':
+          'Introduce tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.',
+      'de':
+          'Gib deine E-Mail-Adresse ein und wir senden dir einen Link zum Zurücksetzen deines Passworts.',
+      'fr':
+          'Saisissez votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.',
+      'ja': 'メールアドレスを入力してください。パスワード再設定用のリンクをお送りします。',
+    },
+    'auth_send_reset_email': {
+      'en': 'Send reset link',
+      'es': 'Enviar enlace',
+      'de': 'Link senden',
+      'fr': 'Envoyer le lien',
+      'ja': 'リンクを送信',
+    },
+    'auth_reset_email_sent': {
+      'en':
+          'If an account exists for this email, you will receive a password reset link shortly.',
+      'es':
+          'Si existe una cuenta con este correo, recibirás un enlace para restablecer tu contraseña.',
+      'de':
+          'Falls ein Konto mit dieser E-Mail-Adresse existiert, erhältst du in Kürze einen Link zum Zurücksetzen deines Passworts.',
+      'fr':
+          'Si un compte existe avec cette adresse e-mail, vous recevrez bientôt un lien de réinitialisation.',
+      'ja': 'このメールアドレスのアカウントが存在する場合、まもなく再設定リンクが届きます。',
+    },
+    'auth_reset_email_invalid': {
+      'en': 'Please enter a valid email address.',
+      'es': 'Introduce un correo electrónico válido.',
+      'de': 'Bitte gib eine gültige E-Mail-Adresse ein.',
+      'fr': 'Veuillez saisir une adresse e-mail valide.',
+      'ja': '有効なメールアドレスを入力してください。',
+    },
+    'auth_reset_email_error': {
+      'en': 'Could not send the reset email. Please try again.',
+      'es': 'No se ha podido enviar el correo. Inténtalo de nuevo.',
+      'de':
+          'Die E-Mail konnte nicht gesendet werden. Bitte versuche es erneut.',
+      'fr': 'Impossible d’envoyer l’e-mail. Veuillez réessayer.',
+      'ja': 'メールを送信できませんでした。もう一度お試しください。',
+    },
+    'auth_back_to_login': {
+      'en': 'Back to sign in',
+      'es': 'Volver a iniciar sesión',
+      'de': 'Zurück zur Anmeldung',
+      'fr': 'Retour à la connexion',
+      'ja': 'ログインに戻る',
+    },
   };
 
   static String get(String key, String languageCode,

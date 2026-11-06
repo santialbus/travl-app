@@ -105,4 +105,15 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> updateAvatar(UserAvatar? avatar) {
     return _remoteDataSource.updateAvatar(avatar);
   }
+
+  @override
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _remoteDataSource.sendPasswordResetEmail(email);
+    } on FirebaseAuthException {
+      rethrow;
+    } catch (e) {
+      throw Exception('Failed to send password reset email: $e');
+    }
+  }
 }

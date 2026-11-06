@@ -34,4 +34,6 @@ abstract class AuthRepository {
   Future<void> updatePreferredCurrency(String currency);
 
   Future<void> updateAvatar(UserAvatar? avatar);
+  // Send password reset email
+  Future<void> sendPasswordResetEmail(String email);
 }

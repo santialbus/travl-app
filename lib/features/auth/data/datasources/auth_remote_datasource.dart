@@ -275,4 +275,11 @@ class AuthRemoteDataSource {
       throw Exception('Failed to update avatar: $e');
     }
   }
+
+  // Send password reset email
+  Future<void> sendPasswordResetEmail(String email) async {
+    await _firebaseAuth.sendPasswordResetEmail(
+      email: email.trim(),
+    );
+  }
 }

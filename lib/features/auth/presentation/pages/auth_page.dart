@@ -9,6 +9,7 @@ import '../../../../core/constants/route_constants.dart';
 import '../../../../core/utils/validators.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/auth_button.dart';
+import '../widgets/password_reset_dialog.dart';
 
 class AuthPage extends ConsumerStatefulWidget {
   const AuthPage({super.key});
@@ -32,36 +33,60 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     super.dispose();
   }
 
+  Future<void> _showPasswordResetDialog() async {
+    final emailSent = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => PasswordResetDialog(
+        initialEmail: _emailController.text.trim(),
+      ),
+    );
+
+    if (!mounted || emailSent != true) return;
+
+    _showPasswordResetSuccess();
+  }
+
+  void _showPasswordResetSuccess() {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(context.tr('auth_reset_email_sent')),
+          backgroundColor: AppColors.primary,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          duration: const Duration(seconds: 5),
+        ),
+      );
+  }
+
   String _getAuthErrorMessage(String errorCode) {
     switch (errorCode) {
-      // Login: mensaje genérico por seguridad.
       case 'wrong-password':
       case 'user-not-found':
       case 'invalid-credential':
       case 'invalid-login-credentials':
         return context.tr('auth_error_invalid_credentials');
 
-      // Registro: correo duplicado.
       case 'email-already-in-use':
         return context.tr('auth_error_email_in_use');
 
-      // Contraseña demasiado débil.
       case 'weak-password':
         return context.tr('auth_error_weak_password');
 
-      // Problemas de conexión.
       case 'network-request-failed':
         return context.tr('auth_error_network');
 
-      // Demasiados intentos.
       case 'too-many-requests':
         return context.tr('auth_error_too_many_requests');
 
-      // Cuenta deshabilitada.
       case 'user-disabled':
         return context.tr('auth_error_user_disabled');
 
-      // Proveedor de autenticación no habilitado.
       case 'operation-not-allowed':
         return context.tr('auth_error_operation_not_allowed');
 
@@ -70,7 +95,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     }
   }
 
-  void _handleGoogleSignIn() async {
+  Future<void> _handleGoogleSignIn() async {
     await ref.read(authControllerProvider.notifier).signInWithGoogle();
 
     if (!mounted) return;
@@ -114,7 +139,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
     return null;
   }
 
-  void _handleEmailAuth() async {
+  Future<void> _handleEmailAuth() async {
     final validationError = _validateInputs();
 
     if (validationError != null) {
@@ -163,10 +188,18 @@ class _AuthPageState extends ConsumerState<AuthPage> {
       );
   }
 
+  void _toggleAuthMode() {
+    setState(() {
+      _isSignUp = !_isSignUp;
+      _passwordController.clear();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
     final size = MediaQuery.of(context).size;
+    final isLoading = authState.isLoading;
 
     return Scaffold(
       backgroundColor: const Color(0xFF060D1A),
@@ -190,7 +223,6 @@ class _AuthPageState extends ConsumerState<AuthPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 40),
-
                 Center(
                   child: Image.asset(
                     'assets/logo/logotravl.png',
@@ -199,17 +231,13 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                     fit: BoxFit.contain,
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
                 Text(
                   'Travl',
                   style: AppTextStyles.h1.copyWith(color: Colors.white),
                   textAlign: TextAlign.center,
                 ),
-
                 const SizedBox(height: 8),
-
                 Text(
                   context.tr('plan_adventures_together'),
                   style: AppTextStyles.bodyMedium.copyWith(
@@ -217,10 +245,9 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-
                 const SizedBox(height: 48),
 
-                // Email / Password Form
+                // Authentication form
                 Column(
                   children: [
                     if (_isSignUp)
@@ -243,6 +270,7 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                         icon: Icons.email_outlined,
                       ),
                       keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
                     ),
                     const SizedBox(height: 16),
                     TextFormField(
@@ -253,19 +281,44 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                         icon: Icons.lock_outline,
                       ),
                       obscureText: true,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted:
+                          isLoading ? null : (_) => _handleEmailAuth(),
                     ),
-                    const SizedBox(height: 24),
+                    if (!_isSignUp)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed:
+                              isLoading ? null : _showPasswordResetDialog,
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4,
+                              vertical: 8,
+                            ),
+                          ),
+                          child: Text(
+                            context.tr('auth_forgot_password'),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      )
+                    else
+                      const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed:
-                            authState.isLoading ? null : _handleEmailAuth,
+                        onPressed: isLoading ? null : _handleEmailAuth,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
                         ),
-                        child: authState.isLoading
+                        child: isLoading
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
@@ -287,12 +340,9 @@ class _AuthPageState extends ConsumerState<AuthPage> {
 
                 const SizedBox(height: 16),
 
+                // Switch between login and signup
                 TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _isSignUp = !_isSignUp;
-                    });
-                  },
+                  onPressed: isLoading ? null : _toggleAuthMode,
                   child: Text(
                     _isSignUp
                         ? context.tr('already_have_account')
@@ -303,8 +353,9 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 16),
 
+                // Google sign-in
                 Row(
                   children: [
                     Expanded(
@@ -328,17 +379,14 @@ class _AuthPageState extends ConsumerState<AuthPage> {
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 32),
-
                 AuthButton(
-                  onPressed: authState.isLoading ? null : _handleGoogleSignIn,
+                  onPressed: isLoading ? null : _handleGoogleSignIn,
                   label: context.tr('continue_with_google'),
                   backgroundColor: Colors.white,
                   textColor: Colors.black87,
                   useGoogleLogo: true,
                 ),
-
                 const SizedBox(height: 24),
               ],
             ),
