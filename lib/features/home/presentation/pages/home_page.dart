@@ -176,8 +176,6 @@ class _BottomNavState extends State<_BottomNav> {
       );
     }
 
-    // Fallback Flutter para iOS anterior a 26,
-    // Android y Web.
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final activeColor = AppColors.primary;
@@ -190,87 +188,124 @@ class _BottomNavState extends State<_BottomNav> {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(32),
           child: BackdropFilter(
             filter: ImageFilter.blur(
-              sigmaX: 22,
-              sigmaY: 22,
+              sigmaX: 32,
+              sigmaY: 32,
             ),
             child: Container(
               decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(32),
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: isDark
                       ? [
-                          Colors.white.withValues(alpha: 0.13),
-                          Colors.white.withValues(alpha: 0.05),
+                          const Color(0xFF51515B).withValues(alpha: 0.48),
+                          const Color(0xFF202027).withValues(alpha: 0.72),
+                          const Color(0xFF111116).withValues(alpha: 0.78),
                         ]
                       : [
-                          Colors.white.withValues(alpha: 0.72),
-                          Colors.white.withValues(alpha: 0.48),
+                          Colors.white.withValues(alpha: 0.78),
+                          const Color(0xFFF5F7FC).withValues(alpha: 0.68),
+                          Colors.white.withValues(alpha: 0.55),
                         ],
                 ),
-                borderRadius: BorderRadius.circular(30),
                 border: Border.all(
                   color: Colors.white.withValues(
-                    alpha: isDark ? 0.20 : 0.65,
+                    alpha: isDark ? 0.38 : 0.78,
                   ),
-                  width: 1,
+                  width: 1.2,
                 ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(
-                      alpha: isDark ? 0.20 : 0.08,
+                      alpha: isDark ? 0.30 : 0.12,
                     ),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
+                    blurRadius: 30,
+                    spreadRadius: 1,
+                    offset: const Offset(0, 10),
+                  ),
+                  BoxShadow(
+                    color: Colors.white.withValues(
+                      alpha: isDark ? 0.08 : 0.55,
+                    ),
+                    blurRadius: 12,
+                    spreadRadius: -5,
+                    offset: const Offset(0, -3),
                   ),
                 ],
               ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 8,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Expanded(
-                      child: _NavItem(
-                        icon: Icons.luggage_outlined,
-                        activeIcon: Icons.luggage,
-                        label: context.tr('trips_tab'),
-                        isActive: widget.currentIndex == 0,
-                        activeColor: activeColor,
-                        inactiveColor: inactiveColor,
-                        onTap: () => widget.onTap(0),
+              child: Stack(
+                children: [
+                  // Reflejo superior del cristal.
+                  Positioned(
+                    top: 0,
+                    left: 20,
+                    right: 20,
+                    child: Container(
+                      height: 1.5,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            Colors.white.withValues(alpha: 0.9),
+                            Colors.white.withValues(alpha: 0.65),
+                            Colors.transparent,
+                          ],
+                        ),
                       ),
                     ),
-                    Expanded(
-                      child: _NavItem(
-                        icon: Icons.map_outlined,
-                        activeIcon: Icons.map,
-                        label: context.tr('map_tab'),
-                        isActive: widget.currentIndex == 1,
-                        activeColor: activeColor,
-                        inactiveColor: inactiveColor,
-                        onTap: () => widget.onTap(1),
-                      ),
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 7,
                     ),
-                    Expanded(
-                      child: _NavItem(
-                        icon: Icons.person_outline,
-                        activeIcon: Icons.person,
-                        label: context.tr('profile_tab'),
-                        isActive: widget.currentIndex == 2,
-                        activeColor: activeColor,
-                        inactiveColor: inactiveColor,
-                        onTap: () => widget.onTap(2),
-                      ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _NavItem(
+                            icon: Icons.luggage_outlined,
+                            activeIcon: Icons.luggage,
+                            label: context.tr('trips_tab'),
+                            isActive: widget.currentIndex == 0,
+                            activeColor: activeColor,
+                            inactiveColor: inactiveColor,
+                            onTap: () => widget.onTap(0),
+                            isDark: isDark,
+                          ),
+                        ),
+                        Expanded(
+                          child: _NavItem(
+                            icon: Icons.map_outlined,
+                            activeIcon: Icons.map,
+                            label: context.tr('map_tab'),
+                            isActive: widget.currentIndex == 1,
+                            activeColor: activeColor,
+                            inactiveColor: inactiveColor,
+                            onTap: () => widget.onTap(1),
+                            isDark: isDark,
+                          ),
+                        ),
+                        Expanded(
+                          child: _NavItem(
+                            icon: Icons.person_outline,
+                            activeIcon: Icons.person,
+                            label: context.tr('profile_tab'),
+                            isActive: widget.currentIndex == 2,
+                            activeColor: activeColor,
+                            inactiveColor: inactiveColor,
+                            onTap: () => widget.onTap(2),
+                            isDark: isDark,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -288,6 +323,7 @@ class _NavItem extends StatelessWidget {
   final Color activeColor;
   final Color inactiveColor;
   final VoidCallback onTap;
+  final bool isDark;
 
   const _NavItem({
     required this.icon,
@@ -297,33 +333,99 @@ class _NavItem extends StatelessWidget {
     required this.activeColor,
     required this.inactiveColor,
     required this.onTap,
+    required this.isDark,
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
+      borderRadius: BorderRadius.circular(22),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+        margin: const EdgeInsets.symmetric(horizontal: 3),
         padding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 8,
+          horizontal: 4,
+          vertical: 7,
+        ),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22),
+          gradient: isActive
+              ? LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: isDark
+                      ? [
+                          Colors.white.withValues(alpha: 0.25),
+                          Colors.white.withValues(alpha: 0.10),
+                        ]
+                      : [
+                          Colors.white.withValues(alpha: 0.82),
+                          Colors.white.withValues(alpha: 0.38),
+                        ],
+                )
+              : null,
+          border: isActive
+              ? Border.all(
+                  color: Colors.white.withValues(
+                    alpha: isDark ? 0.35 : 0.75,
+                  ),
+                  width: 0.8,
+                )
+              : null,
+          boxShadow: isActive
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(
+                      alpha: isDark ? 0.12 : 0.05,
+                    ),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                  BoxShadow(
+                    color: Colors.white.withValues(
+                      alpha: isDark ? 0.10 : 0.55,
+                    ),
+                    blurRadius: 8,
+                    offset: const Offset(0, -2),
+                  ),
+                ]
+              : null,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              isActive ? activeIcon : icon,
-              color: isActive ? activeColor : inactiveColor,
-              size: 26,
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              transitionBuilder: (child, animation) {
+                return FadeTransition(
+                  opacity: animation,
+                  child: ScaleTransition(
+                    scale: animation,
+                    child: child,
+                  ),
+                );
+              },
+              child: Icon(
+                isActive ? activeIcon : icon,
+                key: ValueKey(isActive),
+                color: isActive ? activeColor : inactiveColor,
+                size: 24,
+              ),
             ),
             const SizedBox(height: 4),
-            Text(
-              label,
+            AnimatedDefaultTextStyle(
+              duration: const Duration(milliseconds: 220),
               style: TextStyle(
                 fontSize: 11,
-                fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
                 color: isActive ? activeColor : inactiveColor,
+              ),
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
