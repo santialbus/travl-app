@@ -10,13 +10,106 @@ class NotificationRemoteDataSource {
     FirebaseFirestore? firestore,
   }) : _firestore = firestore ?? FirebaseFirestore.instance;
 
-  /// Escucha los nuevos gastos de un viaje.
-  ///
-  /// Devuelve únicamente documentos añadidos después de recibir
-  /// la primera fotografía del servidor.
-  Stream<DocumentSnapshot<Map<String, dynamic>>> watchNewExpenses(
+  DateTime? _readDate(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    return null;
+  }
+
+  bool _isAfter(dynamic value, DateTime date) {
+    final parsedDate = _readDate(value);
+    return parsedDate != null && parsedDate.isAfter(date);
+  }
+
+  // ---------------------------------------------------------------------------
+  // CONSULTAS HISTÓRICAS
+  // ---------------------------------------------------------------------------
+
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> getExpensesSince(
     String tripId,
-  ) {
+    DateTime since,
+    DateTime until,
+  ) async {
+    final snapshot = await _firestore
+        .collection(FirebaseConstants.expensesCollection)
+        .where('tripId', isEqualTo: tripId)
+        .where(
+          'createdAt',
+          isGreaterThan: Timestamp.fromDate(since),
+        )
+        .where(
+          'createdAt',
+          isLessThanOrEqualTo: Timestamp.fromDate(until),
+        )
+        .get(const GetOptions(source: Source.server));
+
+    return snapshot.docs
+        .where((document) => document.data()['isSettlement'] != true)
+        .toList();
+  }
+
+  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> getActivitiesSince(
+    String tripId,
+    DateTime since,
+    DateTime until,
+  ) async {
+    final snapshot = await _firestore
+        .collection(FirebaseConstants.activitiesCollection)
+        .where('tripId', isEqualTo: tripId)
+        .where(
+          'createdAt',
+          isGreaterThan: Timestamp.fromDate(since),
+        )
+        .where(
+          'createdAt',
+          isLessThanOrEqualTo: Timestamp.fromDate(until),
+        )
+        .get(const GetOptions(source: Source.server));
+
+    return snapshot.docs;
+  }
+
+  Future<List<Map<String, dynamic>>> getMembersSince(
+    String tripId,
+    DateTime since,
+    DateTime until,
+  ) async {
+    final snapshot = await _firestore
+        .collection(FirebaseConstants.tripsCollection)
+        .doc(tripId)
+        .get(const GetOptions(source: Source.server));
+
+    if (!snapshot.exists) return [];
+
+    final data = snapshot.data();
+    if (data == null) return [];
+
+    final rawMembers = data['members'] as List<dynamic>? ?? [];
+
+    return rawMembers
+        .whereType<Map>()
+        .map((member) => Map<String, dynamic>.from(member))
+        .where((member) {
+      final joinedAt = _readDate(member['joinedAt']);
+
+      return joinedAt != null &&
+          joinedAt.isAfter(since) &&
+          !joinedAt.isAfter(until);
+    }).toList();
+  }
+
+  // ---------------------------------------------------------------------------
+  // LISTENERS EN TIEMPO REAL
+  // ---------------------------------------------------------------------------
+
+  /// Escucha nuevos gastos.
+  ///
+  /// En la primera fotografía solo emite documentos posteriores a [after].
+  /// Así no perdemos eventos que se produzcan durante el arranque.
+  Stream<DocumentSnapshot<Map<String, dynamic>>> watchNewExpenses(
+    String tripId, {
+    DateTime? after,
+  }) {
     late final StreamController<DocumentSnapshot<Map<String, dynamic>>>
         controller;
 
@@ -35,26 +128,33 @@ class NotificationRemoteDataSource {
             if (snapshot.metadata.isFromCache) return;
 
             if (!initialized) {
-              processedIds.addAll(
-                snapshot.docs.map((doc) => doc.id),
-              );
+              for (final document in snapshot.docs) {
+                processedIds.add(document.id);
+
+                if (document.metadata.hasPendingWrites) continue;
+
+                final data = document.data();
+
+                if (data['isSettlement'] == true) continue;
+
+                if (after != null && _isAfter(data['createdAt'], after)) {
+                  controller.add(document);
+                }
+              }
+
               initialized = true;
               return;
             }
 
             for (final change in snapshot.docChanges) {
-              if (change.type != DocumentChangeType.added) {
-                continue;
-              }
+              if (change.type != DocumentChangeType.added) continue;
 
               final document = change.doc;
 
               if (document.metadata.hasPendingWrites) continue;
               if (!processedIds.add(document.id)) continue;
 
-              final data = document.data();
-
-              if (data?['isSettlement'] == true) continue;
+              if (document.data()?['isSettlement'] == true) continue;
 
               controller.add(document);
             }
@@ -72,10 +172,11 @@ class NotificationRemoteDataSource {
     return controller.stream;
   }
 
-  /// Escucha las nuevas actividades de un viaje.
+  /// Escucha nuevas actividades.
   Stream<DocumentSnapshot<Map<String, dynamic>>> watchNewActivities(
-    String tripId,
-  ) {
+    String tripId, {
+    DateTime? after,
+  }) {
     late final StreamController<DocumentSnapshot<Map<String, dynamic>>>
         controller;
 
@@ -86,7 +187,7 @@ class NotificationRemoteDataSource {
     controller = StreamController<DocumentSnapshot<Map<String, dynamic>>>(
       onListen: () {
         subscription = _firestore
-            .collection('activities')
+            .collection(FirebaseConstants.activitiesCollection)
             .where('tripId', isEqualTo: tripId)
             .snapshots(includeMetadataChanges: true)
             .listen(
@@ -94,17 +195,24 @@ class NotificationRemoteDataSource {
             if (snapshot.metadata.isFromCache) return;
 
             if (!initialized) {
-              processedIds.addAll(
-                snapshot.docs.map((doc) => doc.id),
-              );
+              for (final document in snapshot.docs) {
+                processedIds.add(document.id);
+
+                if (document.metadata.hasPendingWrites) continue;
+
+                final data = document.data();
+
+                if (after != null && _isAfter(data['createdAt'], after)) {
+                  controller.add(document);
+                }
+              }
+
               initialized = true;
               return;
             }
 
             for (final change in snapshot.docChanges) {
-              if (change.type != DocumentChangeType.added) {
-                continue;
-              }
+              if (change.type != DocumentChangeType.added) continue;
 
               final document = change.doc;
 
@@ -125,13 +233,14 @@ class NotificationRemoteDataSource {
     return controller.stream;
   }
 
-  /// Escucha cambios en los miembros de un viaje.
+  /// Escucha incorporaciones de miembros.
   ///
-  /// La primera fotografía establece el estado inicial.
-  /// Después detecta únicamente incorporaciones.
+  /// En la primera fotografía detecta miembros cuyo joinedAt sea posterior
+  /// a [after]. Después compara las incorporaciones nuevas.
   Stream<List<Map<String, dynamic>>> watchNewMembers(
-    String tripId,
-  ) {
+    String tripId, {
+    DateTime? after,
+  }) {
     late final StreamController<List<Map<String, dynamic>>> controller;
 
     StreamSubscription? subscription;
@@ -140,7 +249,7 @@ class NotificationRemoteDataSource {
     controller = StreamController<List<Map<String, dynamic>>>(
       onListen: () {
         subscription = _firestore
-            .collection('trips')
+            .collection(FirebaseConstants.tripsCollection)
             .doc(tripId)
             .snapshots(includeMetadataChanges: true)
             .listen(
@@ -152,11 +261,12 @@ class NotificationRemoteDataSource {
             final data = snapshot.data();
             if (data == null) return;
 
-            final members = List<Map<String, dynamic>>.from(
-              (data['members'] as List<dynamic>? ?? []).map(
-                (member) => Map<String, dynamic>.from(member as Map),
-              ),
-            );
+            final rawMembers = data['members'] as List<dynamic>? ?? [];
+
+            final members = rawMembers
+                .whereType<Map>()
+                .map((member) => Map<String, dynamic>.from(member))
+                .toList();
 
             final currentMemberIds = members
                 .map((member) => member['userId'] as String?)
@@ -165,6 +275,17 @@ class NotificationRemoteDataSource {
 
             if (previousMemberIds == null) {
               previousMemberIds = currentMemberIds;
+
+              if (after != null) {
+                final recentlyJoined = members.where((member) {
+                  return _isAfter(member['joinedAt'], after);
+                }).toList();
+
+                if (recentlyJoined.isNotEmpty) {
+                  controller.add(recentlyJoined);
+                }
+              }
+
               return;
             }
 

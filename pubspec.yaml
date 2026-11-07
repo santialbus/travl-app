@@ -55,6 +55,7 @@ dependencies:
   native_liquid_glass: ^0.3.1
     # Local Notifications
   flutter_local_notifications: ^22.3.3
+  shared_preferences: ^2.3.2
 
 dev_dependencies:
   flutter_test:
@@ -67,7 +68,6 @@ dev_dependencies:
   latlong2: ^0.9.1
   image_picker: ^1.1.2
   firebase_app_check: ^0.3.2
-  shared_preferences: ^2.3.2
   flutter_launcher_icons: ^0.13.1
 
 flutter:
